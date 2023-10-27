@@ -1,0 +1,41 @@
+\chapter{Analysis of current SoP positioning systems}
+
+
+\section{Survey of select SoP positioning systems}
+%todo zkratky
+In \cite{sop07}, it is demonstrated using analysis and simulation that it is possible to obtain quick\footnote{Definition of "quick" is not provided, but it is stated that it is significantly less than \qty{16}{\s}} positioning using Doppler frequency measurements of signals from one or two satellites of the Globalstar constellation (forward down-link carrier frequency of \qty{2500}{\mega\hertz}). The error in the horizontal plane of such positioning is expected to be less than \qty{9}{\km} in \qty{90}{\percent} of cases using one satellite. Using two satellites, the error is expected to be \qty{1.4}{\km} in \qty{90}{\percent} of cases. This is without any advanced signal processing or data fusion.
+
+In \cite{sop01}, a method of positioning is devised for use as a secondary aircraft navigation system in GPS-denied areas using Iridium Next satellites and SDR. CEP of \qtyrange{0.2}{2}{\km} in dynamic mode is demonstrated without using significant computational resources. The system is based on receiving STL, Ring Alert and MSG Iridium Next signals on \qty{1626.104}{\mega\hertz}, \qty{1626.27}{\mega\hertz} and \qty{1626.44}{\mega\hertz}, respectively, and then fusing the Doppler shift data with IMU data using Kalman filtering.
+
+In \cite{sop04}, a Starlink-based system is designed, based on Doppler measurements of a tone band centered on \qty{11 325}{\mega\hertz}. The system tracked the tone signal of up to six satellites by FFL-assisted-PPL. Extended Kalman filtering was used. The system accuracy was \qty{375}{\metre}. The team determined that the most significant error sources were the receiver (user) clock drift, the user time error and the satellite position error. Notably, the satellite clock drift was not determined to be significant.
+
+In \cite{sop05}, a system based on the fusion (using EKF) of Iridium Doppler shift measurements, INS and magnetometer data is proposed and simulated for a highly dynamic application. The simulated Iridium signal was centred on \qty{1626.25}{\mega\hertz}. The arrival position error\footnote{That is, the error in position after travelling along a predefined trajectory in the simulation} in \qty{95}{\percent} of cases was approximately \qty{300}{\metre} for the best case, and \qty{4}{\km} for the intermediate case. The main difference between the two cases was the accuracy of orbital data.
+
+In \cite{sop08}, a framework is presented which estimates the LEO satellite position states along with the states of a navigating vehicle using Orbcomm satellite signals. The system fuses INS with Doppler measurements of a signal in VHF downlink band of \qtyrange{137}{138}{\mega\hertz} using EKF. The system was tested using an UAV, which had GPS signal available for \qty{90}{\s} and then turned off for \qty{30}{\s}. The final position error was \qty{8.8}{\m}, compared with INS-only error of \qty{31.7}{\m}. Static positioning without the use of GNSS was not performed.
+
+In \cite{sop10}, a framework employing EKF to estimate user position from Doppler measurement of multiple generic LEO satellites was proposed. Simulation showed a RMSE in position from approx. \qty{170}{\m} for 5 satellites over one minute to \qty{11.5}{\m} for 25 satellites over four minutes. Experimental run with 2 Orbcomm satellites (broadcasting at \qty{137.3125}{\mega\hertz} and \qty{137.25}{\mega\hertz} respectively) over one minute showed a RMSE of \qty{360}{\m}.
+
+In \cite{sop11}, and Iridium-based system is proposed and tested. The system uses the Ring Alert and Primer message signals to capture Doppler shift data, which are then processed using Kalman filtering and the least squares method. The system accuracy can be as much as \qty{22}{\m} after \qty{24}{\hour} of measurement under an open sky. For \qty{30}{\min} under open sky, the accuracy was shown to be \qty{46}{\m}. Furthermore, the system accuracy in GPS-hostile conditions (in a dense forest) was shown to be \qty{108}{\m}\footnote{The experiment time is not stated, but can be inferred to be about \qty{30}{\min}}, whereas GPS did not provide a solution.
+
+In \cite{sop03}, two LEO constellations (Iridium Next and Orbcomm) are used to determine position. Three dimensional RMSE achieved over \qty{30}{\s} using a single constellation (Orbcomm) is approx. \qty{0.76}{\km}, whereas using both constellations the RMSE is \qtyrange{0.22}{0.18}{\km} depending on the received signal type. Accuracy when measuring messaging bursts was better than for Ring Alert bursts. EKF was utilised in the signal processing.
+
+The research outlined above is summarised in table \ref{t_sop_survey_summary}. Most research focused on using Iridium Next satellites as SoP source, followed by Orbcomm. Accuracies of position determination were mostly in the order of \qty{e2}{\m} and improved significantly both with measurement time and with the number of measured satellites. In one case the performance was shown to exceed the one of existing GNSS systems. Furthermore, the surveyed research demonstrated the possibility of using SoP positioning both in static and dynamic applications. Notably, all of the surveyed experiments used Kalman filtering for fusion of multiple navigation system data or error estimation, albeit the actual implementation varied greatly.
+
+\begin{table}
+\caption{Summary of selected existing SoP positioning systems (* denotes a simulated result)}
+\label{t_sop_survey_summary}
+\begin{tabular}{p{0.2\linewidth}p{0.15\linewidth}lllll}
+Constellation          & Signal                             & Mode       & Accuracy (2D)                  & Exp. time               & Source  \\ \hline
+Globalstar             & \qty{2500}{\mega\hertz}            & static     & \qtyrange{1.4}{9}{\km}*        & few s                   & \cite{sop07}     \\
+Iridium Next           & STL, Ring Alert, MSG               & dynamic    & \qtyrange{0.2}{2}{\km}         & N/A                     & \cite{sop01}     \\
+Starlink               & \qty{11 325}{\mega\hertz}          & static     & \qty{375}{\metre}              & \qty{330}{\s}           & \cite{sop04}     \\
+Iridium Next           & \qty{1626.25}{\mega\hertz}         & dynamic    & \qtyrange{0.3}{4}{\metre}      & N/A                     & \cite{sop05}     \\
+Generic, Orbcomm       & \qty{137}{\mega\hertz}             & static     & \num{11.5}* to \qty{360}{\m}   & \qtyrange{1}{4}{\min}   & \cite{sop10}     \\
+Iridium Next           & Ring Alert, Primer                 & static     & \qtyrange{46}{108}{\m}         & \qty{30}{\min}          & \cite{sop11}     \\
+Iridium Next, Orbcomm  & MSG, Ring Alert                    & static     & \qtyrange{0.18}{0.76}{\km}     & \qty{30}{\s}            & \cite{sop03}    
+\end{tabular}
+\end{table}
+
+
+\section{Comparison to GNSS}
+

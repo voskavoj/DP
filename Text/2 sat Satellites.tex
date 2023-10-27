@@ -1,0 +1,50 @@
+\chapter{A survey of current LEO satellite systems}
+
+\section{Iridium NEXT}
+Iridium satellite constellation, owned and operated by Iridium Communications Inc., provides global communications coverage for satellite phones, pagers and other devices, as well as an interface to terrestrial communications networks via several Gateways.
+
+The system became operational in 1998 and saw a total of 96 satellites launched, before the constellation was completely overhauled between 2017 and 2019, replacing all of the original satellites with Iridium Next satellites. Currently, no original satellite remains operational, however, 25 satellites remain defunct on orbit\cite{sat06}.
+
+The constellation consists of 66 satellites, 11 each in six orbital planes, spaced \qty{30}{\deg} apart. The altitude of the satellites is approx. \qty{781}{\km}, the inclination is \qty{86.4}{\deg} and the orbital period is approx. \qty{100}{\min}. For a ground user, one satellite is visible for about \qty{7}{\min}. The constellation covers the entire global surface\cite{sat01}.
+
+Communication is carried over Ka-band for satellite-satellite links and satellite-gateway links, and over L-band (\qtyrange{1616}{1626.5}{\mega\hertz}) for satellite-user links. Each satellite provides 48 individual spot beams, sharing 240 traffic channels with a frequency re-use pattern\cite{sat07}.
+
+The Iridium Next onboard clocks have a stability better than \num{10e-9} and a drift less than \qty{3}{\hertz\per\s}, which is sufficient for time transfers with accuracy in the order of \qty{e0}{\micro\s}\cite{sop11}.
+
+\subsection{Iridium signals}
+Due to the scope of this work, only the satellite-user (L-band) signals are examined, as the Ka-band signals are either not globally transmitted or not aimed towards the Earth.
+
+Iridium uses a combination of Space Division Multiple Access (SDMA),  Frequency Division Multiple Access (FDMA), Time Division Multiple Access (TDMA) and Time Division Duplex (TDD) multiple access schemes\cite{sop11}. For every spot beam, channels\footnote{A channel is a specific FDMA frequency and TDMA timeslot\cite{sat07}} are implemented using TDMA architecture based on TDD using a time frame\cite{sop12}. The structure of a TDMA frame is illustrated in \ref{sat_iridium_freq_and_frame_structure}.
+
+In the \qtyrange{1626}{1626.5}{\MHz} band Iridium uses, there are 252 carriers with carrier spacing of \qty{41.667}{\kHz}, grouped into 31 sub-bands of 8 and one of 4. There are 5 simplex carriers in the band with a spacing of \qty{35}{\kHz}, one of which is the Ring Alert, and the remaining four are messaging carriers for paging and acquisition. The polarisation of both the uplink and downlink band is right-hand circular\cite{sat04}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.75\linewidth]{img/sat_iridium_freq_and_frame_structure.png}
+    \caption{Iridium frequency allocation and frame structure\cite{sop12}}
+    \label{sat_iridium_freq_and_frame_structure}
+\end{figure}
+
+\subsubsection{Paging}
+Paging signals enable users to receive ringing and paging messages during heavier atmospheric fading conditions and in buildings where attenuation is greater. There are five paging channels, one for alert (Ring Alert, detailed below) and five for transmitting paging messages to the receive-only terminals.  The transmission duration does not exceed \qty{20.32}{\ms}\cite{sat09}.
+
+\subsubsection{Ring Alert}
+The Iridium Ring Alert signal is an unencrypted downlink-only simplex channel with a carrier frequency of \qty{1626.2708}{\MHz}\cite{sat04}. Each of the 48 satellite beams transmits a Ring Alert message every \qty{4.32}{\s}, for a transmission period of \qty{90}{\ms} of one satellite\cite{sat07}, which can be used to keep track of a specific satellite\cite{sop11}.
+
+The transmit power for the Ring Alert channel is higher than that of voice/data channel, so as to enable the mobile earth terminals to receive ring alerts even when their antennas are stowed\cite{sat09}.
+
+The Ring Alert Message contains the following information\cite{sat08}:
+\begin{itemize}
+    \item Satellite ID - a numeric identifier (\numrange{2}{115}) of the transmitting satellite, which notably does \emph{not} correlate with the satellite NORAD identifier,
+    \item Beam ID - a numeric identifier (\numrange{0}{47}) of the transmitting beam,
+    \item Latitude - the current \emph{ground} latitude of the satellite in degrees, with two decimal places of precision, calculated by the satellite,
+    \item Longitude - same format as Latitude and
+    \item Satellite altitude - altitude above the surface in \unit{\km}, which was shown in \cite{sat08} to be unreliable.
+\end{itemize}
+
+Importantly, the inclusion of satellite ID in the Ring Alert message, combined with the fixed and known frequency of the Ring Alert channel and the absence of encryption, enables any receiver to quickly determine which satellite is transmitting. The Ring Alert signals are thus very useful for SoP navigation using Iridium.
+
+\section{Orbcomm}
+much info in \cite{sop08}
+
+\section{Comparison of system parameters}
