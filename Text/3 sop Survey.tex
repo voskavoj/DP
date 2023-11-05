@@ -24,12 +24,14 @@ The research outlined above is summarised in table \ref{t_sop_survey_summary}. M
 \begin{table}
 \caption{Summary of selected existing SoP positioning systems (* denotes a simulated result)}
 \label{t_sop_survey_summary}
+\hspace*{-2cm}
+\centering
 \begin{tabular}{p{0.2\linewidth}p{0.15\linewidth}lllll}
 Constellation          & Signal                             & Mode       & Accuracy (2D)                  & Exp. time               & Source  \\ \hline
 Globalstar             & \qty{2500}{\mega\hertz}            & static     & \qtyrange{1.4}{9}{\km}*        & few s                   & \cite{sop07}     \\
 Iridium Next           & STL, Ring Alert, MSG               & dynamic    & \qtyrange{0.2}{2}{\km}         & N/A                     & \cite{sop01}     \\
 Starlink               & \qty{11 325}{\mega\hertz}          & static     & \qty{375}{\metre}              & \qty{330}{\s}           & \cite{sop04}     \\
-Iridium Next           & \qty{1626.25}{\mega\hertz}         & dynamic    & \qtyrange{0.3}{4}{\metre}      & N/A                     & \cite{sop05}     \\
+Iridium Next           & \qty{1626.25}{\mega\hertz}         & dynamic    & \qtyrange{0.3}{4}{\metre}      & N/A                     & \cite{sop05}     \\  % fixme Maybe remove?
 Generic, Orbcomm       & \qty{137}{\mega\hertz}             & static     & \num{11.5}* to \qty{360}{\m}   & \qtyrange{1}{4}{\min}   & \cite{sop10}     \\
 Iridium Next           & Ring Alert, Primer                 & static     & \qtyrange{46}{108}{\m}         & \qty{30}{\min}          & \cite{sop11}     \\
 Iridium Next, Orbcomm  & MSG, Ring Alert                    & static     & \qtyrange{0.18}{0.76}{\km}     & \qty{30}{\s}            & \cite{sop03}    

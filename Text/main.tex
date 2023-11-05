@@ -1,0 +1,96 @@
+% arara: pdflatex: { synctex: yes }
+% arara: makeindex: { style: ctuthesis }
+% arara: bibtex
+
+% The class takes all the key=value arguments that \ctusetup does,
+% and a couple more: draft and oneside
+\documentclass[twoside]{style/ctuthesis}
+
+\ctusetup{
+	% preprint = \ctuverlog,
+	mainlanguage = english,
+	titlelanguage = english,
+	otherlanguages = {czech},
+	title-english = {Signals of opportunity positioning using LEO satellites},
+	doctype = M,
+	faculty = F3,
+	department-english = {Department of Measurement},
+	author = {Bc. Vojtěch Voska},
+	supervisor = {Ing. Jiří Svatoň, Ph.D.},
+	fieldofstudy-english = {Aerospace Engineering},
+	subfieldofstudy-english = {Avionics},
+	keywords-czech = {TODO keywords},
+	keywords-english = {TODO},
+	day = 1, % TODO date
+	month = 1,
+	year = 2024,
+	specification-file = {Assignment.pdf},
+    front-specification = true,
+	front-list-of-figures = true,
+	front-list-of-tables = true,
+%	monochrome = true,
+}
+
+\ctuprocess
+
+\addto\ctucaptionsczech{%
+	\def\supervisorname{Vedoucí}%
+	\def\subfieldofstudyname{Studijní program}%
+}
+
+\ctutemplateset{maketitle twocolumn default}{
+	\begin{twocolumnfrontmatterpage}
+		\ctutemplate{twocolumn.thanks}
+		\ctutemplate{twocolumn.declaration}
+		\ctutemplate{twocolumn.abstract.in.titlelanguage}
+		\ctutemplate{twocolumn.abstract.in.secondlanguage}
+		\ctutemplate{twocolumn.tableofcontents}
+		\ctutemplate{twocolumn.listoffigures}
+	\end{twocolumnfrontmatterpage}
+}
+
+% Abstract in Czech
+\begin{abstract-czech}
+TODO
+\end{abstract-czech}
+
+% Abstract in English
+\begin{abstract-english}
+TODO
+\end{abstract-english}
+
+% Acknowledgements / Podekovani
+\begin{thanks}
+TODO
+\end{thanks}
+
+% Declaration / Prohlaseni
+\begin{declaration}
+I, the author, hereby declare that I have completed this thesis independently without illegitimate assistance, and that I have stated all used literature in accordance with the Methodical Instruction no. 1/2009, concerning ethical principles of authoring a university thesis at Czech Technical University in Prague.
+
+\vspace{10pt}
+
+Prague, \ctufield{day}~\monthinlanguage{title}~\ctufield{year} \hfill \ldots\ldots\ldots
+\end{declaration}
+
+\sisetup{
+    range-units = single,
+    list-units = single,
+}
+
+\begin{document}
+\maketitle
+
+\input{1 int Intro}
+\input{2 pos Overview}
+\input{2 sat Satellites}
+\input{3 sop Survey}
+\input{4 des Design}
+\input{5 exp Experiment}
+\input{6 con Conclusion}
+
+\appendix
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\end{document}

@@ -1,13 +1,32 @@
 \chapter{A survey of current LEO satellite systems}
+This chapter describes current LEO satellite constellations which are readily usable for SoP navigation, namely  Iridium Next, Orbcommm, Globalstar and Starlink. For each system, the orbital parameters, constellation status, frequency ranges and communication schemes are described, in addition to select signal types deemed of particular importance for this work.
+
+Parameters of the systems are summarised in table \ref{t_sat_general_summary}.
+
+
+\begin{table}
+\caption{Summary of \emph{approximate} parameters of LEO satellite systems: number of active satellites, number of orbital planes and inclinations, altitudes, visibility times for one satellite, frequency ranges, signal strengths at ground level and modulation used}
+\label{t_sat_general_summary}
+\hspace*{-2cm}
+\centering
+\begin{tabular}{lllllp{0.15\linewidth}ll}
+System     & Sat. & Orb. planes                   & Altitude         & Visibility     & Frequency                     & Strength         & Modul.   \\ \hline
+Iridium    & 66   & 6 $\times$ \ang{86.4}         & \qty{781}{\km}   & \qty{7}{\min}  & \qtyrange{1616}{1626.5}{\MHz} & \qty{-100}{dBm}  & DE-QPSK           \\
+Orbcomm    & 30   & 4 $\times$ \num{47}           & \qty{715}{\km}   & \qty{7}{\min}  & \qtyrange{137}{138}{\MHz}     &                  &            \\
+Globalstar & 48   & 8 $\times$ \ang{52}           & \qty{1414}{\km}  & \qty{11}{\min} & \qtyrange{2483.5}{2500}{\MHz} &                  & SD-QPSK          \\
+Starlink   &      &                               & \qty{550}{\km}   & \qty{4}{\min}  &                               &                  &                    
+\end{tabular}
+\end{table}
+
 
 \section{Iridium NEXT}
 Iridium satellite constellation, owned and operated by Iridium Communications Inc., provides global communications coverage for satellite phones, pagers and other devices, as well as an interface to terrestrial communications networks via several Gateways.
 
-The system became operational in 1998 and saw a total of 96 satellites launched, before the constellation was completely overhauled between 2017 and 2019, replacing all of the original satellites with Iridium Next satellites. Currently, no original satellite remains operational, however, 25 satellites remain defunct on orbit\cite{sat06}.
+The system became operational in 1998 and saw a total of 96 satellites launched, before the constellation was completely overhauled between 2017 and 2019, replacing all of the original satellites with Iridium Next satellites. Currently\footnote{As of October 2023}, no original satellite remains operational, however, 25 satellites remain defunct on orbit\cite{sat06}.
 
-The constellation consists of 66 satellites, 11 each in six orbital planes, spaced \qty{30}{\deg} apart. The altitude of the satellites is approx. \qty{781}{\km}, the inclination is \qty{86.4}{\deg} and the orbital period is approx. \qty{100}{\min}. For a ground user, one satellite is visible for about \qty{7}{\min}. The constellation covers the entire global surface\cite{sat01}.
+The constellation consists of 66 satellites, 11 each in six orbital planes, spaced \ang{30} apart. The altitude of the satellites is approx. \qty{781}{\km}, the inclination is \ang{86.4} and the orbital period is approx. \qty{100}{\min}. For a ground user, one satellite is visible for about \qty{7}{\min}. The constellation covers the entire global surface\cite{sat01}.
 
-Communication is carried over Ka-band for satellite-satellite links and satellite-gateway links, and over L-band (\qtyrange{1616}{1626.5}{\mega\hertz}) for satellite-user links. Each satellite provides 48 individual spot beams, sharing 240 traffic channels with a frequency re-use pattern\cite{sat07}.
+Communication is carried over Ka-band for satellite-satellite links and satellite-gateway links, and over L-band (\qtyrange{1616}{1626.5}{\mega\hertz}) for satellite-user links. Each satellite provides 48 individual spot beams, sharing 240 traffic channels with a frequency re-use pattern\cite{sat07}. At ground level with an Iridium antenna, the signal strength can be expected to be \qtyrange{-90}{-110}{dBm}\cite{sop01}.
 
 The Iridium Next onboard clocks have a stability better than \num{10e-9} and a drift less than \qty{3}{\hertz\per\s}, which is sufficient for time transfers with accuracy in the order of \qty{e0}{\micro\s}\cite{sop11}.
 
@@ -16,7 +35,7 @@ Due to the scope of this work, only the satellite-user (L-band) signals are exam
 
 Iridium uses a combination of Space Division Multiple Access (SDMA),  Frequency Division Multiple Access (FDMA), Time Division Multiple Access (TDMA) and Time Division Duplex (TDD) multiple access schemes\cite{sop11}. For every spot beam, channels\footnote{A channel is a specific FDMA frequency and TDMA timeslot\cite{sat07}} are implemented using TDMA architecture based on TDD using a time frame\cite{sop12}. The structure of a TDMA frame is illustrated in \ref{sat_iridium_freq_and_frame_structure}.
 
-In the \qtyrange{1626}{1626.5}{\MHz} band Iridium uses, there are 252 carriers with carrier spacing of \qty{41.667}{\kHz}, grouped into 31 sub-bands of 8 and one of 4. There are 5 simplex carriers in the band with a spacing of \qty{35}{\kHz}, one of which is the Ring Alert, and the remaining four are messaging carriers for paging and acquisition. The polarisation of both the uplink and downlink band is right-hand circular\cite{sat04}.
+In the \qtyrange{1626}{1626.5}{\MHz} band Iridium uses, there are 252 carriers with carrier spacing of \qty{41.667}{\kHz}, grouped into 31 sub-bands of 8 and one of 4. There are 5 simplex carriers in the band with a spacing of \qty{35}{\kHz}, one of which is the Ring Alert, and the remaining four are messaging carriers for paging and acquisition. The polarisation of both the uplink and downlink band is right-hand circular. Iridium uses DE-QPSK modulation\cite{sat04}.
 
 \begin{figure}
     \centering
@@ -44,7 +63,20 @@ The Ring Alert Message contains the following information\cite{sat08}:
 
 Importantly, the inclusion of satellite ID in the Ring Alert message, combined with the fixed and known frequency of the Ring Alert channel and the absence of encryption, enables any receiver to quickly determine which satellite is transmitting. The Ring Alert signals are thus very useful for SoP navigation using Iridium.
 
+
 \section{Orbcomm}
+Orbcomm satellite constellation provides private internet access and machine-to-machine communication services primarily to industrial customers, such as transportation companies or manufacturers. The first launch of the system occurred in 1991. There were several generations of satellites, the last one, referred to as Orbcomm Generation 2 or OG2, began launching in 2012. TLEs indicate that 60 satellites are currently\footnote{As of October 2023} in orbit, of which 12 are active, all of the OG2 configuration\cite{sat12}.
+
+The Orbcomm satellites orbit in four orbital planes inclined at \ang{47} at an altitude of \qty{715}{km}. The orbital period is approx. \qty{99}{\min} and a satellite is visible to a ground observer for about \qty{7}{\min}\cite{sat11}\cite{sop08}.
+
+% TODO
 much info in \cite{sop08}
 
-\section{Comparison of system parameters}
+
+\section{Gobalstar}
+114 minutes
+% TODO
+
+\section{Starlink}
+% TODO much later
+91 minutes
