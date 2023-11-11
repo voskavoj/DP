@@ -1,7 +1,7 @@
 import csv
 import os
 
-DIRECTORY = "tex"
+DIRECTORY = "Text"
 OUT_ABBR = "List of abbreviations.csv"
 OUT_TODO = "List of TODOs.txt"
 
@@ -61,13 +61,58 @@ def scan_todos_in_file(path):
                 file_todo_list.append((filename, linenum, todo))
     return file_todo_list
 
+
+def find_abbr_meaning_in_files(filelist, abbr_list):
+    abbr_expl_list = list()
+    text = str()
+
+    for path in filelist:
+        with open(path, "r", encoding='utf-8') as file:
+            text += file.read()
+
+    text = replace_multiple(text, "{}[]-,.;\\", " ")
+    words = text.split()
+
+    idx = -1
+    for abbr in abbr_list:
+        all_abbr_expl = list()
+        try:
+            while True:
+                idx = words.index(f"({abbr})", idx+1)
+                potential_abbr_expl = words[max(0, idx - len(abbr) * 2) : idx]
+                all_abbr_expl.append(search_for_abbr_expl_in_text(abbr, potential_abbr_expl))
+        except ValueError:
+            idx = -1
+
+        abbr_expl_list.append((abbr, *all_abbr_expl))
+
+    return abbr_expl_list
+            
+
+def search_for_abbr_expl_in_text(abbr, potential_abbr_expl):
+    print(abbr, potential_abbr_expl)
+
+    for idx in range(len(abbr), 0, -1):
+        abbr_expl = potential_abbr_expl[idx:]
+        if abbr_expl[0].lower().startswith(abbr.lower()[0]):
+            return " ".join(abbr_expl)
+    
+    return None
+
+
 abbr_list = list()
 todo_list = list()
+abbr_filelist = list()
+
 for filename in os.listdir(DIRECTORY):
     f = os.path.join(DIRECTORY, filename)
-    if os.path.isfile(f):
-        abbr_list = list(set(abbr_list + scan_abbreviations_in_file(f)))
+    if os.path.isfile(f) and f.endswith(".tex"):
+        if "main" not in f:
+            abbr_filelist.append(f)
+            abbr_list = list(set(abbr_list + scan_abbreviations_in_file(f)))
         todo_list = list(set(todo_list + scan_todos_in_file(f)))
+
+abbr_list = find_abbr_meaning_in_files(abbr_filelist, abbr_list)
 
 abbr_list.sort()
 
@@ -75,12 +120,12 @@ print(abbr_list)
 print(todo_list)
 
 # writing to csv file  
-with open(OUT_ABBR, 'w', newline='') as csvfile:  
-    csvwriter = csv.writer(csvfile)
+with open(DIRECTORY + "\\" + OUT_ABBR, 'w', newline='') as csvfile:  
+    csvwriter = csv.writer(csvfile, dialect="excel")
 
     for abbr in abbr_list:
-        csvwriter.writerow([abbr]) 
+        csvwriter.writerow(abbr) 
 
-with open(OUT_TODO, 'w', newline='') as txtfile:
+with open(DIRECTORY + "\\" + OUT_TODO, 'w', newline='') as txtfile:
     for file, line, todo in todo_list:
         txtfile.write(f"File {file:<30} at line {line:<3}: {todo}\n")
