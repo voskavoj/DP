@@ -12,9 +12,9 @@ Parameters of the systems are summarised in table \ref{t_sat_general_summary}.
 \begin{tabular}{lllllp{0.15\linewidth}ll}
 System     & Sat. & Orb. planes                   & Altitude         & Visibility     & Frequency                     & Strength         & Modul.   \\ \hline
 Iridium    & 66   & 6 $\times$ \ang{86.4}         & \qty{781}{\km}   & \qty{7}{\min}  & \qtyrange{1616}{1626.5}{\MHz} & \qty{-100}{dBm}  & DE-QPSK           \\
-Orbcomm    & 30   & 4 $\times$ \num{47}           & \qty{715}{\km}   & \qty{7}{\min}  & \qtyrange{137}{138}{\MHz}     &                  &            \\
-Globalstar & 48   & 8 $\times$ \ang{52}           & \qty{1414}{\km}  & \qty{11}{\min} & \qtyrange{2483.5}{2500}{\MHz} &                  & SD-QPSK          \\
-Starlink   &      &                               & \qty{550}{\km}   & \qty{4}{\min}  &                               &                  &                    
+Orbcomm    & 30   & 4 $\times$ \ang{47}           & \qty{715}{\km}   & \qty{7}{\min}  & \qtyrange{137}{138}{\MHz}     & \qty{-118}{dBm}  & SD-QPSK     \\
+Globalstar & 48   & 8 $\times$ \ang{52}           & \qty{1414}{\km}  & \qty{14}{\min} & \qtyrange{2483.5}{2500}{\MHz} & not found   & QPSK        \\
+Starlink   & $>$5000   & $>$180                               & \qty{550}{\km}   & \qty{4}{\min}  & \qtyrange{10.7}{12.7}{GHz}  & N/A        &   16QAM            
 \end{tabular}
 \end{table}
 
@@ -33,7 +33,7 @@ The Iridium Next onboard clocks have a stability better than \num{10e-9} and a d
 \subsection{Iridium signals}
 Due to the scope of this work, only the satellite-user (L-band) signals are examined, as the Ka-band signals are either not globally transmitted or not aimed towards the Earth.
 
-Iridium uses a combination of Space Division Multiple Access (SDMA),  Frequency Division Multiple Access (FDMA), Time Division Multiple Access (TDMA) and Time Division Duplex (TDD) multiple access schemes\cite{sop11}. For every spot beam, channels\footnote{A channel is a specific FDMA frequency and TDMA timeslot\cite{sat07}} are implemented using TDMA architecture based on TDD using a time frame\cite{sop12}. The structure of a TDMA frame is illustrated in \ref{sat_iridium_freq_and_frame_structure}.
+Iridium uses a combination of Space Division Multiple Access (SDMA),  Frequency Division Multiple Access (FDMA), Time Division Multiple Access (TDMA) and Time Division Duplex (TDD) multiple access schemes\cite{sop11}. For every spot beam, channels\footnote{A channel is a specific FDMA frequency and TDMA timeslot\cite{sat07}} are implemented using TDMA architecture based on TDD using a time frame\cite{sop12}. The structure of a TDMA frame is illustrated in Fig. \ref{sat_iridium_freq_and_frame_structure}.
 
 In the \qtyrange{1626}{1626.5}{\MHz} band Iridium uses, there are 252 carriers with carrier spacing of \qty{41.667}{\kHz}, grouped into 31 sub-bands of 8 and one of 4. There are 5 simplex carriers in the band with a spacing of \qty{35}{\kHz}, one of which is the Ring Alert, and the remaining four are messaging carriers for paging and acquisition. The polarisation of both the uplink and downlink band is right-hand circular. Iridium uses DE-QPSK modulation\cite{sat04}.
 
@@ -65,18 +65,67 @@ Importantly, the inclusion of satellite ID in the Ring Alert message, combined w
 
 
 \section{Orbcomm}
-Orbcomm satellite constellation provides private internet access and machine-to-machine communication services primarily to industrial customers, such as transportation companies or manufacturers. The first launch of the system occurred in 1991. There were several generations of satellites, the last one, referred to as Orbcomm Generation 2 or OG2, began launching in 2012. TLEs indicate that 60 satellites are currently\footnote{As of October 2023} in orbit, of which 12 are active, all of the OG2 configuration\cite{sat12}.
+Orbcomm satellite constellation provides private internet access and machine-to-machine communication services primarily to industrial customers, such as transportation companies or manufacturers. The first launch of the system occurred in 1991. There were several generations of satellites, of which two amounted to significant numbers - the first production generation, referred to as Orbcomm Generation 1 (OG1), and the latest one, Orbcomm Generation 2 (OG2), which began launching in 2012. TLEs indicate that 60 satellites are currently\footnote{As of October 2023} in orbit, of which 36 are active, 24 of OG1 and 12 of the OG2 configuration\cite{sat12}.
 
-The Orbcomm satellites orbit in four orbital planes inclined at \ang{47} at an altitude of \qty{715}{km}. The orbital period is approx. \qty{99}{\min} and a satellite is visible to a ground observer for about \qty{7}{\min}\cite{sat11}\cite{sop08}.
+The Orbcomm satellites orbit in four orbital planes inclined at \ang{47} at an altitude of \qty{715}{km}. The orbital period is approx. \qty{99}{\min} and a satellite is visible to a ground observer for about \qty{7}{\min}\cite{sat11, sop08}. % todo actual orbital planes from TLEs
 
-% TODO
-much info in \cite{sop08}
+The Orbcomm communication system consist of the Space segment (satellites), Ground segment (Earth-based gateways and communication centres) and the Subscriber segment (Earth-based paying customers)\cite{sop08}. Orbcomm satellites are also equipped to receive Automatic Identification Signals from maritime traffic, however this is not a navigation system, but rather navigation information collection system\cite{sat11}.
 
+\subsection{Orbcomm signals}
+Downlink signals from the Orbcomm satellites to the subscriber and ground segments are in the VHF band, within \qtyrange{137}{138}{MHz}. There are 12 channels for communication with the subscriber segment and one for the gateways\cite{sop08}.
+
+Each satellite is assigned one of the 12 channels. Over the constellation, the frequencies are reused in a scheme such that signals of equal frequency never overlap. Frequencies of the channels are listed in table \ref{t_sat_orbcomm_channels}. The bandwith of all channels is \qty{25}{kHz}, except the gateway channels, whose is double\cite{sat13}. Importantly, this assignment provides a means of satellite identification, if a table of assigned frequencies is provided or constructed experimentally.
+
+\begin{table}
+\caption{Orbcomm downlink frequency channels\cite{sat13}}
+\label{t_sat_orbcomm_channels}
+\begin{tabular}{ll}
+Channel & Frequency (MHz) \\ \hline
+S-1     & 137.2000        \\
+S-2     & 137.2250        \\
+S-3     & 137.2500        \\
+S-4     & 137.4400        \\
+S-5     & 137.4600        \\
+S-6     & 137.6625        \\
+S-7     & 137.6875        \\
+S-8     & 137.7125        \\
+S-9     & 137.7375        \\
+S-10    & 137.8000        \\
+S-11    & 137.2875        \\
+S-12    & 137.3125        \\
+Gateway & 137.5600       
+\end{tabular}
+\end{table}
+
+The downlink signals are modulated using Symmetric Differential Quadrature Phase Shift Keying (SD-QPSK). The transmission power varies from \qtyrange{10}{40}{W} with effective isotropic radiated power (EIRP) about \qty{12}{dBW}. Ground signal strength is about \qty{-118}{dBm}. The polarisation is right-hand circular\cite{sop08, sat11}.
+
+In addition to the downlink communication signals, Orbcomm satellites are equipped with a \qty{1}{W} unmodulated \qty{400.1}{MHz} (UHF) beacon\cite{sat13}. However, in \cite{sop08} it was shown that this beacon was missing or turned off in the tracked satellites.
 
 \section{Gobalstar}
-114 minutes
-% TODO
+Globalstar is a satellite communication system designed to provide voice and low-rate data communication to user terminals on the earth. The satellites connect the users and ground-based gateways by retransmitting the user terminal signals\cite{sop07, sat14}.
+
+The constellation had two distinct generations. The first generation launched from 1998 and included 48 LEO satellites, none of which remain operational. The current\footnote{As of October 2023}, second, generation has 24 operational satellites, launched between 2010 and 2013. Neither the orbital configuration nor the signal spectrum has changed between the generations\cite{sat15}.
+
+
+The satellites orbit at an altitude of \qty{1400}{km} in 8 planes inclined at \ang{52}. The orbital period is \qty{114}{min}. Each Globalstar satellite is visible for around \qty{14}{\min}\cite{sat14, sat15}
+
+The number of simultaneous visible satellite depends on latitude. For the original constellation and a latitude of \ang{50}, a probability of seeing one, two or three satellites simultaneously in a given moment is respectively \qtylist{19;71;10}{\percent}\cite{sop07}. For the second generation, the probabilities can be expected to be much lower.
+
+Satellite fractional frequency error standard deviation is specified as \num{e-9}\cite{sop07}.
+
+
+\section{Globalstar signals}
+The Globalstar constellation implements four types of signals - satellite-user downlink (S band), user-satellite uplink (L band), and satellite-gateway downlink and uplink (C band, \qtyrange{5}{7}{GHz}). All transmissions use Code Division Multiple Access (CDMA)\cite{sat10}.
+
+The user downlinks are in the frequency range from \qtyrange{2483.5}{2500}{MHz}. Each satellite transmits in 16 beams, utilising the full allocated range of \qty{16.5}{MHz}. The modulation is QPSK\cite{sat14}.
+
+
+
+% TODO Globalstar
 
 \section{Starlink}
-% TODO much later
-91 minutes
+Of the systems discussed, Starlink has by far the most satellites. However, due to the downlink frequency exceeding \qty{10}{GHz}, it is not feasible to process Starlink signals in this work. Starlink is therefore discussed only briefly for the sake of completeness.
+
+Starlink is an satellite internet and telephony constellation. It currently\footnote{As of October 2023} features over \num{5000} satellites in over 180 orbital planes, inclined mostly at \ang{52} or \ang{97}. Up to \numrange{24000}{42000} satellites are possible\cite{sop02}. The satellites orbit at an altitude of around \qty{550}{km}, with an orbital period of \qty{91}{min} and single satellite visibility time of around \qty{4}{min}.
+
+The starlink downlink signal is in the \qtyrange{10.7}{12.7}{GHz} band, with several channels of a \qty{240}{MHz} bandwidth. Furthermore, several \qty{1}{MHz} bandwidth tones were identified within the band by experimentation. The structure of the signal is not public. The reception of signals within this band usually requires a low-noise block down-converter and a parabolic antenna reflector\cite{sop04}.

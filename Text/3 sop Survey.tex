@@ -17,7 +17,7 @@ In \cite{sop10}, a framework employing EKF to estimate user position from Dopple
 
 In \cite{sop11}, and Iridium-based system is proposed and tested. The system uses the Ring Alert and Primer message signals to capture Doppler shift data, which are then processed using Kalman filtering and the least squares method. The system accuracy can be as much as \qty{22}{\m} after \qty{24}{\hour} of measurement under an open sky. For \qty{30}{\min} under open sky, the accuracy was shown to be \qty{46}{\m}. Furthermore, the system accuracy in GPS-hostile conditions (in a dense forest) was shown to be \qty{108}{\m}\footnote{The experiment time is not stated, but can be inferred to be about \qty{30}{\min}}, whereas GPS did not provide a solution.
 
-In \cite{sop03}, two LEO constellations (Iridium Next and Orbcomm) are used to determine position. Three dimensional RMSE achieved over \qty{30}{\s} using a single constellation (Orbcomm) is approx. \qty{0.76}{\km}, whereas using both constellations the RMSE is \qtyrange{0.22}{0.18}{\km} depending on the received signal type. Accuracy when measuring messaging bursts was better than for Ring Alert bursts. EKF was utilised in the signal processing.
+In \cite{sop03}, two LEO constellations (Iridium Next and Orbcomm) are used to determine position. Three dimensional RMSE achieved over \qty{30}{\s} using a single constellation (Orbcomm) is approx. \qty{0.76}{\km}, whereas using both constellations the RMSE is \qtyrange{0.22}{0.18}{\km} depending on the received signal type. Accuracy when measuring messaging bursts was better than for Ring Alert bursts. EKF was utilised in the signal processing. In the receiver architecture, each constellation has a dedicated acquisition chain, including separate antennas, amplifiers, filters and signal processing. 
 
 The research outlined above is summarised in table \ref{t_sop_survey_summary}. Most research focused on using Iridium Next satellites as SoP source, followed by Orbcomm. Accuracies of position determination were mostly in the order of \qty{e2}{\m} and improved significantly both with measurement time and with the number of measured satellites. In one case the performance was shown to exceed the one of existing GNSS systems. Furthermore, the surveyed research demonstrated the possibility of using SoP positioning both in static and dynamic applications. Notably, all of the surveyed experiments used Kalman filtering for fusion of multiple navigation system data or error estimation, albeit the actual implementation varied greatly.
 
@@ -40,4 +40,4 @@ Iridium Next, Orbcomm  & MSG, Ring Alert                    & static     & \qtyr
 
 
 \section{Comparison to GNSS}
-
+% todo

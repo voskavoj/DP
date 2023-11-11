@@ -75,19 +75,20 @@ Prague, \ctufield{day}~\monthinlanguage{title}~\ctufield{year} \hfill \ldots\ldo
 
 \sisetup{
     range-units = single,
-    list-units = single,
+    % list-units = single,
 }
+\newcommand{\citep}[2]{\cite[p. #2]{#1}}
 
 \begin{document}
 \maketitle
 
-\input{1 int Intro}
-\input{2 pos Overview}
+% \input{1 int Intro}
+% \input{2 pos Overview}
 \input{2 sat Satellites}
 \input{3 sop Survey}
-\input{4 des Design}
-\input{5 exp Experiment}
-\input{6 con Conclusion}
+% \input{4 des Design}
+% \input{5 exp Experiment}
+% \input{6 con Conclusion}
 
 \appendix
 \bibliographystyle{unsrt}
