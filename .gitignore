@@ -2,3 +2,7 @@
 resources/*
 /Radio/*.mat
 /Data
+/Archive
+/src/satellites/download
+/.idea
+/src/satellites/__pycache__/*.pyc
