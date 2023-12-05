@@ -13,7 +13,7 @@ from src.satellites.satellite import Satellite
 DOWNLOAD_PATH = "download\\"
 DOWNLOAD_EXTENSION = ".txt"
 DOWNLOAD_TIME_FILE = "last_download_time"
-DOWNLOAD_EXPIRATION = 2  # hours
+DOWNLOAD_EXPIRATION = 8  # hours
 
 SATELLITE_CONSTELLATIONS = ("Iridium", "Orbcomm", "Globalstar")
 
