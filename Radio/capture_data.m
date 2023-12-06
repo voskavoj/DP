@@ -2,6 +2,10 @@ clear all
 close all
 clc
 
+%% Filename
+prefix = "R_noise_";
+num = "06";
+
 %% Device setup
 env_device = 'Pluto';
 env_id = 'usb:0';
@@ -20,6 +24,7 @@ rx_capture = capture(rx, capture_time, 'Seconds');
 rx.info
 release(rx)
 
-save("RXTAT.mat");
+save("Data\" + prefix + num + ".mat");
+write_complex_binary(rx_capture, "Data\" + prefix + num + "_binary")
 
 plot(abs(fftshift(fft(rx_capture))))
