@@ -22,7 +22,7 @@ def predict_position_at_time(satrec: Satrec, time: Time) -> TEME:
 
 def predict_satellite_visibility(satellite: "Satellite | list", observer_position: EarthLocation, start_time: Time,
                                  duration: int = 900, step=30, azimuth_limit=None, elevation_limit=10, log=True,
-                                 log_only_visible=False) -> list:
+                                 log_only_visible=False, native_output=False) -> list:
 
     # prepare array of satellites and times
     if not isinstance(satellite, list):
@@ -64,7 +64,10 @@ def predict_satellite_visibility(satellite: "Satellite | list", observer_positio
                 visible = False
 
             if visible:
-                prediction_list.append((time, elevation, azimuth))
+                if native_output:
+                    prediction_list.append((time.iso, elevation.value, azimuth.value))
+                else:
+                    prediction_list.append((time, elevation, azimuth))
 
         list_of_sat_predictions.append(prediction_list)
 
