@@ -6,3 +6,4 @@ resources/*
 /src/satellites/download
 /.idea
 /src/satellites/__pycache__/*.pyc
+/src/app/download
