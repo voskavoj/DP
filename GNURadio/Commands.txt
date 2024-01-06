@@ -1,3 +1,5 @@
 iridium-extractor -c 1626000000 -d -20 -r 10000000 -f float -v -o RX01_binary
 
 iridium-extractor -D 4 "C:\Git\Personal\DP\GNURadio\plutosdr-soapy.conf" > output.bits
+
+python GNURadio/iridium-toolkit/iridium-parser.py -p Data/output.bits >> Data/decoded.txt
