@@ -23,11 +23,11 @@ CONSTELLATION_URL = {"Iridium": "iridium-next",
                      }
 
 
-def download_tles(constellations=SATELLITE_CONSTELLATIONS) -> Dict[str, Dict[str, Satellite]]:
+def download_tles(constellations=SATELLITE_CONSTELLATIONS, offline_dir=None) -> Dict[str, Dict[str, Satellite]]:
     tles = dict()
 
     for constellation in constellations:
-        tles[constellation] = _download_and_parse_tles(constellation)
+        tles[constellation] = _download_and_parse_tles(constellation, offline_dir)
 
     return tles
 
@@ -39,11 +39,11 @@ def unpack(tles: dict) -> List[Satellite]:
     return satellite_list
 
 
-def _download_and_parse_tles(constellation):
+def _download_and_parse_tles(constellation, offline_dir=None):
     print(f"Downloading TLEs for {constellation}...")
     retval = dict()
 
-    tle_lines = _get_tles(constellation)
+    tle_lines = _get_tles(constellation, offline_dir)
 
     for i in range(0, len(tle_lines), 3):
         pattern = re.compile(r"([A-Za-z]+)[- ]([A-Za-z0-9]+)( \[.\])*", re.IGNORECASE)
@@ -67,10 +67,11 @@ def _download_and_parse_tles(constellation):
     return retval
 
 
-def _get_tles(constellation):
-    found, expired, timestamp, tles_offline = _read_saved_tles(constellation)
+def _get_tles(constellation, offline_dir=None):
+    found, expired, timestamp, tles_offline = _read_saved_tles(constellation,
+                                                               offline_dir if offline_dir else DOWNLOAD_PATH)
 
-    if found and not expired:  # up to date backup exists
+    if found and (not expired or offline_dir):  # up-to-date backup exists
         print("Using previously downloaded TLEs")
         return tles_offline
     else:
@@ -104,9 +105,9 @@ def _save_tles_to_file(constellation, tles):
         file.writelines("\n".join(tles))
 
 
-def _read_saved_tles(constellation):
+def _read_saved_tles(constellation, path=DOWNLOAD_PATH):
     try:
-        with open(DOWNLOAD_PATH + constellation.replace(" ", "_") + DOWNLOAD_EXTENSION, "r") as file:
+        with open(path + constellation.replace(" ", "_") + DOWNLOAD_EXTENSION, "r") as file:
             content = file.readlines()
             timestamp = Time(content[0].strip())
             content = content[1:]
