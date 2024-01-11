@@ -1,18 +1,19 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from src.radio.iridium_offline_radio_full_decode import IridiumOfflineRadio
+from src.radio.iridium_offline_radio import IridiumOfflineRadio
 
 
 GENERATE_NEW_DATA = True
 
 DATA_PATH = "Data\\exp03\\"
-FRAME_FILE = "output.bits"
+# FRAME_FILE = "output.bits"
+FRAME_FILE = "decoded.txt"
 SAVED_DATA_FILE = "saved_output_full_decode_drop_2"
 
 # open file
 if GENERATE_NEW_DATA:
-    radio = IridiumOfflineRadio(DATA_PATH + FRAME_FILE, start_time=0)
+    radio = IridiumOfflineRadio(DATA_PATH + FRAME_FILE, file_is_parsed=True)
     frames_array = None
 
     while frames := radio.get_frames():
