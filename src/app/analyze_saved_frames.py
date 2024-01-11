@@ -14,14 +14,7 @@ SAVED_DATA_FILE = "saved_output_full_decode_drop_2"
 # open file
 if GENERATE_NEW_DATA:
     radio = IridiumOfflineRadio(DATA_PATH + FRAME_FILE, file_is_parsed=True)
-    frames_array = None
-
-    while frames := radio.get_frames():
-        if frames_array is None:
-            frames_array = np.array(frames)
-        else:
-            frames_array = np.append(frames_array, frames, axis=0)
-
+    frames_array = np.array(radio.get_frames())
     del radio
     np.save(DATA_PATH + SAVED_DATA_FILE, frames_array)
 else:
