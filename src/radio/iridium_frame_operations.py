@@ -1,6 +1,6 @@
 import subprocess
 
-IRIDIUM_PARSER_PATH = "GNURadio/iridium-toolkit/iridium-parser.py"
+IRIDIUM_PARSER_PATH = "External/iridium-toolkit/iridium-parser.py"
 
 
 def parse_raw_iridium_frames(raw_frames: str | list, harder=True) -> list[str]:

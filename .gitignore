@@ -1,9 +1,9 @@
 # List of untracked files to ignore
-resources/*
-/Radio/*.mat
 /Data
 /Archive
+/External
 /src/satellites/download
 /.idea
-/src/satellites/__pycache__/*.pyc
+/src/satellites/__pycache__/
 /src/app/download
+/src/radio/__pycache__/

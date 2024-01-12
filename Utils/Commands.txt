@@ -1,0 +1,14 @@
+# Miniconda
+call "C:\ProgramData\miniconda3\condabin\activate.bat"
+activate gnuradioenv
+cd "C:\Git\Personal\DP\Data"
+
+# gr-iridium
+iridium-extractor -c 1626000000 -d -20 -r 10000000 -f float -v -o RX01_binary
+
+echo %date% %time%
+iridium-extractor -D 4 "C:\Git\Personal\DP\src\config\plutosdr-soapy.conf" > output.bits
+
+# iridium-toolkit
+python GNURadio/iridium-toolkit/iridium-parser.py -p Data/output.bits >> Data/decoded.txt
+
