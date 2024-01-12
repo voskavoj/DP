@@ -8,14 +8,13 @@ from astropy.visualization import time_support
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 
+from src.config.locations import LOCATIONS
 from src.satellites.download_tle import download_tles, unpack
 from src.satellites.predictions import predict_satellite_visibility
 
 time_support()
 
-#                   lon (east)   lat (north) alt (m)
-LOCATIONS = {"FEL": (14.3923333, 50.1030019, 225),
-             }
+LOCATION = "HOME"
 CONSTELLATIONS = ("Iridium", "Orbcomm", "Globalstar")
 
 PREDICTION_TIME = 12 * 60 * 60
@@ -25,7 +24,7 @@ SIM_VIS_ELE_LIM = 10
 COLORS = ("tab:red", "tab:orange", "tab:green")
 
 
-observer_position = EarthLocation.from_geodetic(*LOCATIONS["FEL"])
+observer_position = EarthLocation.from_geodetic(*LOCATIONS[LOCATION])
 satellites_dict = download_tles(CONSTELLATIONS)
 satellites_list = unpack(satellites_dict)
 time = Time(PREDICTION_START)

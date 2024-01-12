@@ -12,16 +12,18 @@ from src.satellites.download_tle import download_tles, unpack
 from src.satellites.predictions import predict_satellite_visibility, _texttime
 from src.config.locations import LOCATIONS  #  (lon (east), lat (north), alt (m))
 
-PREDICTION_MINUTES = 15
+PREDICTION_MINUTES = 0
 LOCATION = "HOME"
 
 CONSTELLATIONS = ("Iridium", )
+OFFLINE_DIR = "Data\\exp03\\"
+TIME = "2024-01-07 18:17:40"  # UTC
 
 
 # App
 observer_position = EarthLocation.from_geodetic(*LOCATIONS[LOCATION])
-satellites = unpack(download_tles(CONSTELLATIONS))
-time = Time.now()
+satellites = unpack(download_tles(CONSTELLATIONS, OFFLINE_DIR))
+time = Time(TIME, format="iso") if TIME else Time.now()
 
 print(f"Prediction {PREDICTION_MINUTES} minutes ahead")
 

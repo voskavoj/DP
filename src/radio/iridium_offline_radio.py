@@ -10,6 +10,8 @@ import numpy as np
     satellite ID | time | received frequency | base frequency
 """
 
+FREQ_DROP = False
+
 
 class IridiumOfflineRadio:
     def __init__(self, file_path: str, file_is_parsed=False):
@@ -30,9 +32,9 @@ class IridiumOfflineRadio:
             else:
                 continue
 
-            base_freq = find_tx_base_frequency(freq, drop=True)
+            base_freq = find_tx_base_frequency(freq, drop=FREQ_DROP)
 
-            if sat_id is not False and base_freq is not False:
+            if sat_id and base_freq is not False:
                 self.frames_list.append(np.array([sat_id, rel_time, freq, base_freq]))
 
     def get_frames(self):
