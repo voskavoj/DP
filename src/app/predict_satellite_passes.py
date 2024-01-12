@@ -10,18 +10,16 @@ from src.satellites.download_tle import download_tles, unpack
 
 # Constants
 from src.satellites.predictions import predict_satellite_visibility, _texttime
+from src.config.locations import LOCATIONS  #  (lon (east), lat (north), alt (m))
 
 PREDICTION_MINUTES = 15
-
-#                   lon (east)   lat (north) alt (m)
-LOCATIONS = {"FEL": (14.3923333, 50.1030019, 225),
-             }
+LOCATION = "HOME"
 
 CONSTELLATIONS = ("Iridium", )
 
 
 # App
-observer_position = EarthLocation.from_geodetic(*LOCATIONS["FEL"])
+observer_position = EarthLocation.from_geodetic(*LOCATIONS[LOCATION])
 satellites = unpack(download_tles(CONSTELLATIONS))
 time = Time.now()
 
