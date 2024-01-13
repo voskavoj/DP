@@ -8,21 +8,48 @@ from astropy import units as unit
 from sgp4.api import Satrec, SGP4_ERRORS, SatrecArray
 import numpy as np
 
-from src.satellites.coord_transforms import teme_to_itrs, itrs_to_lla, sgp4_to_teme
 
+def predict_satellite_positions(satrecs: list[Satrec], times: Time) -> ITRS:
+    """
+    Predict position in the ITRS frame of multiple satellites at multiple times using the SGP4 predictor
+    For n satellites and m times, the output is an ITRS position with shape (n, m, 3)
 
-def predict_position_at_time(satrec: Satrec, time: Time) -> TEME:
-    errcode, pos, vel = satrec.sgp4(time.jd1, time.jd2)
+    :param satrecs: list of satellite Satrecs
+    :param times: Time object containing multiple times
+    :return: ITRS positions (shape #satellites, #times, 3)
+    """
+    satrec_array = SatrecArray(satrecs)
+    jds = np.array(times.jd1)
+    jfs = np.array(times.jd2)
 
-    if errcode:
-        raise RuntimeError(f"SGP4 could not compute: {SGP4_ERRORS[errcode]}")
-
-    return sgp4_to_teme(pos, vel, time)
+    errcodes, positions, velocities = satrec_array.sgp4(jds, jfs)
+    pos_teme = CartesianRepresentation(x=positions[:, :, 0], y=positions[:, :, 1], z=positions[:, :, 2], unit=unit.km)
+    vel_teme = CartesianDifferential(velocities[:, :, 0], velocities[:, :, 1], velocities[:, :, 2],
+                                     unit=unit.km / unit.s)
+    r_teme = TEME(pos_teme.with_differentials(vel_teme), obstime=times)
+    pos_itrs = r_teme.transform_to(ITRS(obstime=r_teme.obstime))
+    return pos_itrs
 
 
 def predict_satellite_visibility(satellite: "Satellite | list", observer_position: EarthLocation, start_time: Time,
                                  duration: int = 900, step=30, azimuth_limit=None, elevation_limit=10, log=True,
                                  log_only_visible=False, native_output=False) -> list:
+    """
+    Predict satellite visibility
+
+    :param satellite: Satellite object or list of Satellite objects
+    :param observer_position: EarthLocation object
+    :param start_time: Time object
+    :param duration: duration of prediction in seconds
+    :param step: step size in seconds
+    :param azimuth_limit: tuple of minimum and maximum azimuth in degrees
+    :param elevation_limit: minimum elevation in degrees
+    :param log: print log to console
+    :param log_only_visible: only log visible satellites
+    :param native_output: return native times (True) or Time objects (False)
+
+    :return: list of tuples (time, elevation, azimuth) or one tuple if only one satellite was given
+    """
 
     # prepare array of satellites and times
     if not isinstance(satellite, list):

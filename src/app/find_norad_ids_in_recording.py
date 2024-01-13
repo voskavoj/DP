@@ -1,14 +1,10 @@
-import matplotlib.pyplot as plt
 import numpy as np
 from astropy.coordinates import CartesianRepresentation, CartesianDifferential, ITRS, TEME, EarthLocation
 from astropy.time import Time, TimeDelta
 import astropy.units as unit
-from astropy.visualization import time_support
-from sgp4.api import Satrec, SGP4_ERRORS, SatrecArray
+from sgp4.api import SatrecArray
 
-from src.radio.iridium_channels import map_frame_id_to_sat_id
 from src.radio.iridium_frame_operations import decompose_ira_frame
-from src.radio.iridium_offline_radio import IridiumOfflineRadio
 from src.satellites.download_tle import download_tles, unpack
 
 CONSTELLATIONS = ("Iridium", )

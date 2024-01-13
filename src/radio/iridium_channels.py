@@ -55,6 +55,24 @@ IRIDIUM_ID_MAP = {
     127: 122,  # 2
 }
 
+IRIDIUM_ID_MAP_REVERSE = {tle_id: sat_id for sat_id, tle_id in IRIDIUM_ID_MAP.items()}
+
 
 def map_sat_id_to_tle_id(sat_id):
+    """
+    Maps the satellite ID from an IRA/IBC frame to the TLE ID
+
+    :param sat_id: satellite ID from IRA/IBC frame as number
+    :return: Satellite ID from TLE as integer
+    """
     return IRIDIUM_ID_MAP.get(int(sat_id), False)
+
+
+def map_tle_id_to_sat_id(tle_id):
+    """
+    Maps the satellite ID from a TLE to the ID from IRA/IBC frame
+
+    :param tle_id: Satellite ID from TLE as number
+    :return: Satellite ID from IRA/IBC frame as float
+    """
+    return IRIDIUM_ID_MAP_REVERSE.get(float(tle_id), False)

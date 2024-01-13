@@ -1,9 +1,9 @@
 import copy
+import numpy as np
 
 from src.radio.iridium_channels import find_tx_base_frequency
 from src.radio.iridium_frame_operations import decompose_ira_frame, decompose_ibc_frame, decompose_generic_frame, \
     parse_raw_iridium_frames
-import numpy as np
 
 """
     Buffer of frames looks like this:
