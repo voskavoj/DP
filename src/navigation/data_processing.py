@@ -7,9 +7,11 @@ from src.satellites.predictions import predict_satellite_positions
 
 
 SATELLITE_FRAME_COUNT_FILTER = 100
+TIME_CORRECTION_FACTOR = 1.086932049564126  # ms/ms
 
 
-def process_received_frames(frames_array: np.array, start_time: str, satellites: dict):
+def process_received_frames(frames_array: np.array, start_time: str, satellites: dict,
+                            time_correction_factor: float = TIME_CORRECTION_FACTOR):
     """
     Process received frames from radio into navigation data
     Input - numpy array of foats: satellite id | relative time | frequency | base frequency
@@ -19,13 +21,14 @@ def process_received_frames(frames_array: np.array, start_time: str, satellites:
 
     :param frames_array: array of received frames
     :param start_time: start time of recording as ISO UTC string
-    :param satellites: dicitonary of satellites as Satellite for ONE constellation
+    :param satellites: dictionary of satellites as Satellite for ONE constellation
+    :param time_correction_factor: Factor to correct radio clock
     :return: navigation data as list
     """
     # calculate actual times
     array_len = frames_array.shape[0]
     base_times = Time([start_time] * array_len, format="iso", scale="utc")
-    rel_times = TimeDelta(frames_array[:, 1] * unit.ms)
+    rel_times = TimeDelta(frames_array[:, 1] * time_correction_factor * unit.ms)
     times = base_times + rel_times
 
     # get all unique transmitting satellites
@@ -45,8 +48,9 @@ def process_received_frames(frames_array: np.array, start_time: str, satellites:
     for i in range(array_len):
         try:
             j = tx_satellites_ids.index(str(map_sat_id_to_tle_id(frames_array[i, 0])))
+            sat = map_sat_id_to_tle_id(frames_array[i, 0])
         except ValueError:
             continue
-        nav_data.append([times[i], frames_array[i, 2], frames_array[i, 3], pos_itrs[j, i]])
+        nav_data.append([times[i], frames_array[i, 2], frames_array[i, 3], pos_itrs[j, i], sat])
 
     return nav_data

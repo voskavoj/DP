@@ -35,15 +35,13 @@ IRIDIUM_ID_MAP = {
     27: 173,  # 1
     29: 117,  # 12
     36: 119,  # 567
-    39: 179,  # 1
-    40: 110,  # 1
     42: 110,  # 3
     44: 122,  # 553
-    50: 170,  # 1
+    # 50: 170,  # 1
     57: 169,  # 275
-    58: 169,  # 1
-    65: 173,  # 1
-    66: 173,  # 1
+    # 58: 169,  # 1
+    # 65: 173,  # 1
+    # 66: 173,  # 1
     68: 176,  # 9
     72: 160,  # 1
     73: 138,  # 1
@@ -52,13 +50,16 @@ IRIDIUM_ID_MAP = {
     87: 129,  # 1
     91: 152,  # 3
     115: 178,  # 35
-    127: 122,  # 2
 }
 
 IRIDIUM_ID_MAP_REVERSE = {tle_id: sat_id for sat_id, tle_id in IRIDIUM_ID_MAP.items()}
 
+if len(IRIDIUM_ID_MAP) != len(IRIDIUM_ID_MAP_REVERSE):
+    raise ValueError(f"Duplicate values in IRIDIUM_ID_MAP: "
+                     f"{set([x for x in IRIDIUM_ID_MAP.values() if list(IRIDIUM_ID_MAP.values()).count(x) > 1])}")
 
-def map_sat_id_to_tle_id(sat_id):
+
+def map_sat_id_to_tle_id(sat_id: str | int | float) -> int | bool:
     """
     Maps the satellite ID from an IRA/IBC frame to the TLE ID
 
@@ -68,11 +69,11 @@ def map_sat_id_to_tle_id(sat_id):
     return IRIDIUM_ID_MAP.get(int(sat_id), False)
 
 
-def map_tle_id_to_sat_id(tle_id):
+def map_tle_id_to_sat_id(tle_id: str | int | float) -> int | bool:
     """
     Maps the satellite ID from a TLE to the ID from IRA/IBC frame
 
     :param tle_id: Satellite ID from TLE as number
-    :return: Satellite ID from IRA/IBC frame as float
+    :return: Satellite ID from IRA/IBC frame as integer
     """
-    return IRIDIUM_ID_MAP_REVERSE.get(float(tle_id), False)
+    return IRIDIUM_ID_MAP_REVERSE.get(int(tle_id), False)

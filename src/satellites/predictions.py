@@ -8,6 +8,8 @@ from astropy import units as unit
 from sgp4.api import Satrec, SGP4_ERRORS, SatrecArray
 import numpy as np
 
+C = 299792458
+
 
 def predict_satellite_positions(satrecs: list[Satrec], times: Time) -> ITRS:
     """
@@ -29,6 +31,84 @@ def predict_satellite_positions(satrecs: list[Satrec], times: Time) -> ITRS:
     r_teme = TEME(pos_teme.with_differentials(vel_teme), obstime=times)
     pos_itrs = r_teme.transform_to(ITRS(obstime=r_teme.obstime))
     return pos_itrs
+
+
+def predict_satellite_doppler_shift(satellite: "Satellite | list", lat: float, lon: float, alt: float, base_freq: int,
+                                    start_time: Time, duration: int, step: int | float, elevation_limit=0) -> np.array:
+    """
+    Predict doppler shift of multiple satellites
+    Returns array [rel_time, shifted frequency, abs_doppler_shift, rel_doppler_shift]
+    If elevation_limit is set, invalid values will be [0, 0, 0, 0]
+
+    :param satellite: Satellite or list of Satellites
+    :param lat: Observer latitude
+    :param lon: Observer longitude
+    :param alt: Observer altitude
+    :param base_freq: base frequency in Hz
+    :param start_time: start time as Time
+    :param duration: duration of prediction in seconds
+    :param step: step size in seconds (supports floats)
+
+    :return: array of predictions of shape #sat x #times x 4
+    """
+
+    c = C * unit.m / unit.s
+    base_freq = base_freq * unit.Hz
+
+    # prepare array of satellites and times
+    if not isinstance(satellite, list):
+        satellite = [satellite]
+
+    satrecs = SatrecArray([sat.satrec for sat in satellite])
+    times = [start_time + TimeDelta(secs * unit.s)
+             for secs in [round(i * step, 5) for i in range(int(duration/step))]] if duration else [start_time]
+    jds = np.array([t.jd1 for t in times])
+    jfs = np.array([t.jd2 for t in times])
+
+    observer_position = EarthLocation.from_geodetic([lon] * len(times), [lat] * len(times), [alt] * len(times))
+
+    # do SGP4
+    errcodes, positions, velocities = satrecs.sgp4(jds, jfs)
+
+    pred_array = np.empty((len(satellite), len(times) - 1, 4))
+    for j, sat in enumerate(satellite):
+        time, errcode, pos, vel = Time(times), errcodes[j], positions[j], velocities[j]
+
+        if any(errcode):
+            raise RuntimeError(f"SGP4 could not compute: {SGP4_ERRORS[errcode]}")
+
+        pos_teme = CartesianRepresentation(x=pos[:, 0], y=pos[:, 1], z=pos[:, 2], unit=unit.km)
+        vel_teme = CartesianDifferential(vel[:, 0], vel[:, 1], vel[:, 2], unit=unit.km / unit.s)
+        r_teme = TEME(pos_teme.with_differentials(vel_teme), obstime=time)
+        pos_itrs = r_teme.transform_to(ITRS(obstime=r_teme.obstime))
+
+        if elevation_limit is not None:
+            topo_itrs_repr = pos_itrs.cartesian.without_differentials() - observer_position.get_itrs(
+                obstime=time).cartesian
+            itrs_topo = ITRS(topo_itrs_repr, obstime=time, location=observer_position)
+            aa = itrs_topo.transform_to(AltAz(obstime=time, location=observer_position))
+            elevs = aa.alt
+
+        user_pos_itrs = observer_position.get_itrs(time)
+        distance = pos_itrs.cartesian.without_differentials() - user_pos_itrs.cartesian.without_differentials()
+        distance = distance.norm()
+
+        for i in range(len(distance) - 1):
+            if elevation_limit is not None and elevs[i] < elevation_limit:
+                continue
+
+            delta_distance = (distance[i] - distance[i + 1]).to(unit.m)
+            delta_time = (time[i + 1] - time[i]).sec * unit.s
+            rel_velocity = delta_distance / delta_time
+            rel_doppler_shift = c / (c - rel_velocity)
+            abs_doppler_shift = (rel_doppler_shift * base_freq) - base_freq
+            shifted_freq = base_freq + abs_doppler_shift
+
+            # output array: rel_time, shifted frequency, abs_doppler_shift, rel_doppler_shift
+            pred_array[j, i] = [(time[i] - time[0]).sec,
+                                shifted_freq.value, abs_doppler_shift.value, rel_doppler_shift.value]
+
+    return pred_array
 
 
 def predict_satellite_visibility(satellite: "Satellite | list", observer_position: EarthLocation, start_time: Time,

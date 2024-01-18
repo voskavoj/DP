@@ -7,3 +7,4 @@
 /src/satellites/__pycache__/
 /src/app/download
 /src/radio/__pycache__/
+*.pyc

@@ -7,10 +7,10 @@ from src.radio.iridium_frame_operations import decompose_ira_frame, decompose_ib
 
 """
     Buffer of frames looks like this:
-    satellite ID | time | received frequency | base frequency
+    satellite ID | relative time | received frequency | base frequency
 """
 
-FREQ_DROP = False
+FREQ_DROP = True
 
 
 class IridiumOfflineRadio:
