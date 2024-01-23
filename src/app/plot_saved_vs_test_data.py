@@ -7,7 +7,7 @@ from astropy.time import Time
 
 DATA_PATH = "Data\\exp03\\"
 FRAME_FILE = "decoded.txt"
-SAVED_DATA_FILE = "saved_nav_data_w_id.pickle"
+SAVED_DATA_FILE = "saved_nav_data.pickle"
 TEST_DATA_FILE = "test_nav_data.pickle"
 BASE_FREQ = 1626270800
 START_TIME = "2024-01-07 18:18:29"  # UTC

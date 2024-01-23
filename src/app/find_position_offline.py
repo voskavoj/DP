@@ -6,7 +6,7 @@ from src.satellites.download_tle import download_tles
 from src.navigation.data_processing import process_received_frames
 
 USE_SAVED_DATA = True
-SAVED_DATA_FILE = "saved_nav_data_w_id.pickle"
+SAVED_DATA_FILE = "saved_nav_data.pickle"
 CONSTELLATIONS = ("Iridium", )
 DATA_PATH = "Data\\exp03\\"
 FRAME_FILE = "decoded.txt"
@@ -25,7 +25,7 @@ else:
     # frames_array: satellite ID | relative time | received frequency | base frequency
     frames_array = np.array(radio.get_frames())
     # process nav_data
-    # list: absolute time (Time) | frequency (float) | base frequency (float) | satellite position at time (ITRS)
+    # list: absolute time (Time) | frequency (float) | base frequency (float) | satellite position at time (ITRS) | ID
     nav_data = process_received_frames(frames_array, start_time, satellites["Iridium"])
     with open(DATA_PATH + SAVED_DATA_FILE, "wb") as file:
         pickle.dump(nav_data, file)

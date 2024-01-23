@@ -15,7 +15,7 @@ def process_received_frames(frames_array: np.array, start_time: str, satellites:
     """
     Process received frames from radio into navigation data
     Input - numpy array of foats: satellite id | relative time | frequency | base frequency
-    Ouptut - list: absolute time (Time) | frequency (float) | base frequency (float) | satellite position at time (ITRS)
+    Ouptut - list: absolute time (Time) | frequency (float) | base frequency (float) | satellite position at time (ITRS) | ID (TLE)
 
     Prepares absolute time, extracts unique transmitting satellites, assigns them actual ID, predicts satellite positions and composes navigation data.
 
