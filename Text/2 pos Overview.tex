@@ -1,11 +1,130 @@
-\chapter{Position determination}
-intro about nav systems
+\chapter{Doppler frequency-based satellite-aided positioning}
+As outlined in section \ref{s_int_doppler_shift_method}, the three principal steps in determining a user position from Doppler frequency measurements of a satellite signal are: determining the identity and position (or trajectory) of the transmitting satellite, acquiring and tracking the transmitted signal and measuring its frequency, calculating the user position from the measured data and compensating errors. 
 
-\section{Satellite systems}
+These three steps can be further broken down to:
+\begin{enumerate}
+    \item \label{l_pos_steps_1a} identifying the transmitting satellite,
+    \item \label{l_pos_steps_1b} determining the position or trajectory of the transmitting satellite,
+    \item \label{l_pos_steps_2a} acquiring the transmitted signal,
+    \item \label{l_pos_steps_2b} tracking the transmitted signal,
+    \item \label{l_pos_steps_2c} measuring the frequency of the transmitted signal,
+    \item \label{l_pos_steps_3a} calculating the user position from the measured data,
+    \item \label{l_pos_steps_3b} estimating and compensating the errors introduced in each of the previous steps.
+\end{enumerate}
 
-\section{Basics of GNSS}
+This chapter first describes the Doppler frequency-based method, henceforth referred to as the \emph{Doppler method}, and then goes through the steps of its realisation, thus laying the groundwork for the system designed in this work.
 
-\section{Doppler method}
+\section{Doppler effect}
+The Doppler effect is the change in the frequency of a wave as perceived by an observer who is moving relative to the source of the wave. The received frequency can be expressed as
+\begin{equation*}
+    f_R = \frac{c + v_R}{c - v_T} f_0
+\end{equation*}
+ where $c$ is the speed of wave in the medium, $v_R$ and $v_T$ are the respective velocities of the receiver and transmitter relative to the medium (positive direction is toward each other), and $f_0$ is the transmitted frequency. For a stationary receiver ($v_R = 0$) it can be simplified to
+ \begin{equation}
+ \label{e_pos_doppler}
+    f_R = \frac{c}{c - v_T} f_0
+\end{equation}
+Further simplification yields the original frequency:
+ \begin{equation}
+ \label{e_pos_doppler_f0}
+    f_0 = f_R (1 - \frac{v_T}{c})
+\end{equation}
+
+
+\section{The Doppler method}
+% todo doppler method intro
+ 
+
+\subsection{An ideal case}
+First, a ideal-case example is discussed (see fig. \ref{f_pos_doppler_method_simple}) to illustrate the method.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.75\linewidth]{img/pos_doppler_method_simple}
+    \caption{The Doppler method (ideal case)}
+    \label{f_pos_doppler_method_simple}
+\end{figure}
+
+A satellite passes on a circular trajectory over the surface of the Earth with a tangential velocity $v$, transmitting a signal on a frequency $f_0$. On the surface, a user measures a Doppler-shifted frequency $f_R$.
+
+The Doppler shift can be expressed as
+\begin{align*}
+    f_D &= f_R - f_0 \\
+    \textnormal{substituting eq. \ref{e_pos_doppler_f0}: } 
+    f_D &= f_R - f_R (1 - \frac{v_T}{c}) \\
+    \textnormal{simplified as } 
+    f_D &= f_R \frac{v_T}{c}
+\end{align*}
+
+The velocity $v_T$ is a relative speed of the satellite to the user. Its direction is from the satellite to the user, and it is offset from the satellite velocity by the angle $\alpha$. It can be expressed as
+\begin{equation*}
+    v_T = v \ \cos{\alpha}
+\end{equation*}
+Thus, the Doppler shift can be expressed as
+\begin{equation}
+    \label{e_pos_fd}
+    f_D = f_R - f_0 = f_R \frac{v}{c} \cos{\alpha}
+\end{equation}
+
+The only parameter which relates the position of the satellite and the user is the angle $\alpha$. It is expressed from the above as
+\begin{equation}
+    \label{e_pos_cos_alpha}
+    \cos{\alpha} = \frac{f_R - f_0}{f_R \ v \ c^{-1}}
+\end{equation}
+
+The user is located somewhere on an infinite cone with the centre at the position of the satellite at the time of measurement, the axis in the direction to $v$ and an opening angle $2\alpha$.
+
+If this measurement is carried out several times at a different satellite positions along its trajectory, the user position can be pinpointed further. Two measurements give two closed curves defined by the intersection of two cones, three measurements give a set of points, four measurements reduce the possibility to just one point. Additionally, if the user is assumed to be on the surface, an intersection with a sphere representing the surface can be considered, lowering the number of measurements required.
+
+
+\section{Identifying and determining the satellite position}
+
+\section{Acquiring the satellite signal}
+Provided the transmission frequency of the satellite is known, either exactly or by a set or a range, the signal can be acquired. However, the signal received will be shifted from the original frequency due to the Doppler effect. Knowledge of the bounds of this shift is critical for acquiring the satellite signal.
+
+The largest shift occurs when $\cos{\alpha} = 1$ in eq. \ref{e_pos_fd}, that is, when the satellite radius vector is perpendicular to that of the receiver. However, in this situation, the satellite in LEO is invisible to the receiver. More practically, the largest Doppler shift occurs when the satellite is first (and last) visible to the receiver. For a ground-based receiver with no obstacle in sight, this happens when the satellite intersects a plane tangential to the Earth surface at the receiver position (see fig. \ref{f_pos_max_doppler_shift}).
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.75\linewidth]{img/pos_max_doppler_shift}
+    % TODO actual figure
+    \caption{Situation for maximum Doppler shift}
+    \label{f_pos_max_doppler_shift}
+\end{figure}
+
+In this special case, the angle $\alpha$ is equal to the angle $\gamma$ between the satellite and user radius vectors. Thus,
+\begin{equation*}
+    \cos{\alpha} = \frac{R_E}{R_E + h}
+\end{equation*}
+where $R_E$ is the radius of the Earth and $h$ is the orbital altitude of the satellite.
+
+Orbital velocity for a circular orbit is approximately
+\begin{equation*}
+    v \approx \sqrt{\frac{\mu}{R_E + h}}
+\end{equation*}
+where $\mu$ is the standard gravitational parameter. Thus, substituting the above into eq. \ref{e_pos_fd}, the maximum Doppler shift depends only on the orbital altitude and transmission frequency:
+\begin{equation}
+    \label{e_pos_fd_max}
+    f_{D max} \approx f_R \frac{1}{c} \sqrt{\frac{\mu}{R_E + h}} \frac{R_E}{R_E + h}
+\end{equation}
+
+The maximum Doppler shift for the satellites considered in the LEO system survey in section \ref{s_sat} is in table \ref{t_pos_max_fd}.
+
+\begin{table}
+    \centering
+    \begin{tabular}{llll}
+    System     & $h$ (km) &  $f_R$ (MHz) & $f_{Dmax}$ (kHz) \\ \hline
+    Iridium    &  781  &  1626 & \num{36.1} \\
+    Orbcomm    &  715  &  138  & \num{3.1} \\
+    Globalstar &  1414 &  2500 & \num{48.9}
+    \end{tabular}
+    \caption{Maximum Doppler shift for select LEO satellites}
+    \label{t_pos_max_fd}
+\end{table}
+
+\section{tracking and meas}
+
+\section{Calculating user position}
 
 
 

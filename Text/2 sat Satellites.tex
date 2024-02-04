@@ -1,11 +1,12 @@
 \chapter{A survey of current LEO satellite systems}
+\label{s_sat}
 This chapter describes current LEO satellite constellations which are readily usable for SoP navigation, namely  Iridium Next, Orbcommm, Globalstar and Starlink. For each system, the orbital parameters, constellation status, frequency ranges and communication schemes are described, in addition to select signal types deemed of particular importance for this work.
 
 Parameters of the systems are summarised in table \ref{t_sat_general_summary}.
 
 
 \begin{table}
-\caption{Summary of \emph{approximate} parameters of LEO satellite systems: number of active satellites, number of orbital planes and inclinations, altitudes, visibility times for one satellite, frequency ranges, signal strengths at ground level and modulation used}
+\caption{Summary of \emph{approximate} parameters of LEO satellite systems: number of active satellites, number of orbital planes and inclinations, altitudes, visibility https://www.overleaf.com/project/64ec6e4d5c805295f3ac825etihttps://www.overleaf.com/project/64ec6e4d5c805295f3ac825emes for one satellite, frequency ranges, signal strengths at ground level and modulation used}
 \label{t_sat_general_summary}
 \hspace*{-2cm}
 \centering
@@ -24,7 +25,7 @@ Iridium satellite constellation, owned and operated by Iridium Communications In
 
 The system became operational in 1998 and saw a total of 96 satellites launched, before the constellation was completely overhauled between 2017 and 2019, replacing all of the original satellites with Iridium Next satellites. Currently\footnote{As of October 2023}, no original satellite remains operational, however, 25 satellites remain defunct on orbit\cite{sat06}.
 
-The constellation consists of 66 satellites, 11 each in six orbital planes, spaced \ang{30} apart. The altitude of the satellites is approx. \qty{781}{\km}, the inclination is \ang{86.4} and the orbital period is approx. \qty{100}{\min}. For a ground user, one satellite is visible for about \qty{7}{\min}. The constellation covers the entire global surface\cite{sat01}.
+The constellation consists of 66\footnote{Satellites 102-114, 116-123, 125-160, 163-168, 171-173, 180. All ranges are inclusive.} satellites, 11 each in six orbital planes, spaced \ang{30} apart. The altitude of the satellites is approx. \qty{781}{\km}, the inclination is \ang{86.4} and the orbital period is approx. \qty{100}{\min}. For a ground user, one satellite is visible for about \qty{7}{\min}. The constellation covers the entire global surface\cite{sat01}.
 
 Communication is carried over Ka-band for satellite-satellite links and satellite-gateway links, and over L-band (\qtyrange{1616}{1626.5}{\mega\hertz}) for satellite-user links. Each satellite provides 48 individual spot beams, sharing 240 traffic channels with a frequency re-use pattern\cite{sat07}. At ground level with an Iridium antenna, the signal strength can be expected to be \qtyrange{-90}{-110}{dBm}\cite{sop01}.
 
@@ -65,7 +66,7 @@ Importantly, the inclusion of satellite ID in the Ring Alert message, combined w
 
 
 \section{Orbcomm}
-Orbcomm satellite constellation provides private internet access and machine-to-machine communication services primarily to industrial customers, such as transportation companies or manufacturers. The first launch of the system occurred in 1991. There were several generations of satellites, of which two amounted to significant numbers - the first production generation, referred to as Orbcomm Generation 1 (OG1), and the latest one, Orbcomm Generation 2 (OG2), which began launching in 2012. TLEs indicate that 60 satellites are currently\footnote{As of October 2023} in orbit, of which 36 are active, 24 of OG1 and 12 of the OG2 configuration\cite{sat12}.
+Orbcomm satellite constellation provides private internet access and machine-to-machine communication services primarily to industrial customers, such as transportation companies or manufacturers. The first launch of the system occurred in 1991. There were several generations of satellites, of which two amounted to significant numbers - the first production generation, referred to as Orbcomm Generation 1 (OG1), and the latest one, Orbcomm Generation 2 (OG2), which began launching in 2012. TLEs indicate that 60 satellites are currently\footnote{As of October 2023} in orbit, of which 36\footnote{Satellites 4-15, 18-21, 23, 27, 30, 31, 32 (partially), 34, 35 (OG1); 103, 107-110, 112-118 (OG2). All ranges are inclusive.} are active, 24 of OG1 and 12 of the OG2 configuration\cite{sat12}.
 
 The Orbcomm satellites orbit in four orbital planes inclined at \ang{47} at an altitude of \qty{715}{km}. The orbital period is approx. \qty{99}{\min} and a satellite is visible to a ground observer for about \qty{7}{\min}\cite{sat11, sop08}. % todo actual orbital planes from TLEs
 
@@ -104,24 +105,20 @@ In addition to the downlink communication signals, Orbcomm satellites are equipp
 \section{Gobalstar}
 Globalstar is a satellite communication system designed to provide voice and low-rate data communication to user terminals on the earth. The satellites connect the users and ground-based gateways by retransmitting the user terminal signals\cite{sop07, sat14}.
 
-The constellation had two distinct generations. The first generation launched from 1998 and included 48 LEO satellites, none of which remain operational. The current\footnote{As of October 2023}, second, generation has 24 operational satellites, launched between 2010 and 2013. Neither the orbital configuration nor the signal spectrum has changed between the generations\cite{sat15}.
+The constellation had two distinct generations. The first generation launched from 1998 and included 48 LEO satellites, none of which remain operational. The current\footnote{As of October 2023}, second, generation has 24\footnote{Satellites 074-097. All ranges are inclusive.} operational satellites, launched between 2010 and 2013. Neither the orbital configuration nor the signal spectrum has changed between the generations\cite{sat15}.
 
 
 The satellites orbit at an altitude of \qty{1400}{km} in 8 planes inclined at \ang{52}. The orbital period is \qty{114}{min}. Each Globalstar satellite is visible for around \qty{14}{\min}\cite{sat14, sat15}
 
 The number of simultaneous visible satellite depends on latitude. For the original constellation and a latitude of \ang{50}, a probability of seeing one, two or three satellites simultaneously in a given moment is respectively \qtylist{19;71;10}{\percent}\cite{sop07}. For the second generation, the probabilities can be expected to be much lower.
 
-Satellite fractional frequency error standard deviation is specified as \num{e-9}\cite{sop07}.
+The Globalstar satellites use a phased array antennas with 91 high power amplifiers, each providing an output power of \qty{4}{W} (for a total of \qty{364}{W})\cite{sat14}. Satellite fractional frequency error standard deviation is specified as \num{e-9}\cite{sop07}.
 
 
 \section{Globalstar signals}
 The Globalstar constellation implements four types of signals - satellite-user downlink (S band), user-satellite uplink (L band), and satellite-gateway downlink and uplink (C band, \qtyrange{5}{7}{GHz}). All transmissions use Code Division Multiple Access (CDMA)\cite{sat10}.
 
 The user downlinks are in the frequency range from \qtyrange{2483.5}{2500}{MHz}. Each satellite transmits in 16 beams, utilising the full allocated range of \qty{16.5}{MHz}. The modulation is QPSK\cite{sat14}.
-
-
-
-% TODO Globalstar
 
 \section{Starlink}
 Of the systems discussed, Starlink has by far the most satellites. However, due to the downlink frequency exceeding \qty{10}{GHz}, it is not feasible to process Starlink signals in this work. Starlink is therefore discussed only briefly for the sake of completeness.
