@@ -4,9 +4,10 @@ import pickle
 from src.radio.iridium_offline_radio import IridiumOfflineRadio
 from src.satellites.download_tle import download_tles
 from src.navigation.data_processing import process_received_frames
+from src.navigation.curve_fit_method import solve
 
 USE_SAVED_DATA = True
-SAVED_DATA_FILE = "saved_nav_data.pickle"
+SAVED_DATA_FILE = "test_nav_data.pickle"
 CONSTELLATIONS = ("Iridium", )
 DATA_PATH = "Data\\exp03\\"
 FRAME_FILE = "decoded.txt"
@@ -31,11 +32,11 @@ else:
         pickle.dump(nav_data, file)
 
 # nav_data = nav_data[1700:2000]
-dopp_data = [(nav_data[i][4], nav_data[i][0].value.split()[1], nav_data[i][2], nav_data[i][2] - nav_data[i][1]) for i in range(len(nav_data))]
-for d in dopp_data:
-    print(*d)
+# dopp_data = [(nav_data[i][4], nav_data[i][0].value.split()[1], nav_data[i][2], nav_data[i][2] - nav_data[i][1]) for i in range(len(nav_data))]
+# for d in dopp_data:
+#     print(*d)
 print("Init done.")
 
 # ---------------------------- navigation
-
+solve(nav_data, satellites["Iridium"])
 

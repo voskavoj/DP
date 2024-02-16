@@ -53,12 +53,14 @@ for i in range(len(test_sat_list)):
     for j, pred in enumerate(dopp_preds):
         if DECIMATION and j % DECIMATION != 0:
             continue
+        if pred[1] == 0 or pred[2] == 0:
+            continue
         frames_list.append(pred)
 
 # filter empty frames
-for i, fr in enumerate(frames_list):
-    if fr[1] == 0 and fr[2] == 0:
-        frames_list.pop(i)
+# for i, fr in enumerate(frames_list):
+#     if fr[1] == 0 or fr[2] == 0:
+#         frames_list.pop(i)
 
 # satellite ID | relative time | received frequency | base frequency
 frames_array = np.array(frames_list)

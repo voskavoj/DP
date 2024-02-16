@@ -54,3 +54,19 @@ def process_received_frames(frames_array: np.array, start_time: str, satellites:
         nav_data.append([times[i], frames_array[i, 2], frames_array[i, 3], pos_itrs[j, i], sat])
 
     return nav_data
+
+
+def nav_data_to_array(nav_data: list) -> np.array:
+    """
+    Convert navigation data to numpy array
+    :param nav_data: list of navigation data
+    :return: numpy array
+    """
+    nav_data_array = np.empty((len(nav_data), 10))
+    for i, data in enumerate(nav_data):
+        abs_time, freq, base_freq, sat_pos, sat_id = data
+        nav_data_array[i] = [float(abs_time.to_value("unix")), freq, base_freq, sat_id,
+                             sat_pos.x.value, sat_pos.y.value, sat_pos.z.value,
+                             sat_pos.v_x.value, sat_pos.v_y.value, sat_pos.v_z.value]
+
+    return nav_data_array
