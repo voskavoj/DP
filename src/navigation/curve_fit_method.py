@@ -120,7 +120,10 @@ def solve(nav_data, satellites):
         if pass_time == 0:
             print("SKIPPED")
             # continue
-        pass_pos = predict_satellite_positions([sat.satrec], Time([pass_time], format="unix"))
+
+        times = pass_time + np.array([-30, 0, 30])
+        pred_pos = predict_satellite_positions([sat.satrec], Time(times, format="unix"))[0, :]
+        pass_pos = pred_pos[1]
         print(Time(pass_time, format="unix").to_value("datetime"), pass_time)
 
         # plt.figure()
@@ -128,13 +131,22 @@ def solve(nav_data, satellites):
         # plt.plot(pass_time, 0, "r.")
 
         # find ground position of sat at pass time
-        pass_ground_location = pass_pos.earth_location.geodetic
-        print(pass_ground_location)
+        pass_pos_ground = pass_pos.earth_location.geodetic
+        print(pass_pos_ground)
 
+        # calculate satellite asimuth (of travel)
+        pred_pos_ground = pred_pos.earth_location.geodetic
+        d_lon = pred_pos_ground.lon[0] - pred_pos_ground.lon[-1]
+        d_lat = pred_pos_ground.lat[0] - pred_pos_ground.lat[-1]
+        sat_az = np.arctan2(d_lon, d_lat).value  # todo check
+        print(sat_az, np.rad2deg(sat_az))
+
+        sat_az += np.pi / 2  # perpendicular to travel
+        print(sat_az, np.rad2deg(sat_az))
         # generate coarse list of possible locations
-        sat_inclination = sat.satrec.inclo  # todo into Satellite class  # radians
+
         # CANNOT USE INCLINATION
-        print(sat_inclination)
+
 
 
         # for each location generate a doppler curve based on the timestamps of the original curves

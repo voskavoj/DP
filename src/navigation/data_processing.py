@@ -10,6 +10,36 @@ SATELLITE_FRAME_COUNT_FILTER = 100
 TIME_CORRECTION_FACTOR = 1.086932049564126  # ms/ms
 
 
+class NavDataIndices:
+    abs_time = 0
+    t = abs_time
+    freq = 1
+    f = freq
+    base_freq = 2
+    fb = base_freq
+    sat_pos = 3
+    pos = sat_pos
+    sat_id = 4
+    id = sat_id
+
+
+class NavDataArrayIndices:
+    rel_time = 0
+    t = rel_time
+    freq = 1
+    f = freq
+    base_freq = 2
+    fb = base_freq
+    sat_id = 3
+    id = sat_id
+    x = 4
+    y = 5
+    z = 6
+    vx = 7
+    vy = 8
+    vz = 9
+
+
 def process_received_frames(frames_array: np.array, start_time: str, satellites: dict,
                             time_correction_factor: float = TIME_CORRECTION_FACTOR):
     """
