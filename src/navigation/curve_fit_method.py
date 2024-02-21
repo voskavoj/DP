@@ -1,9 +1,11 @@
 import random
 
 import numpy as np
+from astropy.coordinates import EarthLocation, ITRS, CartesianRepresentation, CartesianDifferential
 from astropy.time import Time, TimeDelta
 import astropy.units as unit
 import matplotlib.pyplot as plt
+import math
 
 from src.radio.iridium_offline_radio import IridiumOfflineRadio
 from src.satellites.download_tle import download_tles
@@ -12,6 +14,8 @@ from src.navigation.data_processing import process_received_frames
 from src.radio.iridium_channels import map_sat_id_to_tle_id
 from src.satellites.predictions import predict_satellite_positions
 from src.navigation.data_processing import nav_data_to_array
+from src.navigation.data_processing import NavDataArrayIndices as IDX
+
 
 FIG_IDX = 100
 
@@ -20,6 +24,8 @@ MIN_CURVE_DENSITY = 1  # smp/s
 MAX_CURVE_VARIANCE = 100  # -
 MAX_CURVE_GAP = 5  # s
 
+STEP = 10  # km
+ITER_LIMIT = 100
 
 def is_valid_curve(curve):
     """
@@ -113,10 +119,10 @@ def solve(nav_data, satellites):
         curve_array = nav_data_to_array(curve)
 
         # find zero doppler shift
-        dopp_shift_arr = curve_array[:, 1] - curve_array[:, 2]
+        dopp_shift_arr = curve_array[:, IDX.f] - curve_array[:, IDX.fb]
         if dopp_shift_arr[0] > dopp_shift_arr[-1]:  # for interpolation the doppler shift must be increasing
             dopp_shift_arr = dopp_shift_arr[::-1]
-        pass_time = np.interp(0, xp=dopp_shift_arr, fp=curve_array[:, 0], left=0, right=0)
+        pass_time = np.interp(0, xp=dopp_shift_arr, fp=curve_array[:, IDX.t], left=0, right=0)
         if pass_time == 0:
             print("SKIPPED")
             # continue
@@ -145,11 +151,103 @@ def solve(nav_data, satellites):
         print(sat_az, np.rad2deg(sat_az))
         # generate coarse list of possible locations
 
-        # CANNOT USE INCLINATION
-
-
+        # ITERATIVE ALGORITHM
+        iterative_algorithm(curve, curve_array, lat_0=pass_pos_ground.lat.value, lon_0=pass_pos_ground.lon.value, az=sat_az)
 
         # for each location generate a doppler curve based on the timestamps of the original curves
         # find the best match
     # plt.show()
+
+
+def geodetic_distance(angle_dist, coord):
+    """
+    Approximate conversion from distance in angle to distance in km based on latitude/longitude
+
+    https://en.wikipedia.org/wiki/Latitude#Meridian_distance_on_the_ellipsoid
+
+    :param angle_dist:
+    :param coord:
+    :return:
+    """
+    EARTH_RADIUS = 6371  # km
+    m_per_deg_lat = 111132.954 - 559.822 * np.cos(2 * latMid) + 1.175 * np.cos(4 * latMid)
+    m_per_deg_lon = 111132.954 * np.cos(latMid)
+
+
+def m_to_deg_lat(m, lat, deg=True):
+    """
+    Approximate conversion from distance in km to distance in latitude
+    https://en.wikipedia.org/wiki/Latitude#Meridian_distance_on_the_ellipsoid
+
+    :param m: meters
+    :param lat: current latitude (deg)
+    :param deg: input is in degrees (True) or radians (False)
+    :return: degrees latitude
+    """
+    if deg:
+        lat = np.deg2rad(lat)
+
+    m_per_deg_lat = 111132.954 - 559.822 * np.cos(2 * lat) + 1.175 * np.cos(4 * lat)
+    return m / m_per_deg_lat
+
+
+def m_to_deg_lon(m, lat, deg=True):
+    """
+    Approximate conversion from distance in km to distance in longitude
+    https://en.wikipedia.org/wiki/Latitude#Meridian_distance_on_the_ellipsoid
+
+    :param m: meters
+    :param lat: current latitude (deg)
+    :param deg: input is in degrees (True) or radians (False)
+    :return: degrees longitude
+    """
+    if deg:
+        lat = np.deg2rad(lat)
+
+    m_per_deg_lon = 111132.954 * np.cos(lat)
+    return m / m_per_deg_lon
+
+
+def iterative_algorithm(curve_list, curve_array, lat_0, lon_0, az):
+    """
+
+    :param curve: array
+    :param lat_0:
+    :param lon_0:
+    :param az: PERPENDICULAR
+    :return:
+    """
+
+    lat = lat_0
+    lon = lon_0
+
+    measured_curve = np.column_stack((curve_array[:, IDX.t], curve_array[:, IDX.f] - curve_array[:, IDX.fb]))
+    curve_len = measured_curve.shape[0]
+
+    time_arr = Time(curve_array[:, IDX.t], format="unix")
+    r = ITRS(x=curve_array[:, IDX.x] * unit.km, y=curve_array[:, IDX.y] * unit.km, z=curve_array[:, IDX.z] * unit.km,
+             v_x=curve_array[:, IDX.vx] * unit.km / unit.s, v_y=curve_array[:, IDX.vy] * unit.km / unit.s,
+             v_z=curve_array[:, IDX.vz] * unit.km / unit.s,
+             obstime=time_arr)
+    r_sat_arr = r.cartesian.without_differentials()
+    v_sat_arr = r.velocity
+
+    for i in range(ITER_LIMIT):
+        trial_curve = np.empty((curve_len, 2))
+        # pick a new location
+        lat += m_to_deg_lat(STEP, lat) * np.cos(az)
+        lon += m_to_deg_lon(STEP, lat) * np.sin(az)
+        alt = 0
+
+        r_user_arr = (EarthLocation.from_geodetic([lon] * curve_len, [lat] * curve_len, [alt] * curve_len)
+                      .get_itrs(obstime=time_arr).cartesian.without_differentials())
+        r_user_arr: CartesianRepresentation
+        r_sat_arr: CartesianRepresentation
+        v_sat_arr: CartesianDifferential
+
+        # calculate doppler curve
+        rel_vel = v_sat_arr * (r_sat_arr - r_user_arr) / (r_sat_arr - r_user_arr).norm()
+        print(rel_vel)
+
+
 
