@@ -24,8 +24,11 @@ MIN_CURVE_DENSITY = 1  # smp/s
 MAX_CURVE_VARIANCE = 100  # -
 MAX_CURVE_GAP = 5  # s
 
-STEP = 10  # km
-ITER_LIMIT = 100
+STEP = 30e3  # km
+ITER_LIMIT = 10
+
+C = 299792458  # m/s
+
 
 def is_valid_curve(curve):
     """
@@ -111,7 +114,9 @@ def solve(nav_data, satellites):
     """
 
     # filter curves
+    print("Solving")
     detected_curves = find_curves(nav_data)
+    print("Detected curves ", len(detected_curves))
     # for each curve
     for curve in detected_curves:
         sat = satellites[str(curve[0][4])]
@@ -152,26 +157,27 @@ def solve(nav_data, satellites):
         # generate coarse list of possible locations
 
         # ITERATIVE ALGORITHM
-        iterative_algorithm(curve, curve_array, lat_0=pass_pos_ground.lat.value, lon_0=pass_pos_ground.lon.value, az=sat_az)
+        iterative_algorithm(curve_array, lat_0=pass_pos_ground.lat.value, lon_0=pass_pos_ground.lon.value,
+                            az=sat_az, base_freq=curve[0][IDX.fb])
 
         # for each location generate a doppler curve based on the timestamps of the original curves
         # find the best match
     # plt.show()
 
 
-def geodetic_distance(angle_dist, coord):
-    """
-    Approximate conversion from distance in angle to distance in km based on latitude/longitude
-
-    https://en.wikipedia.org/wiki/Latitude#Meridian_distance_on_the_ellipsoid
-
-    :param angle_dist:
-    :param coord:
-    :return:
-    """
-    EARTH_RADIUS = 6371  # km
-    m_per_deg_lat = 111132.954 - 559.822 * np.cos(2 * latMid) + 1.175 * np.cos(4 * latMid)
-    m_per_deg_lon = 111132.954 * np.cos(latMid)
+# def geodetic_distance(angle_dist, coord):
+#     """
+#     Approximate conversion from distance in angle to distance in km based on latitude/longitude
+#
+#     https://en.wikipedia.org/wiki/Latitude#Meridian_distance_on_the_ellipsoid
+#
+#     :param angle_dist:
+#     :param coord:
+#     :return:
+#     """
+#     EARTH_RADIUS = 6371  # km
+#     m_per_deg_lat = 111132.954 - 559.822 * np.cos(2 * latMid) + 1.175 * np.cos(4 * latMid)
+#     m_per_deg_lon = 111132.954 * np.cos(latMid)
 
 
 def m_to_deg_lat(m, lat, deg=True):
@@ -208,18 +214,14 @@ def m_to_deg_lon(m, lat, deg=True):
     return m / m_per_deg_lon
 
 
-def iterative_algorithm(curve_list, curve_array, lat_0, lon_0, az):
-    """
-
-    :param curve: array
-    :param lat_0:
-    :param lon_0:
-    :param az: PERPENDICULAR
-    :return:
-    """
+def iterative_algorithm(curve_array, lat_0, lon_0, az, base_freq):
 
     lat = lat_0
     lon = lon_0
+    alt = 0
+
+    # lat = 50.5896028
+    # lon = 13.8436033
 
     measured_curve = np.column_stack((curve_array[:, IDX.t], curve_array[:, IDX.f] - curve_array[:, IDX.fb]))
     curve_len = measured_curve.shape[0]
@@ -232,22 +234,52 @@ def iterative_algorithm(curve_list, curve_array, lat_0, lon_0, az):
     r_sat_arr = r.cartesian.without_differentials()
     v_sat_arr = r.velocity
 
+    if ion := False:
+        plt.ion()
+    plt.figure()
+    plt.plot(measured_curve[:, 0], measured_curve[:, 1], "-k", linewidth=0.5)
+
+    results = list()
+
     for i in range(ITER_LIMIT):
+        # print(f"Iteration {i+1:03d}: lat {lat:03.1f}, lon {lon:02.1f}, alt {alt:04.1f}")
+
         trial_curve = np.empty((curve_len, 2))
+        trial_curve[:, 0] = measured_curve[:, 0]  # times are the same
+
+        r_user_arr = (EarthLocation.from_geodetic([lon] * curve_len, [lat] * curve_len, [alt] * curve_len)
+                      .get_itrs(obstime=time_arr).cartesian.without_differentials())
+
+        # calculate doppler curve
+        for k in range(curve_len):
+            vs, rs, ru = v_sat_arr[k], r_sat_arr[k], r_user_arr[k]
+            vs = np.array([vs.d_x.value, vs.d_y.value, vs.d_z.value]) * 1000
+            rs = np.array([rs.x.value, rs.y.value, rs.z.value]) * 1000
+            ru = np.array([ru.x.value, ru.y.value, ru.z.value]) * 1
+            rel_vel = np.dot(vs, (rs - ru) / np.linalg.norm(rs - ru))
+
+            f_d = -1 * rel_vel * base_freq / C
+            trial_curve[k, 1] = f_d
+
+        # calculate variance
+        sum_of_squares = np.sum((measured_curve[:, 1] - trial_curve[:, 1]) ** 2)
+        results.append((sum_of_squares, i, lat, lon, alt))
+        print(f"Iteration {i + 1:03d}: lat {lat:03.1f}, lon {lon:02.1f}, alt {alt:04.1f}, SOS {sum_of_squares:.0f}")
+
+        plt.plot(trial_curve[:, 0], trial_curve[:, 1], ".")
+        if ion:
+            plt.show()
+            plt.pause(1)
+
         # pick a new location
         lat += m_to_deg_lat(STEP, lat) * np.cos(az)
         lon += m_to_deg_lon(STEP, lat) * np.sin(az)
         alt = 0
 
-        r_user_arr = (EarthLocation.from_geodetic([lon] * curve_len, [lat] * curve_len, [alt] * curve_len)
-                      .get_itrs(obstime=time_arr).cartesian.without_differentials())
-        r_user_arr: CartesianRepresentation
-        r_sat_arr: CartesianRepresentation
-        v_sat_arr: CartesianDifferential
+    print("Results")
+    print(min(results, key=lambda x: x[0]))
+    if not ion:
+        plt.show()
 
-        # calculate doppler curve
-        rel_vel = v_sat_arr * (r_sat_arr - r_user_arr) / (r_sat_arr - r_user_arr).norm()
-        print(rel_vel)
-
-
-
+        # rel_vel = v_sat_arr * (r_sat_arr - r_user_arr) / (r_sat_arr - r_user_arr).norm()
+        # print(rel_vel)
