@@ -7,6 +7,10 @@ import astropy.units as unit
 import matplotlib.pyplot as plt
 import math
 
+from mpl_toolkits.basemap import Basemap
+import numpy as np
+import matplotlib.pyplot as plt
+
 from src.radio.iridium_offline_radio import IridiumOfflineRadio
 from src.satellites.download_tle import download_tles
 from src.navigation.data_processing import process_received_frames
@@ -162,7 +166,7 @@ def solve(nav_data, satellites):
 
         # for each location generate a doppler curve based on the timestamps of the original curves
         # find the best match
-    # plt.show()
+    plt.show()
 
 
 # def geodetic_distance(angle_dist, coord):
@@ -263,8 +267,8 @@ def iterative_algorithm(curve_array, lat_0, lon_0, az, base_freq):
 
         # calculate variance
         sum_of_squares = np.sum((measured_curve[:, 1] - trial_curve[:, 1]) ** 2)
-        results.append((sum_of_squares, i, lat, lon, alt))
-        print(f"Iteration {i + 1:03d}: lat {lat:03.1f}, lon {lon:02.1f}, alt {alt:04.1f}, SOS {sum_of_squares:.0f}")
+        results.append([sum_of_squares, i, lat, lon, alt])
+        print(f"Iteration {i + 1:03d}: lat {lat:03.3f}, lon {lon:02.3f}, alt {alt:04.0f}, SOS {sum_of_squares:.0f}")
 
         plt.plot(trial_curve[:, 0], trial_curve[:, 1], ".")
         if ion:
@@ -278,8 +282,28 @@ def iterative_algorithm(curve_array, lat_0, lon_0, az, base_freq):
 
     print("Results")
     print(min(results, key=lambda x: x[0]))
-    if not ion:
+
+
+    # create new figure, axes instances.
+    plt.figure()
+    # ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+    # setup mercator map projection.
+    m = Basemap(llcrnrlon=-15., llcrnrlat=0., urcrnrlon=30., urcrnrlat=70.,
+                rsphere=(6378137.00, 6356752.3142), resolution='l', projection='merc',)
+
+    res_arr = np.array(results)
+    m.plot(13.8436033, 50.5896028, latlon=True, marker="o")
+    m.plot(min(results, key=lambda x: x[0])[3], min(results, key=lambda x: x[0])[2], latlon=True, marker="o")
+    m.plot(res_arr[:, 3], res_arr[:, 2], latlon=True)
+    sat_track = r.earth_location.geodetic
+    m.plot(sat_track.lon, sat_track.lat, latlon=True)
+    m.drawcoastlines()
+    m.fillcontinents()
+    m.drawcountries()
+    m.drawparallels(np.arange(10, 90, 20), labels=[1, 1, 0, 1])
+    m.drawmeridians(np.arange(-180, 180, 30), labels=[1, 1, 0, 1])
+
+    if not ion and False:
         plt.show()
 
-        # rel_vel = v_sat_arr * (r_sat_arr - r_user_arr) / (r_sat_arr - r_user_arr).norm()
-        # print(rel_vel)
+
