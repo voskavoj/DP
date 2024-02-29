@@ -218,6 +218,34 @@ def m_to_deg_lon(m, lat, deg=True):
     return m / m_per_deg_lon
 
 
+def check_trial_curve(lat, lon, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq):
+    curve_len = measured_curve.shape[0]
+
+    trial_curve = np.empty((curve_len, 2))
+    trial_curve[:, 0] = measured_curve[:, 0]  # times are the same
+
+    r_user_arr = (EarthLocation.from_geodetic([lon] * curve_len, [lat] * curve_len, [alt] * curve_len)
+                  .get_itrs(obstime=time_arr).cartesian.without_differentials())
+
+    # calculate doppler curve
+    for k in range(curve_len):
+        vs, rs, ru = v_sat_arr[k], r_sat_arr[k], r_user_arr[k]
+        vs = np.array([vs.d_x.value, vs.d_y.value, vs.d_z.value]) * 1000
+        rs = np.array([rs.x.value, rs.y.value, rs.z.value]) * 1000
+        ru = np.array([ru.x.value, ru.y.value, ru.z.value]) * 1
+        rel_vel = np.dot(vs, (rs - ru) / np.linalg.norm(rs - ru))
+
+        f_d = -1 * rel_vel * base_freq / C
+        trial_curve[k, 1] = f_d
+
+    # calculate variance
+    sum_of_squares = np.sum((measured_curve[:, 1] - trial_curve[:, 1]) ** 2)
+
+    plt.plot(trial_curve[:, 0], trial_curve[:, 1], ".")
+
+    return sum_of_squares
+
+
 def iterative_algorithm(curve_array, lat_0, lon_0, az, base_freq):
 
     lat = lat_0
@@ -238,46 +266,21 @@ def iterative_algorithm(curve_array, lat_0, lon_0, az, base_freq):
     r_sat_arr = r.cartesian.without_differentials()
     v_sat_arr = r.velocity
 
-    if ion := False:
-        plt.ion()
     plt.figure()
     plt.plot(measured_curve[:, 0], measured_curve[:, 1], "-k", linewidth=0.5)
 
     results = list()
 
     for i in range(ITER_LIMIT):
-        # print(f"Iteration {i+1:03d}: lat {lat:03.1f}, lon {lon:02.1f}, alt {alt:04.1f}")
-
-        trial_curve = np.empty((curve_len, 2))
-        trial_curve[:, 0] = measured_curve[:, 0]  # times are the same
-
-        r_user_arr = (EarthLocation.from_geodetic([lon] * curve_len, [lat] * curve_len, [alt] * curve_len)
-                      .get_itrs(obstime=time_arr).cartesian.without_differentials())
-
-        # calculate doppler curve
-        for k in range(curve_len):
-            vs, rs, ru = v_sat_arr[k], r_sat_arr[k], r_user_arr[k]
-            vs = np.array([vs.d_x.value, vs.d_y.value, vs.d_z.value]) * 1000
-            rs = np.array([rs.x.value, rs.y.value, rs.z.value]) * 1000
-            ru = np.array([ru.x.value, ru.y.value, ru.z.value]) * 1
-            rel_vel = np.dot(vs, (rs - ru) / np.linalg.norm(rs - ru))
-
-            f_d = -1 * rel_vel * base_freq / C
-            trial_curve[k, 1] = f_d
-
-        # calculate variance
-        sum_of_squares = np.sum((measured_curve[:, 1] - trial_curve[:, 1]) ** 2)
+        sum_of_squares = check_trial_curve(lat, lon, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
         results.append([sum_of_squares, i, lat, lon, alt])
         print(f"Iteration {i + 1:03d}: lat {lat:03.3f}, lon {lon:02.3f}, alt {alt:04.0f}, SOS {sum_of_squares:.0f}")
 
-        plt.plot(trial_curve[:, 0], trial_curve[:, 1], ".")
-        if ion:
-            plt.show()
-            plt.pause(1)
-
         # pick a new location
-        lat += m_to_deg_lat(STEP, lat) * np.cos(az)
-        lon += m_to_deg_lon(STEP, lat) * np.sin(az)
+        # lat += m_to_deg_lat(STEP, lat) * np.cos(az)
+        # lon += m_to_deg_lon(STEP, lat) * np.sin(az)
+        lat -= 0.022
+        lon -= 0.075
         alt = 0
 
     print("Results")
@@ -303,7 +306,4 @@ def iterative_algorithm(curve_array, lat_0, lon_0, az, base_freq):
     m.drawparallels(np.arange(10, 90, 20), labels=[1, 1, 0, 1])
     m.drawmeridians(np.arange(-180, 180, 30), labels=[1, 1, 0, 1])
 
-    if not ion and False:
-        plt.show()
-
-
+    plt.show()
