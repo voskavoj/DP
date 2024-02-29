@@ -12,6 +12,7 @@ from mpl_toolkits.basemap import Basemap
 import numpy as np
 import matplotlib.pyplot as plt
 
+from src.navigation.calculations import m_to_deg_lat, m_to_deg_lon, latlon_distance
 from src.radio.iridium_offline_radio import IridiumOfflineRadio
 from src.satellites.download_tle import download_tles
 from src.navigation.data_processing import process_received_frames
@@ -31,7 +32,7 @@ MIN_CURVE_DENSITY = 1  # smp/s
 MAX_CURVE_VARIANCE = 100  # -
 MAX_CURVE_GAP = 5  # s
 
-STEP = 5e3  # km
+STEP = 20e3  # km
 ITER_LIMIT = 150
 STEP_LIMIT = 10  # m
 
@@ -167,58 +168,15 @@ def solve(nav_data, satellites):
         # generate coarse list of possible locations
 
         # ITERATIVE ALGORITHM
-        iterative_algorithm(curve_array, lat_0=pass_pos_ground.lat.value, lon_0=pass_pos_ground.lon.value, alt_0=0,
-                            az=sat_az, base_freq=curve[0][IDX.fb])
+        try:
+            iterative_algorithm(curve_array, lat_0=pass_pos_ground.lat.value, lon_0=pass_pos_ground.lon.value, alt_0=0,
+                                az=sat_az, base_freq=curve[0][IDX.fb])
+        except KeyboardInterrupt:
+            pass
 
         # for each location generate a doppler curve based on the timestamps of the original curves
         # find the best match
     plt.show()
-
-
-def latlon_distance(lat1, lat2, lon1, lon2, alt1=None, alt2=None):
-    """
-    Returns results in m
-
-    """
-    horizontal_distance = distance.geodesic((lat1, lon1), (lat2, lon2)).m
-    if alt1 is None and alt2 is None:
-        return horizontal_distance
-    else:
-        return math.sqrt(horizontal_distance ** 2 + (alt2 - alt1) ** 2)
-
-
-def m_to_deg_lat(m, lat, deg=True):
-    """
-    Approximate conversion from distance in km to distance in latitude
-    https://en.wikipedia.org/wiki/Latitude#Meridian_distance_on_the_ellipsoid
-
-    :param m: meters
-    :param lat: current latitude (deg)
-    :param deg: input is in degrees (True) or radians (False)
-    :return: degrees latitude
-    """
-    if deg:
-        lat = np.deg2rad(lat)
-
-    m_per_deg_lat = 111132.954 - 559.822 * np.cos(2 * lat) + 1.175 * np.cos(4 * lat)
-    return m / m_per_deg_lat
-
-
-def m_to_deg_lon(m, lat, deg=True):
-    """
-    Approximate conversion from distance in km to distance in longitude
-    https://en.wikipedia.org/wiki/Latitude#Meridian_distance_on_the_ellipsoid
-
-    :param m: meters
-    :param lat: current latitude (deg)
-    :param deg: input is in degrees (True) or radians (False)
-    :return: degrees longitude
-    """
-    if deg:
-        lat = np.deg2rad(lat)
-
-    m_per_deg_lon = 111132.954 * np.cos(lat)
-    return m / m_per_deg_lon
 
 
 def check_trial_curve(lat, lon, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq):
@@ -331,7 +289,8 @@ def fit_curve(results, step, lat_0, lon_0, alt_0, measured_curve, time_arr, r_sa
 
         results.append([sos, i, lat, lon, alt])
         print(f"Iteration {i + 1:03d}: lat {lat:03.3f}, lon {lon:02.3f}, alt {alt:04.0f}, SOS {sos:09.0f}, "
-              f"{'N' if go_north else ' '}, {'S' if go_south else ' '}, {'W' if go_west else ' '}, {'E' if go_east else ' '}")
+              f"{latlon_distance(LAT_HOME, lat, LON_HOME, lon):.0f} m"
+              f"{'N' if go_north else ' '}{'S' if go_south else ' '}{'W' if go_west else ' '}{'E' if go_east else ' '}")
 
     return lat, lon, alt, results
 
@@ -359,20 +318,22 @@ def iterative_algorithm(curve_array, lat_0, lon_0, alt_0, az, base_freq):
     step = STEP
     lat, lon, alt = lat_0, lon_0, alt_0
 
-    while step > STEP_LIMIT:
-        print(f"Step {step}")
-        lat, lon, alt, results = fit_curve(results, step, lat, lon, alt,
-                                           measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-        step = int(step / 2)
+    # while step > STEP_LIMIT:
+    #     print(f"Step {step}")
+    #     lat, lon, alt, results = fit_curve(results, step, lat, lon, alt,
+    #                                        measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+    #     step = int(step / 2)
 
-    print("Results")
-    print(min(results, key=lambda x: x[0]))
+    # print("Results")
+    # print(min(results, key=lambda x: x[0]))
 
-    with open("Data\\exp03\\" + "results.pickle", "wb") as file:
-        pickle.dump(results, file)
+    global FIG_IDX
+    FIG_IDX += 1
+    # with open("Data\\exp03\\" + f"results_{FIG_IDX}.pickle", "wb") as file:
+    #     pickle.dump(results, file)
 
-    # with open("Data\\exp03\\" + "results.pickle", "rb") as file:
-    #     results = pickle.load(file)
+    with open("Data\\exp03\\" + "results.pickle", "rb") as file:
+        results = pickle.load(file)
 
     final_lat, final_lon = min(results, key=lambda x: x[0])[2], min(results, key=lambda x: x[0])[3]
 
