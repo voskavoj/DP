@@ -1,31 +1,16 @@
-import pickle
-import random
-
-from geopy import distance
-
-from astropy.coordinates import EarthLocation, ITRS, CartesianRepresentation, CartesianDifferential
-from astropy.time import Time, TimeDelta
+from astropy.coordinates import EarthLocation, ITRS
+from astropy.time import Time
 import astropy.units as unit
-import math
-
-from mpl_toolkits.basemap import Basemap
 import numpy as np
 import matplotlib.pyplot as plt
 
 from src.navigation.calculations import m_to_deg_lat, m_to_deg_lon, latlon_distance
-from src.radio.iridium_offline_radio import IridiumOfflineRadio
-from src.satellites.download_tle import download_tles
-from src.navigation.data_processing import process_received_frames
-
-from src.radio.iridium_channels import map_sat_id_to_tle_id
 from src.satellites.predictions import predict_satellite_positions
 from src.navigation.data_processing import nav_data_to_array
 from src.navigation.data_processing import NavDataArrayIndices as IDX
-
 from src.config.locations import LOCATIONS
-
-
-FIG_IDX = 100
+from src.utils.data import dump_data
+from src.utils.plots import plot_results_of_iterative_position_finding, plot_analyzed_curve
 
 MIN_CURVE_LEN = 60  # s
 MIN_CURVE_DENSITY = 1  # smp/s
@@ -63,24 +48,7 @@ def is_valid_curve(curve):
     except (ValueError, RuntimeError):
         return False
 
-    # print
-    curve_array = nav_data_to_array(curve)
-    plt.figure()
-    plt.title(f"T:{(dopp_start > 0 > dopp_end or dopp_start < 0 < dopp_end)}, "
-              f"L:{curve_duration:.1f}, "
-              f"D:{curve_density:.3f} \n"
-              f"G{largest_gap:.2f}, "
-              f"V{variance:.3f}\n"
-              f"{((dopp_start > 0 > dopp_end or dopp_start < 0 < dopp_end)
-                 and curve_duration >= MIN_CURVE_LEN
-                 and curve_density >= MIN_CURVE_DENSITY
-                 and largest_gap <= MAX_CURVE_GAP
-                 and variance <= MAX_CURVE_VARIANCE)}")
-    plt.plot(curve_array[:, 0], curve_array[:, 1] - curve_array[:, 2], ".")
-    global FIG_IDX
-    plt.savefig(f"f{FIG_IDX}.png")
-    plt.close()
-    FIG_IDX += 1
+    plot_analyzed_curve(curve, dopp_start, dopp_end, curve_duration, curve_density, largest_gap, variance)
 
     return ((dopp_start > 0 > dopp_end or dopp_start < 0 < dopp_end)
             and curve_duration >= MIN_CURVE_LEN
@@ -148,34 +116,18 @@ def solve(nav_data, satellites):
         pass_pos = pred_pos[1]
         print(Time(pass_time, format="unix").to_value("datetime"), pass_time)
 
-        # plt.figure()
-        # plt.plot(curve_array[:, 0], dopp_shift_arr, ".")
-        # plt.plot(pass_time, 0, "r.")
-
         # find ground position of sat at pass time
         pass_pos_ground = pass_pos.earth_location.geodetic
         print(pass_pos_ground)
 
-        # calculate satellite asimuth (of travel)
-        pred_pos_ground = pred_pos.earth_location.geodetic
-        d_lon = pred_pos_ground.lon[0] - pred_pos_ground.lon[-1]
-        d_lat = pred_pos_ground.lat[0] - pred_pos_ground.lat[-1]
-        sat_az = np.arctan2(d_lon, d_lat).value  # todo check
-        print(sat_az, np.rad2deg(sat_az))
-
-        sat_az += np.pi / 2  # perpendicular to travel
-        print(sat_az, np.rad2deg(sat_az))
-        # generate coarse list of possible locations
-
         # ITERATIVE ALGORITHM
         try:
-            iterative_algorithm(curve_array, lat_0=pass_pos_ground.lat.value, lon_0=pass_pos_ground.lon.value, alt_0=0,
-                                az=sat_az, base_freq=curve[0][IDX.fb])
+            iterative_algorithm(curve_array,
+                                lat_0=pass_pos_ground.lat.value, lon_0=pass_pos_ground.lon.value, alt_0=0,
+                                base_freq=curve[0][IDX.fb])
         except KeyboardInterrupt:
-            pass
+            print("Interrupted")
 
-        # for each location generate a doppler curve based on the timestamps of the original curves
-        # find the best match
     plt.show()
 
 
@@ -201,8 +153,6 @@ def check_trial_curve(lat, lon, alt, measured_curve, time_arr, r_sat_arr, v_sat_
 
     # calculate variance
     sum_of_squares = np.sum((measured_curve[:, 1] - trial_curve[:, 1]) ** 2)
-
-    # plt.plot(trial_curve[:, 0], trial_curve[:, 1], ".")
 
     return sum_of_squares
 
@@ -295,13 +245,9 @@ def fit_curve(results, step, lat_0, lon_0, alt_0, measured_curve, time_arr, r_sa
     return lat, lon, alt, results
 
 
-def iterative_algorithm(curve_array, lat_0, lon_0, alt_0, az, base_freq):
-
-    # lat = 50.5896028
-    # lon = 13.8436033
+def iterative_algorithm(curve_array, lat_0, lon_0, alt_0, base_freq):
 
     measured_curve = np.column_stack((curve_array[:, IDX.t], curve_array[:, IDX.f] - curve_array[:, IDX.fb]))
-    curve_len = measured_curve.shape[0]
 
     time_arr = Time(curve_array[:, IDX.t], format="unix")
     r = ITRS(x=curve_array[:, IDX.x] * unit.km, y=curve_array[:, IDX.y] * unit.km, z=curve_array[:, IDX.z] * unit.km,
@@ -318,46 +264,14 @@ def iterative_algorithm(curve_array, lat_0, lon_0, alt_0, az, base_freq):
     step = STEP
     lat, lon, alt = lat_0, lon_0, alt_0
 
-    # while step > STEP_LIMIT:
-    #     print(f"Step {step}")
-    #     lat, lon, alt, results = fit_curve(results, step, lat, lon, alt,
-    #                                        measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-    #     step = int(step / 2)
+    while step > STEP_LIMIT:
+        print(f"Step {step}")
+        lat, lon, alt, results = fit_curve(results, step, lat, lon, alt,
+                                           measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+        step = int(step / 2)
 
-    # print("Results")
-    # print(min(results, key=lambda x: x[0]))
-
-    global FIG_IDX
-    FIG_IDX += 1
-    # with open("Data\\exp03\\" + f"results_{FIG_IDX}.pickle", "wb") as file:
-    #     pickle.dump(results, file)
-
-    with open("Data\\exp03\\" + "results.pickle", "rb") as file:
-        results = pickle.load(file)
+    dump_data("results", results)
+    plot_results_of_iterative_position_finding(results, r)
 
     final_lat, final_lon = min(results, key=lambda x: x[0])[2], min(results, key=lambda x: x[0])[3]
-
     print(f"Position error: {latlon_distance(LAT_HOME, final_lat, LON_HOME, final_lon):.1f} m")
-
-    # create new figure, axes instances.
-    plt.figure()
-    # ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-    # setup mercator map projection.
-    m = Basemap(llcrnrlon=12, llcrnrlat=48, urcrnrlon=18, urcrnrlat=52,
-                rsphere=(6378137.00, 6356752.3142), resolution='h', projection='merc',)
-
-    res_arr = np.array(results)
-    m.plot(LON_HOME, LAT_HOME, latlon=True, marker="o")
-    m.plot(final_lon, final_lat, latlon=True, marker="o")
-    m.plot(res_arr[:, 3], res_arr[:, 2], latlon=True)
-    sat_track = r.earth_location.geodetic
-    m.plot(sat_track.lon, sat_track.lat, latlon=True)
-    m.drawcoastlines()
-    m.fillcontinents()
-    m.drawcountries()
-    m.drawrivers(color="blue")
-    m.makegrid(10, 10)
-    m.drawparallels(np.arange(40, 60, 1), labels=[1, 1, 0, 1])
-    m.drawmeridians(np.arange(10, 30, 1), labels=[1, 1, 0, 1])
-
-    plt.show()
