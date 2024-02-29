@@ -48,7 +48,7 @@ def is_valid_curve(curve):
     except (ValueError, RuntimeError):
         return False
 
-    plot_analyzed_curve(curve, dopp_start, dopp_end, curve_duration, curve_density, largest_gap, variance)
+    # plot_analyzed_curve(curve, dopp_start, dopp_end, curve_duration, curve_density, largest_gap, variance)
 
     return ((dopp_start > 0 > dopp_end or dopp_start < 0 < dopp_end)
             and curve_duration >= MIN_CURVE_LEN
@@ -91,6 +91,8 @@ def solve(nav_data, satellites):
     :param satellites:
     :return:
     """
+
+    # plot_results_of_iterative_position_finding("results_6", show=True)
 
     # filter curves
     print("Solving")
@@ -140,16 +142,15 @@ def check_trial_curve(lat, lon, alt, measured_curve, time_arr, r_sat_arr, v_sat_
     r_user_arr = (EarthLocation.from_geodetic([lon] * curve_len, [lat] * curve_len, [alt] * curve_len)
                   .get_itrs(obstime=time_arr).cartesian.without_differentials())
 
-    # calculate doppler curve
-    for k in range(curve_len):
-        vs, rs, ru = v_sat_arr[k], r_sat_arr[k], r_user_arr[k]
-        vs = np.array([vs.d_x.value, vs.d_y.value, vs.d_z.value]) * 1000
-        rs = np.array([rs.x.value, rs.y.value, rs.z.value]) * 1000
-        ru = np.array([ru.x.value, ru.y.value, ru.z.value]) * 1
-        rel_vel = np.dot(vs, (rs - ru) / np.linalg.norm(rs - ru))
+    vs, rs, ru = v_sat_arr, r_sat_arr, r_user_arr
+    vs = np.array([vs.d_x.value, vs.d_y.value, vs.d_z.value]) * 1000
+    rs = np.array([rs.x.value, rs.y.value, rs.z.value]) * 1000
+    ru = np.array([ru.x.value, ru.y.value, ru.z.value]) * 1
+    # Ro_dot = (V_s - V_u) * (r_s - r_u) / ||r_s - r_u||
+    rel_vel = np.sum(vs * (rs - ru) / np.linalg.norm(rs - ru, axis=0), axis=0)
 
-        f_d = -1 * rel_vel * base_freq / C
-        trial_curve[k, 1] = f_d
+    f_d = -1 * rel_vel * base_freq / C
+    trial_curve[:, 1] = f_d
 
     # calculate variance
     sum_of_squares = np.sum((measured_curve[:, 1] - trial_curve[:, 1]) ** 2)
@@ -157,18 +158,18 @@ def check_trial_curve(lat, lon, alt, measured_curve, time_arr, r_sat_arr, v_sat_
     return sum_of_squares
 
 
-def move_latlon(step, lat, lon, north=False, south=False, west=False, east=False):
+def move_latlon(step, lat, lon, north=False, south=False, west=False, east=False, ratio_lat=1, ratio_lon=1):
     if (north and south) or (west and east) or not any([north, south, west, east]):
         raise ValueError(f"Invalid direction combination (NSWE): {north, south, west, east}")
 
     if north:
-        lat += m_to_deg_lat(step, lat)
+        lat += m_to_deg_lat(step * ratio_lat, lat)
     if south:
-        lat -= m_to_deg_lat(step, lat)
+        lat -= m_to_deg_lat(step * ratio_lat, lat)
     if west:
-        lon -= m_to_deg_lon(step, lat)
+        lon -= m_to_deg_lon(step * ratio_lon, lat)
     if east:
-        lon += m_to_deg_lon(step, lat)
+        lon += m_to_deg_lon(step * ratio_lon, lat)
 
     return lat, lon
 
@@ -239,8 +240,10 @@ def fit_curve(results, step, lat_0, lon_0, alt_0, measured_curve, time_arr, r_sa
 
         results.append([sos, i, lat, lon, alt])
         print(f"Iteration {i + 1:03d}: lat {lat:03.3f}, lon {lon:02.3f}, alt {alt:04.0f}, SOS {sos:09.0f}, "
-              f"{latlon_distance(LAT_HOME, lat, LON_HOME, lon):.0f} m"
-              f"{'N' if go_north else ' '}{'S' if go_south else ' '}{'W' if go_west else ' '}{'E' if go_east else ' '}")
+              f"{latlon_distance(LAT_HOME, lat, LON_HOME, lon):.0f} m "
+              f"dir {'N' if go_north else ''}{'S' if go_south else ''}{'W' if go_west else ''}{'E' if go_east else ''}")
+    else:
+        raise StopIteration
 
     return lat, lon, alt, results
 
@@ -257,9 +260,6 @@ def iterative_algorithm(curve_array, lat_0, lon_0, alt_0, base_freq):
     r_sat_arr = r.cartesian.without_differentials()
     v_sat_arr = r.velocity
 
-    plt.figure()
-    plt.plot(measured_curve[:, 0], measured_curve[:, 1], "-k", linewidth=0.5)
-
     results = list()
     step = STEP
     lat, lon, alt = lat_0, lon_0, alt_0
@@ -272,6 +272,7 @@ def iterative_algorithm(curve_array, lat_0, lon_0, alt_0, base_freq):
 
     dump_data("results", results)
     plot_results_of_iterative_position_finding(results, r)
+    plt.show()
 
     final_lat, final_lon = min(results, key=lambda x: x[0])[2], min(results, key=lambda x: x[0])[3]
     print(f"Position error: {latlon_distance(LAT_HOME, final_lat, LON_HOME, final_lon):.1f} m")
