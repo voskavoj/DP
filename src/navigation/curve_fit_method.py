@@ -1,10 +1,11 @@
+import pickle
 import random
 
-import numpy as np
+from geopy import distance
+
 from astropy.coordinates import EarthLocation, ITRS, CartesianRepresentation, CartesianDifferential
 from astropy.time import Time, TimeDelta
 import astropy.units as unit
-import matplotlib.pyplot as plt
 import math
 
 from mpl_toolkits.basemap import Basemap
@@ -20,6 +21,8 @@ from src.satellites.predictions import predict_satellite_positions
 from src.navigation.data_processing import nav_data_to_array
 from src.navigation.data_processing import NavDataArrayIndices as IDX
 
+from src.config.locations import LOCATIONS
+
 
 FIG_IDX = 100
 
@@ -30,8 +33,11 @@ MAX_CURVE_GAP = 5  # s
 
 STEP = 5e3  # km
 ITER_LIMIT = 150
+STEP_LIMIT = 10  # m
 
 C = 299792458  # m/s
+
+LON_HOME, LAT_HOME = LOCATIONS["HOME"][0], LOCATIONS["HOME"][1]
 
 
 def is_valid_curve(curve):
@@ -169,19 +175,16 @@ def solve(nav_data, satellites):
     plt.show()
 
 
-# def geodetic_distance(angle_dist, coord):
-#     """
-#     Approximate conversion from distance in angle to distance in km based on latitude/longitude
-#
-#     https://en.wikipedia.org/wiki/Latitude#Meridian_distance_on_the_ellipsoid
-#
-#     :param angle_dist:
-#     :param coord:
-#     :return:
-#     """
-#     EARTH_RADIUS = 6371  # km
-#     m_per_deg_lat = 111132.954 - 559.822 * np.cos(2 * latMid) + 1.175 * np.cos(4 * latMid)
-#     m_per_deg_lon = 111132.954 * np.cos(latMid)
+def latlon_distance(lat1, lat2, lon1, lon2, alt1=None, alt2=None):
+    """
+    Returns results in m
+
+    """
+    horizontal_distance = distance.geodesic((lat1, lon1), (lat2, lon2)).m
+    if alt1 is None and alt2 is None:
+        return horizontal_distance
+    else:
+        return math.sqrt(horizontal_distance ** 2 + (alt2 - alt1) ** 2)
 
 
 def m_to_deg_lat(m, lat, deg=True):
@@ -246,20 +249,91 @@ def check_trial_curve(lat, lon, alt, measured_curve, time_arr, r_sat_arr, v_sat_
     return sum_of_squares
 
 
-def move_latlon(lat, lon, north=False, south=False, west=False, east=False):
+def move_latlon(step, lat, lon, north=False, south=False, west=False, east=False):
     if (north and south) or (west and east) or not any([north, south, west, east]):
         raise ValueError(f"Invalid direction combination (NSWE): {north, south, west, east}")
 
     if north:
-        lat += m_to_deg_lat(STEP, lat)
+        lat += m_to_deg_lat(step, lat)
     if south:
-        lat -= m_to_deg_lat(STEP, lat)
+        lat -= m_to_deg_lat(step, lat)
     if west:
-        lon -= m_to_deg_lon(STEP, lat)
+        lon -= m_to_deg_lon(step, lat)
     if east:
-        lon += m_to_deg_lon(STEP, lat)
+        lon += m_to_deg_lon(step, lat)
 
     return lat, lon
+
+
+def fit_curve(results, step, lat_0, lon_0, alt_0, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq):
+
+    # init
+    go_north, go_south, go_west, go_east = False, False, False, False
+    # first, get SOS for current location
+    sos_0 = check_trial_curve(lat_0, lon_0, alt_0, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+    # second, go north, south, west and east to see the direction
+    lat, lon = move_latlon(step, lat_0, lon_0, north=True)
+    sos_n = check_trial_curve(lat, lon, alt_0, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+    if sos_n < sos_0:
+        go_north = True
+    else:
+        lat, lon = move_latlon(step, lat_0, lon_0, south=True)
+        sos_s = check_trial_curve(lat, lon, alt_0, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+        if sos_s < sos_0:
+            go_south = True
+
+    lat, lon = move_latlon(step, lat_0, lon_0, west=True)
+    sos_w = check_trial_curve(lat, lon, alt_0, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+    if sos_w < sos_0:
+        go_west = True
+    else:
+        lat, lon = move_latlon(step, lat_0, lon_0, east=True)
+        sos_e = check_trial_curve(lat, lon, alt_0, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+        if sos_e < sos_0:
+            go_east = True
+
+    print(f"Go N {go_north}, S {go_south}, W {go_west}, E {go_east}")
+
+    if not any([go_north, go_south, go_west, go_east]):
+        print("Original location is the best")
+        return lat_0, lon_0, alt_0, results
+
+    # iterate
+    lat = lat_0
+    lon = lon_0
+    alt = 0
+    sos = sos_0
+
+    for i in range(ITER_LIMIT):
+        # check north-south
+        if go_north or go_south:
+            lat_ns, lon_ns = move_latlon(step, lat, lon, north=go_north, south=go_south)
+            sos_ns = check_trial_curve(lat_ns, lon_ns, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+            if sos_ns < sos:  # we should move in ns direction
+                lat = lat_ns
+            else:
+                go_north, go_south = False, False
+
+        # check west-east
+        if go_west or go_east:
+            lat_we, lon_we = move_latlon(step, lat, lon, west=go_west, east=go_east)
+            sos_we = check_trial_curve(lat_we, lon_we, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+            if sos_we < sos:
+                lon = lon_we
+            else:
+                go_west, go_east = False, False
+
+        if not any([go_north, go_south, go_west, go_east]):
+            print("Found position!")
+            break
+
+        sos = check_trial_curve(lat, lon, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+
+        results.append([sos, i, lat, lon, alt])
+        print(f"Iteration {i + 1:03d}: lat {lat:03.3f}, lon {lon:02.3f}, alt {alt:04.0f}, SOS {sos:09.0f}, "
+              f"{'N' if go_north else ' '}, {'S' if go_south else ' '}, {'W' if go_west else ' '}, {'E' if go_east else ' '}")
+
+    return lat, lon, alt, results
 
 
 def iterative_algorithm(curve_array, lat_0, lon_0, alt_0, az, base_freq):
@@ -282,97 +356,47 @@ def iterative_algorithm(curve_array, lat_0, lon_0, alt_0, az, base_freq):
     plt.plot(measured_curve[:, 0], measured_curve[:, 1], "-k", linewidth=0.5)
 
     results = list()
+    step = STEP
+    lat, lon, alt = lat_0, lon_0, alt_0
 
-    go_north, go_south, go_west, go_east = False, False, False, False
-    # first, get SOS for current location
-    sos_0 = check_trial_curve(lat_0, lon_0, alt_0, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-    # second, go north, south, west and east to see the direction
-    lat, lon = move_latlon(lat_0, lon_0, north=True)
-    sos_n = check_trial_curve(lat, lon, alt_0, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-    if sos_n < sos_0:
-        go_north = True
-    else:
-        lat, lon = move_latlon(lat_0, lon_0, south=True)
-        sos_s = check_trial_curve(lat, lon, alt_0, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-        if sos_s < sos_0:
-            go_south = True
-
-    lat, lon = move_latlon(lat_0, lon_0, west=True)
-    sos_w = check_trial_curve(lat, lon, alt_0, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-    if sos_w < sos_0:
-        go_west = True
-    else:
-        lat, lon = move_latlon(lat_0, lon_0, east=True)
-        sos_e = check_trial_curve(lat, lon, alt_0, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-        if sos_e < sos_0:
-            go_east = True
-
-    print(f"Go N {go_north}, S {go_south}, W {go_west}, E {go_east}")
-
-    if not any([go_north, go_south, go_west, go_east]):
-        print("Original location is the best")
-        return lat_0, lon_0, 0
-
-    # iterate
-    lat = lat_0
-    lon = lon_0
-    alt = 0
-    sos = sos_0
-
-    for i in range(ITER_LIMIT):
-        # check north-south
-        if go_north or go_south:
-            lat_ns, lon_ns = move_latlon(lat, lon, north=go_north, south=go_south)
-            sos_ns = check_trial_curve(lat_ns, lon_ns, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-            if sos_ns < sos:  # we should move in ns direction
-                lat = lat_ns
-            else:
-                go_north, go_south = False, False
-
-        # check west-east
-        if go_west or go_east:
-            lat_we, lon_we = move_latlon(lat, lon, west=go_west, east=go_east)
-            sos_we = check_trial_curve(lat_we, lon_we, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-            if sos_we < sos:
-                lon = lon_we
-            else:
-                go_west, go_east = False, False
-
-        if not any([go_north, go_south, go_west, go_east]):
-            print("Found position!")
-            break
-
-        sos = check_trial_curve(lat, lon, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-
-        results.append([sos, i, lat, lon, alt])
-        print(f"Iteration {i + 1:03d}: lat {lat:03.3f}, lon {lon:02.3f}, alt {alt:04.0f}, SOS {sos:09.0f}, "
-              f"{'N' if go_north else ' '}, {'S' if go_south else ' '}, {'W' if go_west else ' '}, {'E' if go_east else ' '}")
-
-        # pick a new location
-        # lat += m_to_deg_lat(STEP, lat) * np.cos(az)
-        # lon += m_to_deg_lon(STEP, lat) * np.sin(az)
+    while step > STEP_LIMIT:
+        print(f"Step {step}")
+        lat, lon, alt, results = fit_curve(results, step, lat, lon, alt,
+                                           measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+        step = int(step / 2)
 
     print("Results")
     print(min(results, key=lambda x: x[0]))
 
+    with open("Data\\exp03\\" + "results.pickle", "wb") as file:
+        pickle.dump(results, file)
+
+    # with open("Data\\exp03\\" + "results.pickle", "rb") as file:
+    #     results = pickle.load(file)
+
+    final_lat, final_lon = min(results, key=lambda x: x[0])[2], min(results, key=lambda x: x[0])[3]
+
+    print(f"Position error: {latlon_distance(LAT_HOME, final_lat, LON_HOME, final_lon):.1f} m")
 
     # create new figure, axes instances.
     plt.figure()
     # ax = fig.add_axes([0.1, 0.1, 0.8, 0.8])
     # setup mercator map projection.
-    m = Basemap(llcrnrlon=-15., llcrnrlat=0., urcrnrlon=30., urcrnrlat=70.,
-                rsphere=(6378137.00, 6356752.3142), resolution='l', projection='merc',)
+    m = Basemap(llcrnrlon=12, llcrnrlat=48, urcrnrlon=18, urcrnrlat=52,
+                rsphere=(6378137.00, 6356752.3142), resolution='h', projection='merc',)
 
     res_arr = np.array(results)
-    m.plot(13.8436033, 50.5896028, latlon=True, marker="o")
-    m.plot(min(results, key=lambda x: x[0])[3], min(results, key=lambda x: x[0])[2], latlon=True, marker="o")
+    m.plot(LON_HOME, LAT_HOME, latlon=True, marker="o")
+    m.plot(final_lon, final_lat, latlon=True, marker="o")
     m.plot(res_arr[:, 3], res_arr[:, 2], latlon=True)
     sat_track = r.earth_location.geodetic
     m.plot(sat_track.lon, sat_track.lat, latlon=True)
     m.drawcoastlines()
     m.fillcontinents()
     m.drawcountries()
-    m.drawparallels(np.arange(10, 90, 20), labels=[1, 1, 0, 1])
-    m.drawmeridians(np.arange(-180, 180, 30), labels=[1, 1, 0, 1])
+    m.drawrivers(color="blue")
+    m.makegrid(10, 10)
+    m.drawparallels(np.arange(40, 60, 1), labels=[1, 1, 0, 1])
+    m.drawmeridians(np.arange(10, 30, 1), labels=[1, 1, 0, 1])
 
     plt.show()
