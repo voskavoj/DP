@@ -158,7 +158,7 @@ def check_trial_curve(lat, lon, alt, measured_curve, time_arr, r_sat_arr, v_sat_
     return sum_of_squares
 
 
-def move_latlon(step, lat, lon, north=False, south=False, west=False, east=False, ratio_lat=1, ratio_lon=1):
+def move_latlon(step, lat, lon, north=False, south=False, west=False, east=False, ratio_lat=1.0, ratio_lon=1.0):
     if (north and south) or (west and east) or not any([north, south, west, east]):
         raise ValueError(f"Invalid direction combination (NSWE): {north, south, west, east}")
 
@@ -212,30 +212,32 @@ def fit_curve(results, step, lat_0, lon_0, alt_0, measured_curve, time_arr, r_sa
     lon = lon_0
     alt = 0
     sos = sos_0
+    diff_ns, diff_we = 0, 0
 
     for i in range(ITER_LIMIT):
+
         # check north-south
         if go_north or go_south:
             lat_ns, lon_ns = move_latlon(step, lat, lon, north=go_north, south=go_south)
             sos_ns = check_trial_curve(lat_ns, lon_ns, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-            if sos_ns < sos:  # we should move in ns direction
-                lat = lat_ns
-            else:
+            diff_ns = max(0, sos - sos_ns)
+            if not diff_ns:
                 go_north, go_south = False, False
 
         # check west-east
         if go_west or go_east:
             lat_we, lon_we = move_latlon(step, lat, lon, west=go_west, east=go_east)
             sos_we = check_trial_curve(lat_we, lon_we, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-            if sos_we < sos:
-                lon = lon_we
-            else:
+            diff_we = max(0, sos - sos_we)
+            if not diff_we:
                 go_west, go_east = False, False
 
         if not any([go_north, go_south, go_west, go_east]):
             print("Found position!")
             break
 
+        lat, lon = move_latlon(step, lat, lon, north=go_north, south=go_south, west=go_west, east=go_east,
+                               ratio_lat=diff_ns / (diff_ns + diff_we), ratio_lon=diff_we / (diff_ns + diff_we))
         sos = check_trial_curve(lat, lon, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
 
         results.append([sos, i, lat, lon, alt])
@@ -272,7 +274,7 @@ def iterative_algorithm(curve_array, lat_0, lon_0, alt_0, base_freq):
 
     dump_data("results", results)
     plot_results_of_iterative_position_finding(results, r)
-    plt.show()
+    # plt.show()
 
     final_lat, final_lon = min(results, key=lambda x: x[0])[2], min(results, key=lambda x: x[0])[3]
     print(f"Position error: {latlon_distance(LAT_HOME, final_lat, LON_HOME, final_lon):.1f} m")

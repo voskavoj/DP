@@ -21,23 +21,23 @@ def plot_results_of_iterative_position_finding(data: str | list, r=None, show=Fa
     print(f"Position error: {latlon_distance(home_lat, final_lat, home_lon, final_lon):.1f} m")
     
     plt.figure()
-    m = Basemap(llcrnrlon=12, llcrnrlat=48, urcrnrlon=18, urcrnrlat=52,
+    m = Basemap(llcrnrlon=0, llcrnrlat=40, urcrnrlon=30, urcrnrlat=65,
                 rsphere=(6378137.00, 6356752.3142), resolution='h', projection='merc', )
     
     res_arr = np.array(results)
-    m.plot(home_lon, home_lat, latlon=True, marker="o")
-    m.plot(final_lon, final_lat, latlon=True, marker="o")
-    m.plot(res_arr[:, 3], res_arr[:, 2], latlon=True)
+    m.plot(home_lon, home_lat, latlon=True, marker="x", label="Actual position")
+    m.plot(final_lon, final_lat, latlon=True, marker="o", label="Estimated position")
+    m.plot(res_arr[:, 3], res_arr[:, 2], latlon=True, label="Algorithm path")
     if r is not None:
         sat_track = r.earth_location.geodetic
-        m.plot(sat_track.lon, sat_track.lat, latlon=True)
+        m.plot(sat_track.lon, sat_track.lat, latlon=True, label="Satellite track")
     m.drawcoastlines()
     m.fillcontinents()
     m.drawcountries()
     m.drawrivers(color="blue")
-    m.makegrid(10, 10)
-    m.drawparallels(np.arange(40, 60, 1), labels=[1, 1, 0, 1])
-    m.drawmeridians(np.arange(10, 30, 1), labels=[1, 1, 0, 1])
+    m.drawparallels(np.arange(40, 65, 5), labels=[0, 1, 0, 0])
+    m.drawmeridians(np.arange(0, 30, 5), labels=[0, 0, 0, 1])
+    plt.legend()
 
     if show:
         plt.show()
