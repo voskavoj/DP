@@ -20,6 +20,7 @@ def dump_data(name, data, overwrite=False):
         else:
             break
 
+    print(f"Saving data as {name}_{FILE_IDX}")
     with open(filename, "wb") as file:
         pickle.dump(data, file)
 

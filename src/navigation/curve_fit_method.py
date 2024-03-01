@@ -26,6 +26,12 @@ C = 299792458  # m/s
 LON_HOME, LAT_HOME = LOCATIONS["HOME"][0], LOCATIONS["HOME"][1]
 
 
+class IterationResults:
+    first = 0
+    found = 1
+    limit = 2
+
+
 def is_valid_curve(curve):
     """
     Determine if a curve is valid
@@ -205,7 +211,7 @@ def fit_curve(results, step, lat_0, lon_0, alt_0, measured_curve, time_arr, r_sa
 
     if not any([go_north, go_south, go_west, go_east]):
         print("Original location is the best")
-        return lat_0, lon_0, alt_0, results
+        return IterationResults.first, lat_0, lon_0, alt_0, results
 
     # iterate
     lat = lat_0
@@ -245,9 +251,9 @@ def fit_curve(results, step, lat_0, lon_0, alt_0, measured_curve, time_arr, r_sa
               f"{latlon_distance(LAT_HOME, lat, LON_HOME, lon):.0f} m "
               f"dir {'N' if go_north else ''}{'S' if go_south else ''}{'W' if go_west else ''}{'E' if go_east else ''}")
     else:
-        raise StopIteration
+        return IterationResults.limit, lat, lon, alt, results
 
-    return lat, lon, alt, results
+    return IterationResults.found, lat, lon, alt, results
 
 
 def iterative_algorithm(curve_array, lat_0, lon_0, alt_0, base_freq):
@@ -268,9 +274,15 @@ def iterative_algorithm(curve_array, lat_0, lon_0, alt_0, base_freq):
 
     while step > STEP_LIMIT:
         print(f"Step {step}")
-        lat, lon, alt, results = fit_curve(results, step, lat, lon, alt,
-                                           measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-        step = int(step / 2)
+        iter_res, lat, lon, alt, results = fit_curve(results, step, lat, lon, alt,
+                                                     measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+        # change step only if moving in any of the directions doesn't improve the results anymore
+        if iter_res == IterationResults.first:
+            step = round(step / 2)
+        # if we hit iteration limit, it makes no sense to continue
+        elif iter_res == IterationResults.limit:
+            print("Iteration limit reached")
+            break
 
     dump_data("results", results)
     plot_results_of_iterative_position_finding(results, r)
