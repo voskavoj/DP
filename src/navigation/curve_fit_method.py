@@ -18,7 +18,7 @@ MAX_CURVE_VARIANCE = 100  # -
 MAX_CURVE_GAP = 5  # s
 
 STEP = 20e3  # km
-ITER_LIMIT = 150
+ITER_LIMIT = 100
 STEP_LIMIT = 10  # m
 
 C = 299792458  # m/s
@@ -222,21 +222,26 @@ def fit_curve(results, step, lat_0, lon_0, alt_0, measured_curve, time_arr, r_sa
 
     for i in range(ITER_LIMIT):
 
-        # check north-south
-        if go_north or go_south:
-            lat_ns, lon_ns = move_latlon(step, lat, lon, north=go_north, south=go_south)
-            sos_ns = check_trial_curve(lat_ns, lon_ns, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-            diff_ns = max(0, sos - sos_ns)
-            if not diff_ns:
-                go_north, go_south = False, False
+        lat_1, lon_1 = move_latlon(step, lat, lon, north=True, south=False, west=False, east=False)
+        sos_n = check_trial_curve(lat_1, lon_1, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
 
-        # check west-east
-        if go_west or go_east:
-            lat_we, lon_we = move_latlon(step, lat, lon, west=go_west, east=go_east)
-            sos_we = check_trial_curve(lat_we, lon_we, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-            diff_we = max(0, sos - sos_we)
-            if not diff_we:
-                go_west, go_east = False, False
+        lat_1, lon_1 = move_latlon(step, lat, lon, north=False, south=True, west=False, east=False)
+        sos_s = check_trial_curve(lat_1, lon_1, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+
+        lat_1, lon_1 = move_latlon(step, lat, lon, north=False, south=False, west=True, east=False)
+        sos_w = check_trial_curve(lat_1, lon_1, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+
+        lat_1, lon_1 = move_latlon(step, lat, lon, north=False, south=False, west=False, east=True)
+        sos_e = check_trial_curve(lat_1, lon_1, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+
+        go_north = sos_n < sos
+        go_south = sos_s < sos
+        go_west = sos_w < sos
+        go_east = sos_e < sos
+
+        diff_ns = max(0, max(sos - sos_n, sos - sos_s))
+        diff_we = max(0, max(sos - sos_w, sos - sos_e))
+        print(f"Diff NS {diff_ns}, WE {diff_we}")
 
         if not any([go_north, go_south, go_west, go_east]):
             print("Found position!")
@@ -245,10 +250,12 @@ def fit_curve(results, step, lat_0, lon_0, alt_0, measured_curve, time_arr, r_sa
         lat, lon = move_latlon(step, lat, lon, north=go_north, south=go_south, west=go_west, east=go_east,
                                ratio_lat=diff_ns / (diff_ns + diff_we), ratio_lon=diff_we / (diff_ns + diff_we))
         sos = check_trial_curve(lat, lon, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+        step = 3 * sos / 1000  # adaptive step
+        step = max(min(STEP, step), STEP_LIMIT)  # constrain step
 
         results.append([sos, i, lat, lon, alt])
-        print(f"Iteration {i + 1:03d}: lat {lat:03.3f}, lon {lon:02.3f}, alt {alt:04.0f}, SOS {sos:09.0f}, "
-              f"{latlon_distance(LAT_HOME, lat, LON_HOME, lon):.0f} m "
+        print(f"Iteration {i + 1:03d}: lat {lat:03.3f}, lon {lon:02.3f}, alt {alt:04.0f}, SOS {sos:09.0f}, step {step:05.0f} m "
+              f"{latlon_distance(LAT_HOME, lat, LON_HOME, lon):07.0f} m "
               f"dir {'N' if go_north else ''}{'S' if go_south else ''}{'W' if go_west else ''}{'E' if go_east else ''}")
     else:
         return IterationResults.limit, lat, lon, alt, results
@@ -276,17 +283,16 @@ def iterative_algorithm(curve_array, lat_0, lon_0, alt_0, base_freq):
         print(f"Step {step}")
         iter_res, lat, lon, alt, results = fit_curve(results, step, lat, lon, alt,
                                                      measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-        # change step only if moving in any of the directions doesn't improve the results anymore
-        if iter_res == IterationResults.first:
-            step = round(step / 2)
+        step = round(step / 2)
+
         # if we hit iteration limit, it makes no sense to continue
-        elif iter_res == IterationResults.limit:
+        if iter_res == IterationResults.limit:
             print("Iteration limit reached")
             break
 
     dump_data("results", results)
     plot_results_of_iterative_position_finding(results, r)
-    # plt.show()
+    plt.show()
 
     final_lat, final_lon = min(results, key=lambda x: x[0])[2], min(results, key=lambda x: x[0])[3]
     print(f"Position error: {latlon_distance(LAT_HOME, final_lat, LON_HOME, final_lon):.1f} m")

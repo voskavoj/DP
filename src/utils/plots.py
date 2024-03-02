@@ -27,7 +27,7 @@ def plot_results_of_iterative_position_finding(data: str | list, r=None, show=Fa
     res_arr = np.array(results)
     m.plot(home_lon, home_lat, latlon=True, marker="x", label="Actual position")
     m.plot(final_lon, final_lat, latlon=True, marker="o", label="Estimated position")
-    m.plot(res_arr[:, 3], res_arr[:, 2], latlon=True, label="Algorithm path")
+    m.plot(res_arr[:, 3], res_arr[:, 2], marker=".", latlon=True, label="Algorithm path")
     if r is not None:
         sat_track = r.earth_location.geodetic
         m.plot(sat_track.lon, sat_track.lat, latlon=True, label="Satellite track")
