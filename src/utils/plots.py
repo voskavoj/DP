@@ -14,13 +14,14 @@ def plot_results_of_iterative_position_finding(data: str | list, r=None, show=Fa
     else:
         results = data
 
-    final_lat, final_lon = min(results, key=lambda x: x[0])[2], min(results, key=lambda x: x[0])[3]
+    final_lat, final_lon, final_alt = results[-1][2], results[-1][3], results[-1][4]
 
-    home_lon, home_lat = LOCATIONS["HOME"][0], LOCATIONS["HOME"][1]
+    home_lon, home_lat, home_alt = LOCATIONS["HOME"][0], LOCATIONS["HOME"][1], LOCATIONS["HOME"][2]
 
-    print(f"Position error: {latlon_distance(home_lat, final_lat, home_lon, final_lon):.1f} m")
+    pos_error = latlon_distance(home_lat, final_lat, home_lon, final_lon, home_alt, final_alt)
     
     plt.figure()
+    plt.title(f"Pos. error: {pos_error:.1f} m")
     m = Basemap(llcrnrlon=0, llcrnrlat=40, urcrnrlon=30, urcrnrlat=65,
                 rsphere=(6378137.00, 6356752.3142), resolution='h', projection='merc', )
     
