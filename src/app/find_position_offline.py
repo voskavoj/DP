@@ -1,5 +1,6 @@
 import numpy as np
 import pickle
+from matplotlib import pyplot as plt
 
 from src.radio.iridium_offline_radio import IridiumOfflineRadio
 from src.satellites.download_tle import download_tles
@@ -39,4 +40,5 @@ print("Init done.")
 
 # ---------------------------- navigation
 solve(nav_data, satellites["Iridium"])
+plt.show()
 

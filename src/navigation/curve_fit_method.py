@@ -19,7 +19,7 @@ MAX_CURVE_GAP = 5  # s
 
 INIT_STEP_LL = 20e3  # km
 INIT_STEP_ALT = 50  # m
-INIT_STEP_OFF = 5000  # Hz
+INIT_STEP_OFF = 1000  # Hz
 ALT_LIMIT = 3000  # m
 
 ITER_LIMIT = 1000
@@ -172,7 +172,8 @@ def check_trial_curve(lat, lon, alt, off, measured_curve, time_arr, r_sat_arr, v
     # Ro_dot = (V_s - V_u) * (r_s - r_u) / ||r_s - r_u||
     rel_vel = np.sum(vs * (rs - ru) / np.linalg.norm(rs - ru, axis=0), axis=0)
 
-    f_d = -1 * rel_vel * base_freq / C
+    f_b = measured_curve[:, 2]
+    f_d = -1 * rel_vel * f_b / C
     trial_curve[:, 1] = f_d + off
 
     # calculate variance
@@ -292,7 +293,7 @@ def fit_curve(results, lat_0, lon_0, alt_0, off_0, measured_curve, time_arr, r_s
 
 def iterative_algorithm(curve_array, lat_0, lon_0, alt_0, off_0, base_freq):
 
-    measured_curve = np.column_stack((curve_array[:, IDX.t], curve_array[:, IDX.f] - curve_array[:, IDX.fb]))
+    measured_curve = np.column_stack((curve_array[:, IDX.t], curve_array[:, IDX.f] - curve_array[:, IDX.fb], curve_array[:, IDX.fb]))
 
     time_arr = Time(curve_array[:, IDX.t], format="unix")
     r = ITRS(x=curve_array[:, IDX.x] * unit.km, y=curve_array[:, IDX.y] * unit.km, z=curve_array[:, IDX.z] * unit.km,
@@ -309,6 +310,5 @@ def iterative_algorithm(curve_array, lat_0, lon_0, alt_0, off_0, base_freq):
 
     dump_data("results", results)
     plot_results_of_iterative_position_finding(results, r)
-    # plt.show()
 
     print(f"Position error: {latlon_distance(LAT_HOME, lat, LON_HOME, lon, ALT_HOME, alt):.1f} m")
