@@ -18,7 +18,7 @@ MAX_CURVE_VARIANCE = 100  # -
 MAX_CURVE_GAP = 5  # s
 
 STEP = 20e3  # km
-ITER_LIMIT = 100
+ITER_LIMIT = 1000
 STEP_LIMIT = 10  # m
 
 C = 299792458  # m/s
@@ -129,12 +129,9 @@ def solve(nav_data, satellites):
         print(pass_pos_ground)
 
         # ITERATIVE ALGORITHM
-        try:
-            iterative_algorithm(curve_array,
-                                lat_0=pass_pos_ground.lat.value, lon_0=pass_pos_ground.lon.value, alt_0=0,
-                                base_freq=curve[0][IDX.fb])
-        except KeyboardInterrupt:
-            print("Interrupted")
+        iterative_algorithm(curve_array,
+                            lat_0=pass_pos_ground.lat.value, lon_0=pass_pos_ground.lon.value, alt_0=0,
+                            base_freq=curve[0][IDX.fb])
 
     plt.show()
 
@@ -163,103 +160,98 @@ def check_trial_curve(lat, lon, alt, measured_curve, time_arr, r_sat_arr, v_sat_
     return sum_of_squares
 
 
-def move_latlon(step, lat, lon, north=False, south=False, west=False, east=False, ratio_lat=1.0, ratio_lon=1.0):
-    if (north and south) or (west and east) or not any([north, south, west, east]):
-        raise ValueError(f"Invalid direction combination (NSWE): {north, south, west, east}")
-
-    if north:
-        lat += m_to_deg_lat(step * ratio_lat, lat)
-    if south:
-        lat -= m_to_deg_lat(step * ratio_lat, lat)
-    if west:
-        lon -= m_to_deg_lon(step * ratio_lon, lat)
-    if east:
-        lon += m_to_deg_lon(step * ratio_lon, lat)
-
-    return lat, lon
-
-
 def fit_curve(results, step, lat_0, lon_0, alt_0, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq):
-
-    # init
-    go_north, go_south, go_west, go_east = False, False, False, False
-    # first, get SOS for current location
-    sos_0 = check_trial_curve(lat_0, lon_0, alt_0, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-    # second, go north, south, west and east to see the direction
-    lat, lon = move_latlon(step, lat_0, lon_0, north=True)
-    sos_n = check_trial_curve(lat, lon, alt_0, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-    if sos_n < sos_0:
-        go_north = True
-    else:
-        lat, lon = move_latlon(step, lat_0, lon_0, south=True)
-        sos_s = check_trial_curve(lat, lon, alt_0, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-        if sos_s < sos_0:
-            go_south = True
-
-    lat, lon = move_latlon(step, lat_0, lon_0, west=True)
-    sos_w = check_trial_curve(lat, lon, alt_0, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-    if sos_w < sos_0:
-        go_west = True
-    else:
-        lat, lon = move_latlon(step, lat_0, lon_0, east=True)
-        sos_e = check_trial_curve(lat, lon, alt_0, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-        if sos_e < sos_0:
-            go_east = True
-
-    print(f"Go N {go_north}, S {go_south}, W {go_west}, E {go_east}")
-
-    if not any([go_north, go_south, go_west, go_east]):
-        print("Original location is the best")
-        return IterationResults.first, lat_0, lon_0, alt_0, results
+    iteration_result = IterationResults.limit
 
     # iterate
+    step_ll = step
+    step_alt = 10  # todo
+    step_off = 100  # todo
     lat = lat_0
     lon = lon_0
     alt = 0
-    sos = sos_0
-    diff_ns, diff_we = 0, 0
+
+    # initial SOS
+    sos = check_trial_curve(lat, lon, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
 
     for i in range(ITER_LIMIT):
+        # nORTH, sOUTH, wEST, eAST, uP, dOWN, mORE_OFFSET, lESS_OFFSET
 
-        lat_1, lon_1 = move_latlon(step, lat, lon, north=True, south=False, west=False, east=False)
-        sos_n = check_trial_curve(lat_1, lon_1, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+        # 1. calculate SOS for each direction
+        lat_n = lat + m_to_deg_lat(step_ll * 1, lat)
+        sos_n = check_trial_curve(lat_n, lon, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
 
-        lat_1, lon_1 = move_latlon(step, lat, lon, north=False, south=True, west=False, east=False)
-        sos_s = check_trial_curve(lat_1, lon_1, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+        lat_s = lat + m_to_deg_lat(step_ll * -1, lat)
+        sos_s = check_trial_curve(lat_s, lon, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
 
-        lat_1, lon_1 = move_latlon(step, lat, lon, north=False, south=False, west=True, east=False)
-        sos_w = check_trial_curve(lat_1, lon_1, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+        lon_w = lon + m_to_deg_lon(step_ll * -1, lat)
+        sos_w = check_trial_curve(lat, lon_w, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
 
-        lat_1, lon_1 = move_latlon(step, lat, lon, north=False, south=False, west=False, east=True)
-        sos_e = check_trial_curve(lat_1, lon_1, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+        lon_e = lon + m_to_deg_lon(step_ll * 1, lat)
+        sos_e = check_trial_curve(lat, lon_e, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
 
-        go_north = sos_n < sos
-        go_south = sos_s < sos
-        go_west = sos_w < sos
-        go_east = sos_e < sos
+        alt_u = alt + step_alt * 1
+        sos_u = check_trial_curve(lat, lon, alt_u, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
 
-        diff_ns = max(0, max(sos - sos_n, sos - sos_s))
-        diff_we = max(0, max(sos - sos_w, sos - sos_e))
-        print(f"Diff NS {diff_ns}, WE {diff_we}")
+        alt_d = alt + step_alt * -1
+        sos_d = check_trial_curve(lat, lon, alt_d, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
 
-        if not any([go_north, go_south, go_west, go_east]):
-            print("Found position!")
+        # 2. calculate differences
+        sos_n = max(0, sos - sos_n)
+        sos_s = max(0, sos - sos_s)
+        sos_w = max(0, sos - sos_w)
+        sos_e = max(0, sos - sos_e)
+        sos_u = max(0, sos - sos_u)
+        sos_d = max(0, sos - sos_d)
+
+        diff_lat = sos_n - sos_s
+        diff_lon = sos_e - sos_w
+        diff_alt = sos_u - sos_d
+
+        # 3. check if current position is the best
+        if diff_lat == 0 and diff_lon == 0 and step_ll > STEP_LIMIT:
+            step_ll = max(STEP_LIMIT, round(step_ll / 2))
+
+        if diff_lat == 0 and diff_lon == 0 and diff_alt == 0 and step_ll <= STEP_LIMIT:
+            results.append([sos, i, lat, lon, alt])
+            print(f"Iteration {i + 1:03d}: lat {lat:03.3f}°, lon {lon:02.3f}°, alt {alt:04.0f} m, SOS {sos:09.0f}, "
+                  f"step_LL {step_ll:05.0f} m, "
+                  f"dist {latlon_distance(LAT_HOME, lat, LON_HOME, lon):07.0f} m, "
+                  f"ITERATION END")
+            if i == 0:
+                iteration_result = IterationResults.first
+            else:
+                iteration_result = IterationResults.found
             break
 
-        lat, lon = move_latlon(step, lat, lon, north=go_north, south=go_south, west=go_west, east=go_east,
-                               ratio_lat=diff_ns / (diff_ns + diff_we), ratio_lon=diff_we / (diff_ns + diff_we))
+        # 4. calculate ratios
+        tot_diff = abs(diff_lat) + abs(diff_lon) + abs(diff_alt)
+        if tot_diff > 0:
+            ratio_lat = diff_lat / tot_diff
+            ratio_lon = diff_lon / tot_diff
+            ratio_alt = diff_alt / tot_diff
+        else:
+            ratio_lat, ratio_lon, ratio_alt = 0, 0, 0
+
+        # 5. move trial position and calculate new SOS
+        lat = lat + m_to_deg_lat(step_ll * ratio_lat, lat)
+        lon = lon + m_to_deg_lon(step_ll * ratio_lon, lat)
+        alt = alt + step_alt * ratio_alt
+
         sos = check_trial_curve(lat, lon, alt, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-        step = 3 * sos / 1000  # adaptive step
-        step = max(min(STEP, step), STEP_LIMIT)  # constrain step
 
+        # 6. calculate new step
+        # step_ll = max(step_ll, 3 * sos / 1000)  # adaptive step
+        # step_ll = max(min(STEP, step_ll), STEP_LIMIT)  # constrain step
+
+        # 7. log results
         results.append([sos, i, lat, lon, alt])
-        print(f"Iteration {i + 1:03d}: lat {lat:03.3f}, lon {lon:02.3f}, alt {alt:04.0f}, SOS {sos:09.0f}, step {step:05.0f} m "
-              f"{latlon_distance(LAT_HOME, lat, LON_HOME, lon):07.0f} m "
-              f"dir {'N' if go_north else ''}{'S' if go_south else ''}{'W' if go_west else ''}{'E' if go_east else ''}")
-    else:
-        return IterationResults.limit, lat, lon, alt, results
+        print(f"Iteration {i + 1:03d}: lat {lat:05.3f}°, lon {lon:05.3f}°, alt {alt:04.0f} m, SOS {sos:09.0f}, "
+              f"step_LL {step_ll:05.0f} m, "
+              f"dist {latlon_distance(LAT_HOME, lat, LON_HOME, lon):07.0f} m, "
+              f"rlat {ratio_lat: 5.2f}, rlon {ratio_lon: 5.2f}, ralt {ratio_alt: 5.2f}")
 
-    return IterationResults.found, lat, lon, alt, results
+    return iteration_result, lat, lon, alt, results
 
 
 def iterative_algorithm(curve_array, lat_0, lon_0, alt_0, base_freq):
@@ -282,7 +274,10 @@ def iterative_algorithm(curve_array, lat_0, lon_0, alt_0, base_freq):
         print(f"Step {step}")
         iter_res, lat, lon, alt, results = fit_curve(results, step, lat, lon, alt,
                                                      measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-        step = round(step / 2)
+        # step = round(step / 2)
+
+        if iter_res == IterationResults.found:
+            break
 
         # if we hit iteration limit, it makes no sense to continue
         if iter_res == IterationResults.limit:
