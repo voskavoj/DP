@@ -144,8 +144,7 @@ def check_trial_curve(lat, lon, alt, measured_curve, time_arr, r_sat_arr, v_sat_
 
     trial_curve = np.empty((curve_len, 2))
     trial_curve[:, 0] = measured_curve[:, 0]  # times are the same
-
-    r_user_arr = (EarthLocation.from_geodetic([lon] * curve_len, [lat] * curve_len, [alt] * curve_len)
+    r_user_arr = (EarthLocation.from_geodetic(lon, lat, alt)
                   .get_itrs(obstime=time_arr).cartesian.without_differentials())
 
     vs, rs, ru = v_sat_arr, r_sat_arr, r_user_arr
