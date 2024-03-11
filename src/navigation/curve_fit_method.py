@@ -107,6 +107,10 @@ def solve(nav_data, satellites):
     detected_curves = find_curves(nav_data)
     print("Detected curves ", len(detected_curves))
     # for each curve
+
+    init_locations = list()
+    measured_curves = list()
+
     for curve in detected_curves:
         sat = satellites[str(curve[0][4])]
         print(sat.name, curve[0][2], len(curve))
@@ -124,16 +128,31 @@ def solve(nav_data, satellites):
         times = pass_time + np.array([-30, 0, 30])
         pred_pos = predict_satellite_positions([sat.satrec], Time(times, format="unix"))[0, :]
         pass_pos = pred_pos[1]
-        print(Time(pass_time, format="unix").to_value("datetime"), pass_time)
 
         # find ground position of sat at pass time
         pass_pos_ground = pass_pos.earth_location.geodetic
-        print(pass_pos_ground)
 
-        # fit curve to find position
-        iterative_algorithm(curve_array,
-                            lat_0=pass_pos_ground.lat.value, lon_0=pass_pos_ground.lon.value, alt_0=0,
-                            base_freq=curve[0][IDX.fb])
+        init_locations.append((pass_pos_ground.lat.value, pass_pos_ground.lon.value, 0))
+        measured_curves.append(curve_array)
+
+    lat_0, lon_0, alt_0 = 0, 0, 0
+    for lat, lon, alt in init_locations:
+        lat_0 += lat
+        lon_0 += lon
+        alt_0 += alt
+    lat_0 /= len(init_locations)
+    lon_0 /= len(init_locations)
+    alt_0 /= len(init_locations)
+
+    curve_array = np.vstack([curve for curve in measured_curves])
+
+    print(curve_array.shape)
+
+    print(f"Initial position: lat {lat_0:05.3f}°, lon {lon_0:05.3f}°, alt {alt_0:04.0f} m")
+    # fit curve to find position
+    iterative_algorithm(curve_array,
+                        lat_0=lat_0, lon_0=lon_0, alt_0=alt_0,
+                        base_freq=1626270800.0)  # todo different base freqs
 
     plt.show()
 
