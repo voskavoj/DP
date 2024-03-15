@@ -8,7 +8,7 @@ from src.navigation.data_processing import process_received_frames
 from src.navigation.curve_fit_method import solve
 
 USE_SAVED_DATA = True
-SAVED_DATA_FILE = "test_nav_data.pickle"
+SAVED_DATA_FILE = "saved_nav_data.pickle"
 CONSTELLATIONS = ("Iridium", )
 DATA_PATH = "Data\\exp03\\"
 FRAME_FILE = "decoded.txt"
