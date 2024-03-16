@@ -43,7 +43,7 @@ def _download_and_parse_tles(constellation, offline_dir=None):
     print(f"Downloading TLEs for {constellation}...")
     retval = dict()
 
-    tle_lines = _get_tles(constellation, offline_dir)
+    tle_lines = get_tles(constellation, offline_dir)
 
     for i in range(0, len(tle_lines), 3):
         pattern = re.compile(r"([A-Za-z]+)[- ]([A-Za-z0-9]+)( \[.\])*", re.IGNORECASE)
@@ -67,7 +67,7 @@ def _download_and_parse_tles(constellation, offline_dir=None):
     return retval
 
 
-def _get_tles(constellation, offline_dir=None):
+def get_tles(constellation, offline_dir=None):
     found, expired, timestamp, tles_offline = _read_saved_tles(constellation,
                                                                offline_dir if offline_dir else DOWNLOAD_PATH)
 
@@ -109,13 +109,19 @@ def _read_saved_tles(constellation, path=DOWNLOAD_PATH):
     try:
         with open(path + constellation.replace(" ", "_") + DOWNLOAD_EXTENSION, "r") as file:
             content = file.readlines()
+            try:
             timestamp = Time(content[0].strip())
+            except Exception:
+                print("Error in reading timestamp from TLE file")
+                timestamp = None
             content = content[1:]
     except FileNotFoundError:
         return False, None, None, None
 
     # check expiration
-    if Time.now() - timestamp > TimeDelta(DOWNLOAD_EXPIRATION * 3600 * unit.s):
+    if timestamp is None:
+        expired = False
+    elif Time.now() - timestamp > TimeDelta(DOWNLOAD_EXPIRATION * 3600 * unit.s):
         expired = True
     else:
         expired = False
