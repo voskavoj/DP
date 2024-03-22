@@ -24,39 +24,34 @@ def find_channel_id(freq):
     return CHANNEL_IDS[find_tx_base_frequency(freq, drop=False)]
 
 
-IRIDIUM_ID_MAP = {
-    1: 154,  # 1
-    9: 159,  # 1
-    11: 141,  # 1
-    15: 180,  # 1
-    21: 118,  # 1
-    22: 167,  # 1
-    23: 170,  # 1
-    27: 173,  # 1
-    29: 117,  # 12
-    36: 119,  # 567
-    42: 110,  # 3
-    44: 122,  # 553
-    # 50: 170,  # 1
-    57: 169,  # 275
-    # 58: 169,  # 1
-    # 65: 173,  # 1
-    # 66: 173,  # 1
-    68: 176,  # 9
-    72: 160,  # 1
-    73: 138,  # 1
-    78: 179,  # 669
-    82: 106,  # 1
-    87: 129,  # 1
-    91: 152,  # 3
-    115: 178,  # 35
+TLE_ID_TO_IRI_ID_MAP = {
+    102: 112,  # 24
+    103: 103,  # 103
+    104: 110,  # 53
+    109: 4,    # 23
+    110: 9,    # 6
+    111: 16,   # 17
+    112: 17,   # 35
+    114: 26,   # 75
+    119: 36,   # 567
+    122: 44,   # 553
+    156: 46,   # 304
+    158: 18,   # 285
+    159: 49,   # 158
+    160: 90,   # 226
+    163: 3,    # 129
+    165: 23,   # 90
+    166: 96,   # 73
+    169: 57,   # 275
+    179: 78,   # 669
 }
 
-IRIDIUM_ID_MAP_REVERSE = {tle_id: sat_id for sat_id, tle_id in IRIDIUM_ID_MAP.items()}
+IRI_ID_TO_TLE_ID_MAP = {iri_id: tle_id for tle_id, iri_id in TLE_ID_TO_IRI_ID_MAP.items()}
 
-if len(IRIDIUM_ID_MAP) != len(IRIDIUM_ID_MAP_REVERSE):
-    raise ValueError(f"Duplicate values in IRIDIUM_ID_MAP: "
-                     f"{set([x for x in IRIDIUM_ID_MAP.values() if list(IRIDIUM_ID_MAP.values()).count(x) > 1])}")
+
+if len(IRI_ID_TO_TLE_ID_MAP) != len(TLE_ID_TO_IRI_ID_MAP):
+    raise ValueError(f"Duplicate values in IRI_ID_TO_TLE_ID_MAP: "
+                     f"{set([x for x in TLE_ID_TO_IRI_ID_MAP.values() if list(TLE_ID_TO_IRI_ID_MAP.values()).count(x) > 1])}")
 
 
 def map_sat_id_to_tle_id(sat_id: str | int | float) -> int | bool:
@@ -66,7 +61,7 @@ def map_sat_id_to_tle_id(sat_id: str | int | float) -> int | bool:
     :param sat_id: satellite ID from IRA/IBC frame as number
     :return: Satellite ID from TLE as integer
     """
-    return IRIDIUM_ID_MAP.get(int(sat_id), False)
+    return IRI_ID_TO_TLE_ID_MAP[int(sat_id)]
 
 
 def map_tle_id_to_sat_id(tle_id: str | int | float) -> int | bool:
@@ -76,4 +71,4 @@ def map_tle_id_to_sat_id(tle_id: str | int | float) -> int | bool:
     :param tle_id: Satellite ID from TLE as number
     :return: Satellite ID from IRA/IBC frame as integer
     """
-    return IRIDIUM_ID_MAP_REVERSE.get(int(tle_id), False)
+    return TLE_ID_TO_IRI_ID_MAP[int(tle_id)]
