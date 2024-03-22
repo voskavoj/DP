@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 from src.navigation.calculations import m_to_deg_lat, m_to_deg_lon, latlon_distance
 from src.satellites.predictions import predict_satellite_positions
-from src.navigation.data_processing import nav_data_to_array
+from src.navigation.data_processing import nav_data_to_array, find_curves
 from src.navigation.data_processing import NavDataArrayIndices as IDX
 from src.config.locations import LOCATIONS
 from src.utils.data import dump_data
@@ -80,36 +80,9 @@ def is_valid_curve(curve):
         and (MAX_CURVE_VARIANCE is False or variance <= MAX_CURVE_VARIANCE)
     )
 
-    # plot_analyzed_curve(curve, dopp_start, dopp_end, curve_duration, curve_density, largest_gap, variance, ok=valid)
+    plot_analyzed_curve(curve, dopp_start, dopp_end, curve_duration, curve_density, largest_gap, variance, ok=valid)
 
     return valid
-
-
-def find_curves(nav_data):
-    curves = dict()
-
-    # split by ID and channel
-    for time, freq, base_freq, sat_pos, sat_id in nav_data:
-        if sat_id not in curves:
-            curves[sat_id] = dict()
-        if base_freq not in curves[sat_id]:
-            curves[sat_id][base_freq] = list()
-        curves[sat_id][base_freq].append((time, freq, base_freq, sat_pos, sat_id))
-
-    # to list
-    curves = [curves[sat_id][base_freq]
-              for sat_id in curves
-              for base_freq in curves[sat_id]
-              if is_valid_curve(curves[sat_id][base_freq])]
-
-    # todo for actual data
-#     # split by gap
-#     for curve in curves:
-#         prev_time = curve[0][0]
-#         for time, freq, base_freq, sat_pos in curve:
-#             TODO split by time
-
-    return curves
 
 
 def solve(nav_data, satellites):
@@ -124,15 +97,13 @@ def solve(nav_data, satellites):
     print("Solving")
     detected_curves = find_curves(nav_data)
     print("Detected curves ", len(detected_curves))
-    # for each curve
 
     init_locations = list()
     measured_curves = list()
 
-    for curve in detected_curves:
-        sat = satellites[str(curve[0][4])]
-        print(sat.name, curve[0][2], len(curve))
-        curve_array = nav_data_to_array(curve)
+    for curve_array in detected_curves:
+        sat = satellites[str(int(curve_array[0, IDX.sat_id]))]
+        print(sat.name, curve_array[0, IDX.fb], curve_array.shape[0])
 
         # find zero doppler shift
         dopp_shift_arr = curve_array[:, IDX.f] - curve_array[:, IDX.fb]
@@ -167,7 +138,6 @@ def solve(nav_data, satellites):
     print(curve_array.shape)
 
     print(f"Initial position: lat {lat_0:05.3f}°, lon {lon_0:05.3f}°, alt {alt_0:04.0f} m")
-    # fit curve to find position
     iterative_algorithm(curve_array,
                         lat_0=lat_0, lon_0=lon_0, alt_0=alt_0, off_0=0,
                         base_freq=1626270800.0)  # todo different base freqs
@@ -360,13 +330,11 @@ def iterative_algorithm(curve_array, lat_0, lon_0, alt_0, off_0, base_freq):
 
     iter_res, lat, lon, alt, results = fit_curve(results, lat_0, lon_0, alt_0, off_0,
                                                  measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-
     dump_data("results", results)
     plot_results_of_iterative_position_finding(results, r)
 
     iter_res, lat, lon, alt, results = fit_curve_grid(results, lat_0, lon_0, alt_0, off_0,
                                                       measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-
     dump_data("results", results)
     plot_results_of_iterative_position_finding(results, r)
 

@@ -3,18 +3,18 @@ import pickle
 from astropy.time import Time
 
 from src.config.locations import LOCATIONS
-from src.radio.iridium_channels import map_tle_id_to_sat_id
+from src.radio.iridium_channels import map_tle_id_to_sat_id, IRA_BASE_FREQUENCY
 from src.satellites.download_tle import download_tles
 from src.navigation.data_processing import process_received_frames
 from src.satellites.predictions import predict_satellite_doppler_shift
 
-SAVED_DATA_FILE = "test_nav_data.pickle"
-
-CONSTELLATIONS = ("Iridium", )
-BASE_FREQ = 1626270800
 DATA_PATH = "Data\\exp04\\"
-LOCATION = "HOME"
 START_TIME = "2024-03-17 14:24:09"  # UTC
+
+SAVED_DATA_FILE = "test_nav_data.pickle"
+CONSTELLATIONS = ("Iridium", )
+BASE_FREQ = IRA_BASE_FREQUENCY
+LOCATION = "HOME"
 TEST_DATA_MINUTES = 60
 DECIMATION = 4
 DOPP_LIMIT = 36000
@@ -26,10 +26,15 @@ lon, lat, alt = LOCATIONS[LOCATION]
 
 
 test_sat_list = [
+    satellites["Iridium"]["103"],
+    satellites["Iridium"]["104"],
+    satellites["Iridium"]["114"],
     satellites["Iridium"]["156"],
     satellites["Iridium"]["158"],
+    satellites["Iridium"]["159"],
     satellites["Iridium"]["160"],
-    satellites["Iridium"]["163"]
+    satellites["Iridium"]["163"],
+    satellites["Iridium"]["165"],
 ]
 
 print(test_sat_list)

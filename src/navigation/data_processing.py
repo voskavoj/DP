@@ -7,7 +7,7 @@ from src.satellites.predictions import predict_satellite_positions
 
 
 SATELLITE_FRAME_COUNT_FILTER = 100
-TIME_CORRECTION_FACTOR = 1.086932049564126  # ms/ms
+TIME_CORRECTION_FACTOR = 1  # ms/ms
 
 
 class NavDataIndices:
@@ -83,7 +83,7 @@ def process_received_frames(frames_array: np.array, start_time: str, satellites:
             continue
         nav_data.append([times[i], frames_array[i, 2], frames_array[i, 3], pos_itrs[j, i], sat])
 
-    return nav_data
+    return nav_data_to_array(nav_data)  # todo actual array above
 
 
 def nav_data_to_array(nav_data: list) -> np.array:
@@ -100,3 +100,33 @@ def nav_data_to_array(nav_data: list) -> np.array:
                              sat_pos.v_x.value, sat_pos.v_y.value, sat_pos.v_z.value]
 
     return nav_data_array
+
+
+def find_curves(nav_data_array):
+    IDX = NavDataArrayIndices
+    # sort nav_data_array by sat_id, base_freq, and abs_time
+    sorted_indices = np.lexsort((nav_data_array[:, IDX.t], nav_data_array[:, IDX.fb], nav_data_array[:, IDX.id]))
+
+    sorted_nav_data = nav_data_array[sorted_indices]
+
+    # find unique combinations of sat_id and base_freq
+    unique_combinations, indices = np.unique(sorted_nav_data[:, [IDX.id, IDX.fb]], axis=0, return_index=True)
+
+    split_arrays = []
+
+    # Split sorted_nav_data into arrays based on unique combinations
+    for i in range(len(indices)):
+        if i == len(indices) - 1:
+            split_array = sorted_nav_data[indices[i]:]
+        else:
+            split_array = sorted_nav_data[indices[i]:indices[i + 1]]
+
+        # verify the splitting works
+        assert np.all(split_array[:, IDX.fb] == split_array[0, IDX.fb])  # is one base frequency
+        assert np.all(split_array[:, IDX.id] == split_array[0, IDX.id])  # is one satellite ID
+        assert np.all(np.diff(split_array[:, IDX.t]) >= 0)  # is sorted by time
+
+        if True:  # todo is_valid_curve(split_array):
+            split_arrays.append(split_array)
+
+    return split_arrays
