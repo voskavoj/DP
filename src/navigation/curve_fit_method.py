@@ -80,36 +80,38 @@ def is_valid_curve(curve):
         and (MAX_CURVE_VARIANCE is False or variance <= MAX_CURVE_VARIANCE)
     )
 
-    # plot_analyzed_curve(curve, dopp_start, dopp_end, curve_duration, curve_density, largest_gap, variance, ok=valid)
+    plot_analyzed_curve(curve, dopp_start, dopp_end, curve_duration, curve_density, largest_gap, variance, ok=valid)
 
     return valid
 
 
-def find_curves(nav_data):
-    curves = dict()
+def find_curves(nav_data_array):
+    # sort nav_data_array by sat_id, base_freq, and abs_time
+    sorted_indices = np.lexsort((nav_data_array[:, 0], nav_data_array[:, 2], nav_data_array[:, 3]))
 
-    # split by ID and channel
-    for time, freq, base_freq, sat_pos, sat_id in nav_data:
-        if sat_id not in curves:
-            curves[sat_id] = dict()
-        if base_freq not in curves[sat_id]:
-            curves[sat_id][base_freq] = list()
-        curves[sat_id][base_freq].append((time, freq, base_freq, sat_pos, sat_id))
+    sorted_nav_data = nav_data_array[sorted_indices]
 
-    # to list
-    curves = [curves[sat_id][base_freq]
-              for sat_id in curves
-              for base_freq in curves[sat_id]
-              if is_valid_curve(curves[sat_id][base_freq])]
+    # find unique combinations of sat_id and base_freq
+    unique_combinations, indices = np.unique(sorted_nav_data[:, [3, 2]], axis=0, return_index=True)
 
-    # todo for actual data
-#     # split by gap
-#     for curve in curves:
-#         prev_time = curve[0][0]
-#         for time, freq, base_freq, sat_pos in curve:
-#             TODO split by time
+    # Initialize a list to hold split arrays
+    split_arrays = []
 
-    return curves
+    # Split sorted_nav_data into arrays based on unique combinations
+    for i in range(len(indices)):
+        if i == len(indices) - 1:
+            split_array = sorted_nav_data[indices[i]:]
+        else:
+            split_array = sorted_nav_data[indices[i]:indices[i + 1]]
+
+            assert np.all(split_array[:, 2] == split_array[0, 2])
+            assert np.all(split_array[:, 3] == split_array[0, 3])
+            assert np.all(np.diff(split_array[:, 0]) >= 0)
+
+            if True:  # todo is_valid_curve(split_array):
+                split_arrays.append(split_array)
+
+    return split_arrays
 
 
 def solve(nav_data, satellites):
@@ -124,15 +126,13 @@ def solve(nav_data, satellites):
     print("Solving")
     detected_curves = find_curves(nav_data)
     print("Detected curves ", len(detected_curves))
-    # for each curve
 
     init_locations = list()
     measured_curves = list()
 
-    for curve in detected_curves:
-        sat = satellites[str(curve[0][4])]
-        print(sat.name, curve[0][2], len(curve))
-        curve_array = nav_data_to_array(curve)
+    for curve_array in detected_curves:
+        sat = satellites[str(int(curve_array[0, IDX.sat_id]))]
+        print(sat.name, curve_array[0, IDX.fb], curve_array.shape[0])
 
         # find zero doppler shift
         dopp_shift_arr = curve_array[:, IDX.f] - curve_array[:, IDX.fb]
@@ -360,13 +360,11 @@ def iterative_algorithm(curve_array, lat_0, lon_0, alt_0, off_0, base_freq):
 
     iter_res, lat, lon, alt, results = fit_curve(results, lat_0, lon_0, alt_0, off_0,
                                                  measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-
     dump_data("results", results)
     plot_results_of_iterative_position_finding(results, r)
 
     iter_res, lat, lon, alt, results = fit_curve_grid(results, lat_0, lon_0, alt_0, off_0,
                                                       measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-
     dump_data("results", results)
     plot_results_of_iterative_position_finding(results, r)
 

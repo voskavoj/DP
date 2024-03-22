@@ -83,7 +83,7 @@ def process_received_frames(frames_array: np.array, start_time: str, satellites:
             continue
         nav_data.append([times[i], frames_array[i, 2], frames_array[i, 3], pos_itrs[j, i], sat])
 
-    return nav_data
+    return nav_data_to_array(nav_data)  # todo actual array above
 
 
 def nav_data_to_array(nav_data: list) -> np.array:
