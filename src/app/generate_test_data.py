@@ -12,10 +12,10 @@ SAVED_DATA_FILE = "test_nav_data.pickle"
 
 CONSTELLATIONS = ("Iridium", )
 BASE_FREQ = 1626270800
-DATA_PATH = "Data\\exp03\\"
+DATA_PATH = "Data\\exp04\\"
 LOCATION = "HOME"
-START_TIME = "2024-01-07 18:18:29"  # UTC
-TEST_DATA_MINUTES = 35
+START_TIME = "2024-03-17 14:24:09"  # UTC
+TEST_DATA_MINUTES = 60
 DECIMATION = 4
 DOPP_LIMIT = 36000
 
@@ -26,10 +26,10 @@ lon, lat, alt = LOCATIONS[LOCATION]
 
 
 test_sat_list = [
-    satellites["Iridium"]["119"],
-    satellites["Iridium"]["122"],
-    satellites["Iridium"]["169"],
-    satellites["Iridium"]["179"]
+    satellites["Iridium"]["156"],
+    satellites["Iridium"]["158"],
+    satellites["Iridium"]["160"],
+    satellites["Iridium"]["163"]
 ]
 
 print(test_sat_list)

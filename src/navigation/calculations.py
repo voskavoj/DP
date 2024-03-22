@@ -48,3 +48,24 @@ def m_to_deg_lon(m, lat, deg=True):
 
     m_per_deg_lon = 111132.954 * np.cos(lat)
     return m / m_per_deg_lon
+
+
+def add_gaussian_noise_and_offset(data, noise_mean=0, noise_std_dev=1, offset=0):
+    """
+    Add Gaussian noise and offset to the input data.
+
+    :param data: input data
+    :param noise_mean: mean of the Gaussian noise
+    :param noise_std_dev: standard deviation of the Gaussian noise
+    :param offset: offset to add to the data
+
+    :return: noisy data
+    """
+    if noise_std_dev != 0:
+        noise = np.random.normal(noise_mean, noise_std_dev, data.shape)
+        data += noise
+
+    if offset != 0:
+        data += offset
+
+    return data

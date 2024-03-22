@@ -29,7 +29,7 @@ STEP_LIMIT = 10  # m
 ITER_INIT_STEP_LL = 100e3  # km
 ITER_INIT_STEP_ALT = 100  # m
 ITER_INIT_STEP_OFF = 3000  # Hz
-ITER_LIMIT = 1500
+ITER_LIMIT = 500
 
 # Grid search parameters
 GRID_SEARCH_DEPTH = 5
@@ -172,8 +172,6 @@ def solve(nav_data, satellites):
                         lat_0=lat_0, lon_0=lon_0, alt_0=alt_0, off_0=0,
                         base_freq=1626270800.0)  # todo different base freqs
 
-    plt.show()
-
 
 def check_trial_curve(lat, lon, alt, off, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq):
     curve_len = measured_curve.shape[0]
@@ -256,7 +254,6 @@ def fit_curve(results, lat_0, lon_0, alt_0, off_0, measured_curve, time_arr, r_s
         diff_lat = sos_n - sos_s
         diff_lon = sos_e - sos_w
         diff_alt = sos_u - sos_d
-        diff_alt = 0
         diff_off = sos_m - sos_l
 
         # 3. check if current position is the best

@@ -110,11 +110,13 @@ def _read_saved_tles(constellation, path=DOWNLOAD_PATH):
         with open(path + constellation.replace(" ", "_") + DOWNLOAD_EXTENSION, "r") as file:
             content = file.readlines()
             try:
-                timestamp = Time(content[0].strip())
-            except Exception:
-                print("Error in reading timestamp from TLE file")
+                content[0].strip()
+                timestamp = Time(content[0].strip(), format="iso")
+            except ValueError:
+                print("Error in reading timestamp from TLE file, assuming file is up to date")
                 timestamp = None
-            content = content[1:]
+            else:
+                content = content[1:]
     except FileNotFoundError:
         return False, None, None, None
 

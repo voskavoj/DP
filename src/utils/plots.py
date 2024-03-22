@@ -26,12 +26,12 @@ def plot_results_of_iterative_position_finding(data: str | list, r=None, show=Fa
                 rsphere=(6378137.00, 6356752.3142), resolution='h', projection='merc', )
     
     res_arr = np.array(results)
-    m.plot(home_lon, home_lat, "x", latlon=True, label="Actual position")
-    m.plot(final_lon, final_lat, "o", latlon=True, label="Estimated position")
-    m.plot(res_arr[:, 3], res_arr[:, 2], marker=".", latlon=True, label="Algorithm path")
     if r is not None:
         sat_track = r.earth_location.geodetic
-        m.plot(sat_track.lon, sat_track.lat, ".", ms=1.5, latlon=True, label="Satellite track")
+        m.plot(sat_track.lon, sat_track.lat, ".", color="red", ms=1.5, latlon=True, label="Satellite track")
+    m.plot(res_arr[:, 3], res_arr[:, 2], marker=".", color="green", latlon=True, label="Algorithm path")
+    m.plot(final_lon, final_lat, "o", color="orange", latlon=True, label="Estimated position")
+    m.plot(home_lon, home_lat, "x", color="blue", latlon=True, label="Actual position")
     m.drawcoastlines()
     m.fillcontinents()
     m.drawcountries()
