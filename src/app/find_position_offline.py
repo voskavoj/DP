@@ -10,9 +10,10 @@ from src.navigation.curve_fit_method import solve
 USE_SAVED_DATA = True
 SAVED_DATA_FILE = "saved_nav_data.pickle"
 CONSTELLATIONS = ("Iridium", )
-DATA_PATH = "Data\\exp03\\"
+DATA_PATH = "Data\\exp04\\"
 FRAME_FILE = "decoded.txt"
-START_TIME = "2024-01-07 18:18:29"  # UTC
+# START_TIME = "2024-01-07 18:18:29"  # UTC
+START_TIME = "2024-03-17 14:04:09"  # UTC
 
 # ---------------------------- init
 satellites = download_tles(constellations=CONSTELLATIONS, offline_dir=DATA_PATH)

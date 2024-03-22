@@ -8,9 +8,9 @@ from src.radio.iridium_frame_operations import decompose_ira_frame
 from src.satellites.download_tle import download_tles, unpack
 
 CONSTELLATIONS = ("Iridium", )
-DATA_PATH = "Data\\exp03\\"
+DATA_PATH = "Data\\exp04\\"
 FRAME_FILE = "decoded.txt"
-START_TIME = "2024-01-07 18:17:40"  # UTC
+START_TIME = "2024-03-17 14:04:09"  # UTC
 
 # ---------------------------- init
 satellites = download_tles(constellations=CONSTELLATIONS, offline_dir=DATA_PATH)
@@ -62,3 +62,9 @@ for k in found_ids.keys():
     ids, counts = np.unique(found_ids[k], return_counts=True)
 
     print(f"{k: 3d}: " + "\t".join(f"Iridium {sat_id: 3d} x {c}" for sat_id, c in zip(ids, counts)))
+
+for k in found_ids.keys():
+    out = ""
+    ids, counts = np.unique(found_ids[k], return_counts=True)
+    for sat_id, c in zip(ids, counts):
+        print(f"{sat_id}: {k: 3d} ({c})")
