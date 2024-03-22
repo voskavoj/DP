@@ -44,7 +44,14 @@ def plot_results_of_iterative_position_finding(data: str | list, r=None, show=Fa
         plt.show()
 
 
-def plot_analyzed_curve(curve, dopp_start, dopp_end, curve_duration, curve_density, largest_gap, variance):
+def plot_analyzed_curve(curve, dopp_start, dopp_end, curve_duration, curve_density, largest_gap, variance, ok=None):
+    if ok is True:
+        color = "green"
+    elif ok is False:
+        color = "red"
+    else:
+        color = "blue"
+
     curve_array = nav_data_to_array(curve)
     plt.figure()
     plt.title(f"T:{(dopp_start > 0 > dopp_end or dopp_start < 0 < dopp_end)}, "
@@ -52,6 +59,6 @@ def plot_analyzed_curve(curve, dopp_start, dopp_end, curve_duration, curve_densi
               f"D:{curve_density:.3f} \n"
               f"G{largest_gap:.2f}, "
               f"V{variance:.3f}\n")
-    plt.plot(curve_array[:, 0], curve_array[:, 1] - curve_array[:, 2], ".")
+    plt.plot(curve_array[:, 0], curve_array[:, 1] - curve_array[:, 2], ".", color=color)
     plt.savefig(get_fig_filename("analyzed_curve"))
     plt.close()
