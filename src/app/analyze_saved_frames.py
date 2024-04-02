@@ -1,24 +1,22 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+from src.config.setup import *
 from src.radio.iridium_offline_radio import IridiumOfflineRadio
 
 
 GENERATE_NEW_DATA = True
 
-DATA_PATH = "Data\\exp03\\"
-# FRAME_FILE = "output.bits"
-FRAME_FILE = "decoded.txt"
-SAVED_DATA_FILE = "saved_output_full_decode_drop_2"
+SAVE_FILE = "saved_output_full_decode_drop_2"
 
 # open file
 if GENERATE_NEW_DATA:
     radio = IridiumOfflineRadio(DATA_PATH + FRAME_FILE, file_is_parsed=True)
     frames_array = np.array(radio.get_frames())
     del radio
-    np.save(DATA_PATH + SAVED_DATA_FILE, frames_array)
+    np.save(DATA_PATH + SAVE_FILE, frames_array)
 else:
-    frames_array = np.load(DATA_PATH + SAVED_DATA_FILE + ".npy", allow_pickle=True)
+    frames_array = np.load(DATA_PATH + SAVE_FILE + ".npy", allow_pickle=True)
 
 
 print(frames_array.shape)

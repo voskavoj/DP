@@ -3,14 +3,12 @@ import pickle
 import numpy as np
 from matplotlib import pyplot as plt
 
+from src.config.setup import *
 from src.navigation.calculations import add_gaussian_noise_and_offset
 from src.satellites.download_tle import download_tles
 from src.navigation.curve_fit_method import solve
 from src.navigation.data_processing import NavDataArrayIndices as IDX
 
-
-CONSTELLATIONS = ("Iridium", )
-DATA_PATH = "Data\\exp04\\"
 
 # test variations - mean, std, offset
 VARIATIONS = [

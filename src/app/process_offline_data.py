@@ -1,15 +1,10 @@
 import numpy as np
 import pickle
 
+from src.config.setup import *
 from src.radio.iridium_offline_radio import IridiumOfflineRadio
 from src.satellites.download_tle import download_tles
 from src.navigation.data_processing import process_received_frames
-
-SAVED_DATA_FILE = "saved_nav_data.pickle"
-CONSTELLATIONS = ("Iridium", )
-DATA_PATH = "Data\\exp04\\"
-FRAME_FILE = "decoded.txt"
-START_TIME = "2024-03-17 14:04:09"  # UTC
 
 
 # ---------------------------- init

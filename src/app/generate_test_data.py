@@ -2,19 +2,14 @@ import numpy as np
 import pickle
 from astropy.time import Time
 
+from src.config.setup import *
 from src.config.locations import LOCATIONS
 from src.radio.iridium_channels import map_tle_id_to_sat_id, IRA_BASE_FREQUENCY
 from src.satellites.download_tle import download_tles
 from src.navigation.data_processing import process_received_frames
 from src.satellites.predictions import predict_satellite_doppler_shift
 
-DATA_PATH = "Data\\exp04\\"
-START_TIME = "2024-03-17 14:24:09"  # UTC
-
-SAVED_DATA_FILE = "test_nav_data.pickle"
-CONSTELLATIONS = ("Iridium", )
 BASE_FREQ = IRA_BASE_FREQUENCY
-LOCATION = "HOME"
 TEST_DATA_MINUTES = 60
 DECIMATION = 4
 DOPP_LIMIT = 36000
@@ -74,5 +69,5 @@ print(frames_array.shape)
 nav_data = process_received_frames(frames_array, START_TIME, satellites["Iridium"], time_correction_factor=1)
 print(len(nav_data), nav_data[0], nav_data[-1])
 
-with open(DATA_PATH + SAVED_DATA_FILE, "wb") as file:
+with open(DATA_PATH + TEST_DATA_FILE, "wb") as file:
     pickle.dump(nav_data, file)

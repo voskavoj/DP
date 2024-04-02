@@ -10,7 +10,6 @@ from sgp4.api import SatrecArray
 from src.navigation.calculations import latlon_distance
 from src.satellites.satellite import Satellite
 
-CONSTELLATIONS = ("Iridium", )
 DATA_FILE_PATH = "Data\\sat08\\1109-0910_20_parsed.txt"
 SAVE_FILE_PATH = "Data\\sat08\\iridium_ids.csv"
 TLE_PATH = "Data\\sat08\\tle\\"

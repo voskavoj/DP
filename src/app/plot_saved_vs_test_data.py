@@ -1,12 +1,10 @@
 import pickle
 import matplotlib.pyplot as plt
 
+from src.config.setup import *
 from src.navigation.data_processing import NavDataArrayIndices as IDX, find_curves
 
 
-DATA_PATH = "Data\\exp04\\"
-SAVED_DATA_FILE = "saved_nav_data.pickle"
-TEST_DATA_FILE = "test_nav_data_all_sat.pickle"
 OFFSET = -15e3
 
 

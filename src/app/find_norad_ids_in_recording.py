@@ -4,13 +4,10 @@ from astropy.time import Time, TimeDelta
 import astropy.units as unit
 from sgp4.api import SatrecArray
 
+from src.config.setup import *
 from src.radio.iridium_frame_operations import decompose_ira_frame
 from src.satellites.download_tle import download_tles, unpack
 
-CONSTELLATIONS = ("Iridium", )
-DATA_PATH = "Data\\exp04\\"
-FRAME_FILE = "decoded.txt"
-START_TIME = "2024-03-17 14:04:09"  # UTC
 
 # ---------------------------- init
 satellites = download_tles(constellations=CONSTELLATIONS, offline_dir=DATA_PATH)

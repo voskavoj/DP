@@ -1,11 +1,9 @@
 import pickle
 from matplotlib import pyplot as plt
 
+from src.config.setup import *
 from src.satellites.download_tle import download_tles
 from src.navigation.curve_fit_method import solve
-
-CONSTELLATIONS = ("Iridium", )
-DATA_PATH = "Data\\exp04\\"
 
 
 def find_position_from_offline_data(satellites, data_filename):
