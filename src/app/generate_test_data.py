@@ -1,6 +1,6 @@
 import numpy as np
 import pickle
-from astropy.time import Time
+from astropy.time import Time, TimeDelta
 
 from src.config.setup import *
 from src.config.locations import LOCATIONS
@@ -67,7 +67,7 @@ frames_array = np.array(frames_list)
 print(frames_array.shape)
 
 nav_data = process_received_frames(frames_array, START_TIME, satellites["Iridium"], time_correction_factor=1)
-print(len(nav_data), nav_data[0], nav_data[-1])
+print(len(nav_data))
 
 with open(DATA_PATH + TEST_DATA_FILE, "wb") as file:
     pickle.dump(nav_data, file)

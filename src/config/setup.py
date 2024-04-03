@@ -7,4 +7,4 @@ TEST_DATA_FILE = "test_nav_data.pickle"
 FRAME_FILE = "decoded.txt"
 
 DATA_PATH = "Data\\exp04\\"
-START_TIME = "2024-03-17 14:24:09"  # UTC
+START_TIME = "2024-03-17 14:04:57"  # UTC

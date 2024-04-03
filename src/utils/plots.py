@@ -40,6 +40,8 @@ def plot_results_of_iterative_position_finding(data: str | list, r=None, show=Fa
     m.drawmeridians(np.arange(0, 30, 5), labels=[0, 0, 0, 1])
     plt.legend()
 
+    plt.savefig(get_fig_filename("fig"))
+
     if show:
         plt.show()
 
@@ -62,3 +64,19 @@ def plot_analyzed_curve(curve, dopp_start, dopp_end, curve_duration, curve_densi
     plt.plot(curve_array[:, 0], curve_array[:, 1] - curve_array[:, 2], ".", color=color)
     plt.savefig(get_fig_filename("analyzed_curve"))
     plt.close()
+
+
+def plot_measured_vs_trial_curve(measured_curve, trial_curve, lat, lon, alt, off):
+    plt.figure()
+    plt.xlabel("Unix time [s]")
+    plt.ylabel("Doppler shift [Hz]")
+    plt.figtext(.15, .12, f"Lat.: {lat:.2f}°, Lon.: {lon:.2f}°, Alt.: {alt:.0f} m, Offset: {off / 1e3:.0f} kHz")
+    plt.scatter(measured_curve[:, 0], measured_curve[:, 1], marker=".", label="Measured curve")
+    plt.scatter(trial_curve[:, 0], trial_curve[:, 1], marker=".", label="Trial curve")
+    plt.legend()
+
+
+if __name__ == "__main__":
+    for i in []:
+        plot_results_of_iterative_position_finding(f"results_{i}")
+    plt.show()

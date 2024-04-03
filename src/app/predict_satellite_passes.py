@@ -18,7 +18,7 @@ TIME = "2024-01-07 18:17:40"  # UTC
 
 # App
 observer_position = EarthLocation.from_geodetic(*LOCATIONS[LOCATION])
-satellites = unpack(download_tles(CONSTELLATIONS, DATA_PATH))
+satellites = unpack(download_tles(CONSTELLATIONS))
 time = Time(TIME, format="iso") if TIME else Time.now()
 
 print(f"Prediction {PREDICTION_MINUTES} minutes ahead")

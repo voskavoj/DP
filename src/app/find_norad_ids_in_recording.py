@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 from astropy.coordinates import CartesianRepresentation, CartesianDifferential, ITRS, TEME, EarthLocation
 from astropy.time import Time, TimeDelta
@@ -5,8 +6,10 @@ import astropy.units as unit
 from sgp4.api import SatrecArray
 
 from src.config.setup import *
+from src.navigation.calculations import latlon_distance, deg_lat_to_m, deg_lon_to_m
 from src.radio.iridium_frame_operations import decompose_ira_frame
 from src.satellites.download_tle import download_tles, unpack
+from src.utils.data import dump_data
 
 
 # ---------------------------- init
@@ -19,6 +22,7 @@ with open(DATA_PATH + FRAME_FILE, "r") as file:
 
 
 found_ids = dict()
+ress = list()
 
 for frame in frames:
     if frame.startswith("IRA"):
@@ -53,6 +57,30 @@ for frame in frames:
     found_sat_list = found_sat_list[found_sat_list[:, 3].argsort()]
     found_ids[sat_id].append(int(found_sat_list[0, 0]))
 
+    iri_id = int(sat_id)
+    closest_sat_id = int(found_sat_list[0, 0])
+    frame_lat, frame_lon, frame_alt = lat, lon, alt
+    distances = [latlon_distance(frame_lat, lat.value, frame_lon, lon.value, frame_alt, alt.value) for lat, lon, alt in
+                 zip(geo_pos.lat, geo_pos.lon, geo_pos.height)]
+    min_idx = np.argmin(np.array(distances))
+    closest_sat_id_2 = sat_list[min_idx].number
+
+    dist = distances[min_idx]
+    iri_lat, iri_lon, iri_alt = geo_pos.lat[min_idx].value, geo_pos.lon[min_idx].value, geo_pos.height[min_idx].value
+
+    # print(f"Orig ID: {closest_sat_id}, new ID: {closest_sat_id_2}")
+    # if closest_sat_id == closest_sat_id_2:
+    # print(f"ID {iri_id:03d} is Iridium {closest_sat_id_2:03d}, distance {distances[min_idx] / 1000:.0f} km")
+        # print(f"Frame coordinates: {frame_lat:.2f} deg, {frame_lon:.2f} deg, {frame_alt} km")
+        # print(f"Pred. coordinates: {geo_pos.lat[min_idx]:.2f}, {geo_pos.lon[min_idx]:.2f}, {geo_pos.height[min_idx]:.0f}")
+        # print()
+        # print(f"{iri_id:03d}\t{closest_sat_id_2:03d}\t{dist/1000:04.0f}\t"
+        #       f"{frame_lat-iri_lat:.2f}\t{frame_lon-iri_lon:.2f}\t{frame_alt-iri_alt:.0f}")
+        # print(f"{iri_id:03d}\t{closest_sat_id_2:03d}\t{dist/1000:04.0f}\t"
+        #       f"{deg_lat_to_m(frame_lat-iri_lat)/1000:.0f}\t{deg_lon_to_m(frame_lon-iri_lon, frame_lon+iri_lon/2)/1000:.0f}\t{frame_alt-iri_alt:.0f}")
+    ress.append([iri_id, closest_sat_id_2, dist, frame_lat, frame_lon, frame_alt, iri_lat, iri_lon, iri_alt])
+
+dump_data("iridium_id_comparison_results", ress)
 
 for k in found_ids.keys():
     out = ""
@@ -60,8 +88,16 @@ for k in found_ids.keys():
 
     print(f"{k: 3d}: " + "\t".join(f"Iridium {sat_id: 3d} x {c}" for sat_id, c in zip(ids, counts)))
 
-for k in found_ids.keys():
+for k in sorted(found_ids.keys()):
     out = ""
     ids, counts = np.unique(found_ids[k], return_counts=True)
     for sat_id, c in zip(ids, counts):
         print(f"{sat_id}: {k: 3d} ({c})")
+
+resarr = np.array(ress)
+resarr = resarr[resarr[:,0].argsort()]
+plt.plot(resarr[:,2])
+plt.plot(resarr[:,3])
+plt.plot(resarr[:,4])
+plt.show()
+

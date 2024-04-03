@@ -50,6 +50,20 @@ def m_to_deg_lon(m, lat, deg=True):
     return m / m_per_deg_lon
 
 
+def deg_lat_to_m(lat):
+    lat_rad = np.deg2rad(lat)
+
+    m_per_deg_lon = 111132.954 * np.cos(lat_rad)
+    return m_per_deg_lon * lat
+
+
+def deg_lon_to_m(lon, lat):
+    lat_rad = np.deg2rad(lat)
+
+    m_per_deg_lat = 111132.954 - 559.822 * np.cos(2 * lat_rad) + 1.175 * np.cos(4 * lat_rad)
+    return m_per_deg_lat * lon
+
+
 def add_gaussian_noise_and_offset(data, noise_mean=0, noise_std_dev=1, offset=0):
     """
     Add Gaussian noise and offset to the input data.

@@ -198,4 +198,4 @@ def predict_satellite_visibility(satellite: "Satellite | list", observer_positio
 
 
 def _texttime(time: Time):
-    return time.value.strftime('%H:%M:%S')
+    return time

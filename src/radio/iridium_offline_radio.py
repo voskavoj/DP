@@ -19,7 +19,7 @@ class IridiumOfflineRadio:
         self.frames_list = list()
 
         if not file_is_parsed:
-            parse_raw_iridium_frames(frames)
+            frames = parse_raw_iridium_frames(frames)
 
         print("Analyzing.")
         for frame in frames:
