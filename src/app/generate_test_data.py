@@ -10,7 +10,7 @@ from src.navigation.data_processing import process_received_frames
 from src.satellites.predictions import predict_satellite_doppler_shift
 
 BASE_FREQ = IRA_BASE_FREQUENCY
-TEST_DATA_MINUTES = 60
+TEST_DATA_MINUTES = 90
 DECIMATION = 4
 DOPP_LIMIT = 36000
 
@@ -30,6 +30,7 @@ test_sat_list = [
     satellites["Iridium"]["160"],
     satellites["Iridium"]["163"],
     satellites["Iridium"]["165"],
+    satellites["Iridium"]["166"],
 ]
 
 print(test_sat_list)

@@ -5,7 +5,7 @@ from src.config.setup import *
 from src.navigation.data_processing import NavDataArrayIndices as IDX, find_curves
 
 
-OFFSET = 15e3
+OFFSET = 0
 
 
 with open(DATA_PATH + SAVED_DATA_FILE, "rb") as file:

@@ -17,5 +17,6 @@ def find_position_from_offline_data(satellites, data_filename):
 
 satellites = download_tles(constellations=CONSTELLATIONS, offline_dir=DATA_PATH)
 find_position_from_offline_data(satellites, SAVED_DATA_FILE)
+find_position_from_offline_data(satellites, TEST_DATA_FILE)
 
 plt.show()
