@@ -8,9 +8,10 @@ from astropy.time import Time, TimeDelta
 from astropy import units as unit
 from typing import Dict, List
 
+from src.config.setup import *
 from src.satellites.satellite import Satellite
 
-DOWNLOAD_PATH = "download\\"
+DOWNLOAD_PATH = TMP_PATH + "download\\"
 DOWNLOAD_EXTENSION = ".txt"
 DOWNLOAD_TIME_FILE = "last_download_time"
 DOWNLOAD_EXPIRATION = 8  # hours
