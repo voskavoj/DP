@@ -47,6 +47,7 @@ found_ids = dict()
 ress = list()
 base_offset = 0
 direction = 0
+avg_offset = 0
 
 for frame in frames:
     if frame.startswith("IRA"):
@@ -93,8 +94,9 @@ for frame in frames:
                 dist = dist_1
                 base_offset += direction
 
-    print(f"Iri ID {sat_id:03d}, TLE ID {tle_id:03d}, distance {dist / 1000:.0f} km, offset {base_offset:.1f} s")
     ress.append([sat_id, base_offset, dist])
+    avg_offset += base_offset
+    print(f"Iri ID {sat_id:03d}, TLE ID {tle_id:03d}, distance {dist / 1000:.0f} km, offset {base_offset:.1f} s (avg {avg_offset/len(ress):.1f} s)")
 
 dump_data("iridium_id_minimization_results", ress)
 

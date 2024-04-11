@@ -8,3 +8,4 @@
 /src/app/download
 /src/radio/__pycache__/
 *.pyc
+/tmp

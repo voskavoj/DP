@@ -1,10 +1,15 @@
-CONSTELLATIONS = ("Iridium", )
-
-TMP_PATH = "Data\\tmp\\"
+# Experiment settings
+EXP_NAME = "exp04"
 LOCATION = "HOME"
+START_TIME = "2024-03-17 14:04:49"  # UTC
+
+# Paths
+WORKING_DIR = "C:\\Git\\Personal\\DP\\"
+TMP_PATH = WORKING_DIR + "tmp\\"
+DATA_PATH = WORKING_DIR + f"Data\\{EXP_NAME}\\"
+
+# Global files, ...
+CONSTELLATIONS = ("Iridium",)
+FRAME_FILE = "decoded.txt"
 SAVED_DATA_FILE = "saved_nav_data.pickle"
 TEST_DATA_FILE = "test_nav_data.pickle"
-FRAME_FILE = "decoded.txt"
-
-DATA_PATH = "Data\\exp04\\"
-START_TIME = "2024-03-17 14:04:49"  # UTC
