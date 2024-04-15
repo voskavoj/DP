@@ -130,3 +130,7 @@ def _read_saved_tles(constellation, path=DOWNLOAD_PATH):
         expired = False
 
     return True, expired, timestamp, content
+
+
+if __name__ == "__main__":
+    download_tles()

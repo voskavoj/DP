@@ -79,7 +79,8 @@ def process_received_frames(frames_array: np.array, start_time: str, satellites:
         try:
             j = tx_satellites_ids.index(str(map_sat_id_to_tle_id(frames_array[i, 0])))
             sat = map_sat_id_to_tle_id(frames_array[i, 0])
-        except ValueError:
+        except (ValueError, KeyError):
+            print(f"Iridium ID {frames_array[i, 0]:.0f} not found")
             continue
         nav_data.append([times[i], frames_array[i, 2], frames_array[i, 3], pos_itrs[j, i], sat])
 

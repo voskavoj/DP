@@ -9,8 +9,7 @@ from src.config.setup import *
 from src.navigation.calculations import latlon_distance, deg_lat_to_m, deg_lon_to_m
 from src.radio.iridium_frame_operations import decompose_ira_frame
 from src.satellites.download_tle import download_tles, unpack
-from src.utils.data import dump_data
-
+from src.utils.data import dump_data, load_data
 
 # ---------------------------- init
 satellites = download_tles(constellations=CONSTELLATIONS, offline_dir=DATA_PATH)
@@ -23,8 +22,10 @@ with open(DATA_PATH + FRAME_FILE, "r") as file:
 
 found_ids = dict()
 ress = list()
-
-for frame in frames:
+# frames = []
+for i, frame in enumerate(frames):
+    if i % 500 == 0:
+        print(f"\r{100 * i / len(frames):.1f}%", end="")
     if frame.startswith("IRA"):
         sat_id, rel_time, freq, ira_data = decompose_ira_frame(frame)
         beam_id, lat, lon, alt, x, y, z = ira_data
@@ -69,18 +70,18 @@ for frame in frames:
     iri_lat, iri_lon, iri_alt = geo_pos.lat[min_idx].value, geo_pos.lon[min_idx].value, geo_pos.height[min_idx].value
 
     # print(f"Orig ID: {closest_sat_id}, new ID: {closest_sat_id_2}")
-    # if closest_sat_id == closest_sat_id_2:
     # print(f"ID {iri_id:03d} is Iridium {closest_sat_id_2:03d}, distance {distances[min_idx] / 1000:.0f} km")
-        # print(f"Frame coordinates: {frame_lat:.2f} deg, {frame_lon:.2f} deg, {frame_alt} km")
-        # print(f"Pred. coordinates: {geo_pos.lat[min_idx]:.2f}, {geo_pos.lon[min_idx]:.2f}, {geo_pos.height[min_idx]:.0f}")
-        # print()
+    # print(f"Frame coordinates: {frame_lat:.2f} deg, {frame_lon:.2f} deg, {frame_alt} km")
+    # print(f"Pred. coordinates: {geo_pos.lat[min_idx]:.2f}, {geo_pos.lon[min_idx]:.2f}, {geo_pos.height[min_idx]:.0f}")
+    # print()
         # print(f"{iri_id:03d}\t{closest_sat_id_2:03d}\t{dist/1000:04.0f}\t"
         #       f"{frame_lat-iri_lat:.2f}\t{frame_lon-iri_lon:.2f}\t{frame_alt-iri_alt:.0f}")
         # print(f"{iri_id:03d}\t{closest_sat_id_2:03d}\t{dist/1000:04.0f}\t"
         #       f"{deg_lat_to_m(frame_lat-iri_lat)/1000:.0f}\t{deg_lon_to_m(frame_lon-iri_lon, frame_lon+iri_lon/2)/1000:.0f}\t{frame_alt-iri_alt:.0f}")
     ress.append([iri_id, closest_sat_id_2, dist, frame_lat, frame_lon, frame_alt, iri_lat, iri_lon, iri_alt])
 
-dump_data("iridium_id_comparison_results", ress)
+dump_data(f"iridium_id_comparison_results_{EXP_NAME}", ress)
+ress = load_data(f"iridium_id_comparison_results_{EXP_NAME}_0")
 
 for k in found_ids.keys():
     out = ""
@@ -94,10 +95,37 @@ for k in sorted(found_ids.keys()):
     for sat_id, c in zip(ids, counts):
         print(f"{sat_id}: {k: 3d} ({c})")
 
-resarr = np.array(ress)
-resarr = resarr[resarr[:,0].argsort()]
-plt.plot(resarr[:,2])
-plt.plot(resarr[:,3])
-plt.plot(resarr[:,4])
-plt.show()
+
+import numpy as np
+from collections import defaultdict
+
+# Assuming your ress_arr is a numpy array
+# Sample data:
+ress_arr = np.array(ress)
+
+# Dictionary to store results
+result = defaultdict(lambda: defaultdict(list))
+
+# Iterate over rows of ress_arr
+for row in ress_arr:
+    iri_id, closest_sat_id_2, dist = row[0], row[1], row[2]
+    result[closest_sat_id_2][iri_id].append(dist)
+
+# Sort the result by occurrences
+sorted_result = {}
+for sat_id, iri_data in result.items():
+    sorted_iri_data = sorted(iri_data.items(), key=lambda x: len(x[1]), reverse=True)
+    sorted_result[sat_id] = sorted_iri_data
+
+# Print the sorted result
+for sat_id, iri_data in sorted(sorted_result.items()):
+    print(f"Iridium {sat_id:.0f}:")
+    for iri_id, dist_list in iri_data:
+        occurrences = len(dist_list)
+        avg_dist = np.mean(dist_list)
+        if occurrences > 10 and avg_dist < 100e3:
+            dict_style = f" | {sat_id:.0f}: {iri_id:.0f},  # {occurrences}"
+        else:
+            dict_style = ""
+        print(f"  IRI ID: {iri_id: 4.0f}, Occurrences: {occurrences: 4d}, Average Distance: {avg_dist/1000: 7.1f} km" + dict_style)
 

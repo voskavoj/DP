@@ -1,3 +1,3 @@
 cd ..
-python GNURadio/iridium-toolkit/iridium-parser.py Data/exp03/output.bits  --harder >> Data/exp03/decoded.txt
+python External/iridium-toolkit/iridium-parser.py Data/exp05/output.bits >> Data/exp05/decoded.txt
 pause
