@@ -28,9 +28,10 @@ STEP_LIMIT = 10  # m
 
 # Iterative algorithm parameters
 ITER_INIT_STEP_LL = 100e3  # km
-ITER_INIT_STEP_ALT = 100  # m
+ITER_INIT_STEP_ALT = 0  # m
 ITER_INIT_STEP_OFF = 3000  # Hz
 ITER_LIMIT = 500
+ITER_INIT_STEP_DFT = 100  # mHz/s
 
 # Grid search parameters
 GRID_SEARCH_DEPTH = 5
@@ -144,27 +145,32 @@ def solve(nav_data, satellites):
                         base_freq=1626270800.0)  # todo different base freqs
 
 
-def check_trial_curve(lat, lon, alt, off, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq, plot=False):
+def check_trial_curve(lat, lon, alt, off, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq, dft=0, plot=False):
     curve_len = measured_curve.shape[0]
 
     trial_curve = np.empty((curve_len, 2))
     trial_curve[:, 0] = measured_curve[:, 0]  # times are the same
     r_user_arr = (EarthLocation.from_geodetic(lon, lat, alt)
-                  .get_itrs(obstime=time_arr).cartesian.without_differentials())
+                  .get_itrs().cartesian.without_differentials())
 
-    vs, rs, ru = v_sat_arr, r_sat_arr, r_user_arr
+    vs, rs, ru = v_sat_arr, r_sat_arr, r_user_arr * np.ones(curve_len)
     vs = np.array([vs.d_x.value, vs.d_y.value, vs.d_z.value]) * 1000
     rs = np.array([rs.x.value, rs.y.value, rs.z.value]) * 1000
     ru = np.array([ru.x.value, ru.y.value, ru.z.value]) * 1
-    # Ro_dot = (V_s - V_u) * (r_s - r_u) / ||r_s - r_u||
-    rel_vel = np.sum(vs * (rs - ru) / np.linalg.norm(rs - ru, axis=0), axis=0)
-
     f_b = measured_curve[:, 2]
+
+    # Calculate range rate: Ro_dot = (V_s - V_u) * (r_s - r_u) / ||r_s - r_u||
+    rel_vel = np.sum(vs * (rs - ru) / np.linalg.norm(rs - ru, axis=0), axis=0)
+    # Calculate doppler frequency
     f_d = -1 * rel_vel * f_b / C
 
-    trial_curve[:, 1] = f_d + off
+    # Calculate drift
+    f_drift = (trial_curve[:, 0] - np.min(trial_curve[:, 0])) * (dft / 1000)  # todo make it so it's in base units - individual limits!
 
-    # calculate variance
+    # Construct trial curve
+    trial_curve[:, 1] = f_d + off + f_drift
+
+    # Calculate variance
     sum_of_squares = np.sum((measured_curve[:, 1] - trial_curve[:, 1]) ** 2)
 
     if plot:
@@ -208,41 +214,50 @@ def fit_curve(results, lat_0, lon_0, alt_0, off_0, measured_curve, time_arr, r_s
     step_lat, step_lon = ITER_INIT_STEP_LL, ITER_INIT_STEP_LL
     step_alt = ITER_INIT_STEP_ALT
     step_off = ITER_INIT_STEP_OFF
+    step_dft = ITER_INIT_STEP_DFT
     lat = lat_0
     lon = lon_0
     alt = alt_0
     off = off_0
+    dft = 0
 
     # initial SOS
     sos = check_trial_curve(lat, lon, alt, off, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+    results.append([sos, -1, lat, lon, alt])
 
     for i in range(ITER_LIMIT):
         # nORTH, sOUTH, wEST, eAST, uP, dOWN, mORE_OFFSET, lESS_OFFSET
 
         # 1. calculate SOS for each direction
         lat_n = lat + m_to_deg_lat(step_lat * 1, lat)
-        sos_n = check_trial_curve(lat_n, lon, alt, off, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+        sos_n = check_trial_curve(lat_n, lon, alt, off, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq, dft)
 
         lat_s = lat + m_to_deg_lat(step_lat * -1, lat)
-        sos_s = check_trial_curve(lat_s, lon, alt, off, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+        sos_s = check_trial_curve(lat_s, lon, alt, off, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq, dft)
 
         lon_w = lon + m_to_deg_lon(step_lon * -1, lat)
-        sos_w = check_trial_curve(lat, lon_w, alt, off, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+        sos_w = check_trial_curve(lat, lon_w, alt, off, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq, dft)
 
         lon_e = lon + m_to_deg_lon(step_lon * 1, lat)
-        sos_e = check_trial_curve(lat, lon_e, alt, off, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+        sos_e = check_trial_curve(lat, lon_e, alt, off, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq, dft)
 
         alt_u = alt + step_alt * 1
-        sos_u = check_trial_curve(lat, lon, alt_u, off, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+        sos_u = check_trial_curve(lat, lon, alt_u, off, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq, dft)
 
         alt_d = alt + step_alt * -1
-        sos_d = check_trial_curve(lat, lon, alt_d, off, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-        
+        sos_d = check_trial_curve(lat, lon, alt_d, off, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq, dft)
+
         off_m = off + step_off * 1
-        sos_m = check_trial_curve(lat, lon, alt, off_m, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+        sos_m = check_trial_curve(lat, lon, alt, off_m, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq, dft)
 
         off_l = off + step_off * -1
-        sos_l = check_trial_curve(lat, lon, alt, off_l, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+        sos_l = check_trial_curve(lat, lon, alt, off_l, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq, dft)
+
+        dft_m = dft + step_dft * 1
+        sos_dm = check_trial_curve(lat, lon, alt, off, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq, dft_m)
+
+        dft_l = dft + step_dft * -1
+        sos_dl = check_trial_curve(lat, lon, alt, off, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq, dft_l)
 
         # 2. calculate differences
         sos_n = max(0, sos - sos_n)
@@ -253,11 +268,14 @@ def fit_curve(results, lat_0, lon_0, alt_0, off_0, measured_curve, time_arr, r_s
         sos_d = max(0, sos - sos_d)
         sos_m = max(0, sos - sos_m)
         sos_l = max(0, sos - sos_l)
+        sos_dm = max(0, sos - sos_dm)
+        sos_dl = max(0, sos - sos_dl)
 
         diff_lat = sos_n - sos_s
         diff_lon = sos_e - sos_w
         diff_alt = sos_u - sos_d
         diff_off = sos_m - sos_l
+        diff_dft = sos_dm - sos_dl
 
         # 3. check if current position is the best
 
@@ -268,8 +286,9 @@ def fit_curve(results, lat_0, lon_0, alt_0, off_0, measured_curve, time_arr, r_s
         step_lon = _adjust_step(step_lon, diff_lon)
         step_alt = _adjust_step(step_alt, diff_alt)
         step_off = _adjust_step(step_off, diff_off)
+        step_dft = _adjust_step(step_dft, diff_dft)
 
-        if (diff_lat == 0 and diff_lon == 0 and diff_off == 0 and diff_alt == 0
+        if (diff_lat == 0 and diff_lon == 0 and diff_off == 0 and diff_alt == 0 and diff_dft == 0
                 and step_lat <= STEP_LIMIT and step_lon <= STEP_LIMIT):
 
             results.append([sos, i, lat, lon, alt])
@@ -288,12 +307,14 @@ def fit_curve(results, lat_0, lon_0, alt_0, off_0, measured_curve, time_arr, r_s
         ratio_lon = diff_lon / abs(diff_lon) if diff_lon else 0
         ratio_alt = diff_alt / abs(diff_alt) if diff_alt else 0
         ratio_off = diff_off / abs(diff_off) if diff_off else 0
+        ratio_dft = diff_dft / abs(diff_dft) if diff_dft else 0
 
         # 5. move trial position and calculate new SOS
         lat = lat + m_to_deg_lat(step_lat * ratio_lat, lat)
         lon = lon + m_to_deg_lon(step_lon * ratio_lon, lat)
         alt = min(ALT_LIMIT, max(0, alt + step_alt * ratio_alt))
         off = off + step_off * ratio_off
+        dft = dft + step_dft * ratio_dft
 
         # check if the algorithm is not stuck in a cycle
         cycle_detector.update([ratio_lat, ratio_lon, ratio_alt, ratio_off])
@@ -302,20 +323,22 @@ def fit_curve(results, lat_0, lon_0, alt_0, off_0, measured_curve, time_arr, r_s
             step_lon = _adjust_step(step_lon, diff_lon, force=ratio_lon != 0)
             step_alt = _adjust_step(step_alt, diff_alt, force=ratio_alt != 0)
             step_off = _adjust_step(step_off, diff_off, force=ratio_off != 0)
+            # step_dft = _adjust_step(step_dft, diff_dft, force=ratio_dft != 0)
 
             lat = lat + m_to_deg_lat(step_lat * ratio_lat, lat)
             lon = lon + m_to_deg_lon(step_lon * ratio_lon, lat)
             alt = min(ALT_LIMIT, max(0, alt + step_alt * ratio_alt))
             off = off + step_off * ratio_off
+            dft = dft + step_dft * ratio_dft
 
-        sos = check_trial_curve(lat, lon, alt, off, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+        sos = check_trial_curve(lat, lon, alt, off, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq, dft)
 
         # 6. log results
         results.append([sos, i, lat, lon, alt])
-        print(f"Iteration {i + 1:03d}: lat {lat:05.3f}°, lon {lon:05.3f}°, alt {alt:04.0f} m, off {off:05.0f} SOS {sos:09.0f}, "
-              f"step_lat {step_lat:05.0f} m, step_lon {step_lon:05.0f} m, step_alt {step_alt:03.0f} m, step_off {step_off:04.0f} Hz,"
+        print(f"Iteration {i + 1:03d}: lat {lat:05.3f}°, lon {lon:05.3f}°, alt {alt:04.0f} m, off {off:05.0f}, dft {dft:04.0f}, SOS {sos:09.0f}, "
+              f"step_lat {step_lat:05.0f} m, step_lon {step_lon:05.0f} m, step_alt {step_alt:03.0f} m, step_off {step_off:04.0f} Hz, step_dft {step_dft:04.0f} mHz/s,"
               f"dist {latlon_distance(LAT_HOME, lat, LON_HOME, lon):07.0f} m, "
-              f"rlat {ratio_lat: 2.0f}, rlon {ratio_lon: 2.0f}, ralt {ratio_alt: 2.0f}, roff {ratio_off: 2.0f}{', Cycle' if cycle_detector.is_cycle() else ''}")
+              f"rlat {ratio_lat: 2.0f}, rlon {ratio_lon: 2.0f}, ralt {ratio_alt: 2.0f}, roff {ratio_off: 2.0f}, rdft {ratio_dft: 2.0f}{', Cycle' if cycle_detector.is_cycle() else ''}")
 
     check_trial_curve(lat, lon, alt, off, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq, plot=True)
     return iteration_result, lat, lon, alt, results
@@ -356,7 +379,6 @@ def fit_curve_grid(results, lat_0, lon_0, alt_0, off_0, measured_curve, time_arr
 
         step_lat, step_lon, step_alt, step_off = round(step_lat / GRID_SIZE), round(step_lon / GRID_SIZE), round(step_alt / GRID_SIZE), round(step_off / GRID_SIZE)
 
-    check_trial_curve(lat, lon, alt, off, measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq, plot=True)
     return IterationResults.found, lat, lon, alt, res
 
 
@@ -367,21 +389,24 @@ def iterative_algorithm(curve_array, lat_0, lon_0, alt_0, off_0, base_freq):
     time_arr = Time(curve_array[:, IDX.t], format="unix")
     r = ITRS(x=curve_array[:, IDX.x] * unit.km, y=curve_array[:, IDX.y] * unit.km, z=curve_array[:, IDX.z] * unit.km,
              v_x=curve_array[:, IDX.vx] * unit.km / unit.s, v_y=curve_array[:, IDX.vy] * unit.km / unit.s,
-             v_z=curve_array[:, IDX.vz] * unit.km / unit.s,
-             obstime=time_arr)
+             v_z=curve_array[:, IDX.vz] * unit.km / unit.s)
     r_sat_arr = r.cartesian.without_differentials()
     v_sat_arr = r.velocity
 
     results = list()
 
-    iter_res, lat, lon, alt, results = fit_curve(results, lat_0, lon_0, alt_0, off_0,
-                                                 measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-    dump_data("results", results)
-    plot_results_of_iterative_position_finding(results, r)
+    try:
+        iter_res, lat, lon, alt, results = fit_curve(results, lat_0, lon_0, alt_0, off_0,
+                                                     measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+        dump_data("results", results)
+        plot_results_of_iterative_position_finding(results, r)
+    except KeyboardInterrupt:
+        print("Skipped by user!")
 
-    iter_res, lat, lon, alt, results = fit_curve_grid(results, lat_0, lon_0, alt_0, off_0,
-                                                      measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
-    dump_data("results", results)
-    plot_results_of_iterative_position_finding(results, r)
-
-    print(f"Position error: {latlon_distance(LAT_HOME, lat, LON_HOME, lon, ALT_HOME, alt):.1f} m")
+    # try:
+    #     iter_res, lat, lon, alt, results = fit_curve_grid(results, lat_0, lon_0, alt_0, off_0,
+    #                                                       measured_curve, time_arr, r_sat_arr, v_sat_arr, base_freq)
+    #     dump_data("results", results)
+    #     plot_results_of_iterative_position_finding(results, r)
+    # except KeyboardInterrupt:
+    #     print("Skipped by user!")
