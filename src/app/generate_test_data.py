@@ -9,30 +9,19 @@ from src.satellites.download_tle import download_tles
 from src.navigation.data_processing import process_received_frames
 from src.satellites.predictions import predict_satellite_doppler_shift
 
+TEST_SAT_IDS = [109, 110, 111, 112, 114, 136, 139, 147, 152, 154, 155, 156, 158, 159, 160, 163, 164, 165, 166]
 BASE_FREQ = IRA_BASE_FREQUENCY
-TEST_DATA_MINUTES = 90
+TEST_DATA_MINUTES = 160
+SKIPPED_MINUTES = 100
 DECIMATION = 4
 DOPP_LIMIT = 36000
 
 # ---------------------------- init
 satellites = download_tles(constellations=CONSTELLATIONS, offline_dir=DATA_PATH)
-start_time = Time(START_TIME)
+start_time = Time(START_TIME) + TimeDelta(SKIPPED_MINUTES * 60, format="sec")
 lon, lat, alt = LOCATIONS[LOCATION]
 
-
-test_sat_list = [
-    satellites["Iridium"]["103"],
-    satellites["Iridium"]["104"],
-    satellites["Iridium"]["114"],
-    satellites["Iridium"]["156"],
-    satellites["Iridium"]["158"],
-    satellites["Iridium"]["159"],
-    satellites["Iridium"]["160"],
-    satellites["Iridium"]["163"],
-    satellites["Iridium"]["165"],
-    satellites["Iridium"]["166"],
-]
-
+test_sat_list = [satellites["Iridium"][str(idx)] for idx in TEST_SAT_IDS]
 print(test_sat_list)
 
 # [rel_time, shifted frequency, abs_doppler_shift, rel_doppler_shift]
