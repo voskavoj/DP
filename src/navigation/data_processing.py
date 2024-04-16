@@ -74,15 +74,20 @@ def process_received_frames(frames_array: np.array, start_time: str, satellites:
 
     # nav_data: time, freq, base_freq, sat_pos_itrs
     nav_data = list()
+    not_found_iri_ids = list()
 
     for i in range(array_len):
         try:
             j = tx_satellites_ids.index(str(map_sat_id_to_tle_id(frames_array[i, 0])))
             sat = map_sat_id_to_tle_id(frames_array[i, 0])
         except (ValueError, KeyError):
-            print(f"Iridium ID {frames_array[i, 0]:.0f} not found")
+            not_found_iri_ids.append(int(frames_array[i, 0]))
             continue
         nav_data.append([times[i], frames_array[i, 2], frames_array[i, 3], pos_itrs[j, i], sat])
+
+    if not_found_iri_ids:
+        not_found_iri_ids = sorted(list(zip(*np.unique(not_found_iri_ids, return_counts=True))), key=lambda x: x[1], reverse=True)
+        print(f"Some Iridium IDs were not found in channel map: " + ",".join([f"{iri_id:03d} ({count}x) " for iri_id, count in not_found_iri_ids]))
 
     return nav_data_to_array(nav_data)  # todo actual array above
 

@@ -8,6 +8,8 @@ from astropy import units as unit
 from sgp4.api import Satrec, SGP4_ERRORS, SatrecArray
 import numpy as np
 
+from src.navigation.calculations import latlon_distance
+
 C = 299792458
 
 
@@ -195,6 +197,29 @@ def predict_satellite_visibility(satellite: "Satellite | list", observer_positio
         return list_of_sat_predictions[0]
     else:
         return list_of_sat_predictions
+
+
+def find_closest_tle_id_to_ira_id_by_position(time, satrecs, sat_list, iri_lat, iri_lon, iri_alt):
+
+    jds = np.array([time.jd1])
+    jfs = np.array([time.jd2])
+    errcodes, positions, velocities = satrecs.sgp4(jds, jfs)
+    pos_teme = CartesianRepresentation(x=positions[:, 0, 0], y=positions[:, 0, 1], z=positions[:, 0, 2], unit=unit.km)
+    vel_teme = CartesianDifferential(velocities[:, 0, 0], velocities[:, 0, 1], velocities[:, 0, 2],
+                                     unit=unit.km / unit.s)
+    r_teme = TEME(pos_teme.with_differentials(vel_teme), obstime=time)
+    pos_itrs = r_teme.transform_to(ITRS(obstime=r_teme.obstime))
+    geo_pos = pos_itrs.earth_location.geodetic
+
+    distances = [latlon_distance(iri_lat, lat.value, iri_lon, lon.value, iri_alt*1000, alt.value*1000) for lat, lon, alt in
+                 zip(geo_pos.lat, geo_pos.lon, geo_pos.height.to("km"))]
+    min_idx = np.argmin(np.array(distances))
+    closest_sat_id = sat_list[min_idx].number
+
+    dist = distances[min_idx]
+    tle_lat, tle_lon, tle_alt = geo_pos.lat[min_idx].value, geo_pos.lon[min_idx].value, geo_pos.height[min_idx].value
+
+    return closest_sat_id, dist, tle_lat, tle_lon, tle_alt
 
 
 def _texttime(time: Time):

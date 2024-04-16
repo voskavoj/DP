@@ -1,32 +1,64 @@
 import os
 import pickle
 
-from src.config.setup import TMP_PATH
+from src.config.setup import TMP_PATH, DATA_PATH
 
-FILE_IDX = 0
 FIG_IDX = 0
 
 
-def dump_data(name, data, overwrite=False):
-    global FILE_IDX
+def dump_data(name, data):
+    """
+        Dump data to tmp folder
 
+    :param name: filename, suffixed by index
+    :param data: data
+    """
     create_tmp_dir()
-    filename = f"{TMP_PATH}{name}_{FILE_IDX}.pickle"
 
-    while True:
-        if not overwrite and os.path.exists(filename):
-            FILE_IDX += 1
-            filename = f"{TMP_PATH}{name}_{FILE_IDX}.pickle"
-        else:
-            break
+    file_idx = 0
+    filename = f"{TMP_PATH}{name}_{file_idx}.pickle"
 
-    print(f"Saving data as {name}_{FILE_IDX}")
+    while os.path.exists(filename):
+        file_idx += 1
+        filename = f"{TMP_PATH}{name}_{file_idx}.pickle"
+
+    print(f"Saving data as {filename}")
     with open(filename, "wb") as file:
         pickle.dump(data, file)
 
 
-def load_data(name):
-    filename = f"{TMP_PATH}{name}.pickle"
+def save_data(name, data):
+    """
+        Save data to Data folder, overwrites existing file
+    :param name: filename
+    :param data: data
+    """
+
+    filename = f"{DATA_PATH}{name}.pickle"
+    with open(filename, "wb") as file:
+        pickle.dump(data, file)
+
+
+def load_data(name, index=None):
+    """
+    Load data from a dump.
+
+    :param name: filename
+    :param index: file index - if None, none is inserted, if -1, the last existing index is used
+    :return: data from dump
+    """
+    if index is None:
+        filename = f"{TMP_PATH}{name}.pickle"
+    elif index == -1:
+        index = 0
+        while os.path.exists(f"{TMP_PATH}{name}_{index+1}.pickle"):
+            index += 1
+        filename = f"{TMP_PATH}{name}_{index}.pickle"
+    elif isinstance(index, int):
+        filename = f"{TMP_PATH}{name}_{index}.pickle"
+    else:
+        raise ValueError("Index must be an integer or None")
+
     with open(filename, "rb") as file:
         data = pickle.load(file)
     return data
@@ -51,8 +83,3 @@ def create_tmp_dir():
         return
     else:
         os.makedirs(TMP_PATH)
-
-
-# def clear_tmp_dir():
-#     for file in os.listdir(TMP_PATH):
-#         os.remove(TMP_PATH + file)

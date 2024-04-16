@@ -1,7 +1,7 @@
 import copy
 import numpy as np
 
-from src.radio.iridium_channels import find_tx_base_frequency, IRA_BASE_FREQUENCY
+from src.radio.iridium_channels import find_tx_base_frequency, IRA_BASE_FREQUENCY, CHANNEL_ID_THRESHOLD
 from src.radio.iridium_frame_operations import decompose_ira_frame, decompose_ibc_frame, decompose_generic_frame, \
     parse_raw_iridium_frames
 
@@ -26,6 +26,8 @@ class IridiumOfflineRadio:
             if frame.startswith("IRA"):
                 sat_id, rel_time, freq, ira_data = decompose_ira_frame(frame)
                 base_freq = IRA_BASE_FREQUENCY
+                if drop_frequencies and abs(base_freq - freq) > CHANNEL_ID_THRESHOLD:
+                    continue
             elif non_ira_frames and frame.startswith("IBC"):
                 sat_id, rel_time, freq = decompose_ibc_frame(frame)
                 base_freq = find_tx_base_frequency(freq, drop=drop_frequencies)
