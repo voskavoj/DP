@@ -8,6 +8,49 @@ from src.utils.data import load_data, get_fig_filename
 from src.config.locations import LOCATIONS
 
 
+class ColorPicker:
+    color_list = ["b", "g", "r", "c", "m", "y", "k", "w", "antiquewhite", "aqua", "aquamarine", "blue", "blueviolet",
+                  "brown", "burlywood", "cadetblue", "chartreuse", "chocolate",
+                  "coral", "cornflowerblue", "crimson", "cyan", "darkblue", "darkcyan", "darkgoldenrod", "darkgray",
+                  "darkgreen", "darkgrey", "darkkhaki", "darkmagenta", "darkolivegreen", "darkorange", "darkorchid",
+                  "darkred", "darksalmon", "darkseagreen", "darkslateblue", "darkslategray", "darkslategrey",
+                  "darkturquoise", "darkviolet", "deeppink", "deepskyblue", "dimgray", "dimgrey", "dodgerblue",
+                  "firebrick", "forestgreen", "fuchsia", "gold", "goldenrod", "gray", "green", "greenyellow",
+                  "grey", "hotpink", "indianred", "indigo", "khaki", "lavender", "lavenderblush", "lawngreen",
+                  "lightblue", "lightcoral", "lightcyan", "lightgreen", "lightpink", "lightsalmon", "lightseagreen",
+                  "lightskyblue", "lightslategray", "lightslategrey", "lightsteelblue", "lightyellow", "lime",
+                  "limegreen", "magenta", "maroon", "mediumaquamarine", "mediumblue", "mediumorchid", "mediumpurple",
+                  "mediumseagreen", "mediumslateblue", "mediumspringgreen", "mediumturquoise", "mediumvioletred",
+                  "midnightblue", "mintcream", "mistyrose", "moccasin", "navajowhite", "navy", "oldlace", "olive",
+                  "olivedrab", "orange", "orangered", "orchid", "palegoldenrod", "palegreen", "paleturquoise",
+                  "palevioletred", "peachpuff", "peru", "pink", "plum", "powderblue", "purple", "rebeccapurple", "red",
+                  "rosybrown", "royalblue", "saddlebrown", "salmon", "sandybrown", "seagreen", "sienna", "silver",
+                  "skyblue", "slateblue", "slategray", "slategrey", "springgreen", "steelblue", "tan", "teal",
+                  "thistle", "tomato", "turquoise", "violet", "yellow", "yellowgreen"]
+
+    def __init__(self):
+        self.colors_by_line = dict()
+        self.idx = 0
+
+    def _choose_new_color(self):
+        if self.idx >= len(self.color_list):
+            print("Warning: recycling colors")
+            self.index = 0
+
+        color = self.color_list[self.idx]
+        self.idx += 1
+        return color
+
+    def pick_color(self, line_name):
+        if line_name in self.colors_by_line:
+            color = self.colors_by_line[line_name]
+        else:
+            color = self._choose_new_color()
+            self.colors_by_line[line_name] = color
+
+        return color
+
+
 def plot_results_of_iterative_position_finding(data: str | list, r=None, show=False):
     if isinstance(data, str):
         results = load_data(data)
