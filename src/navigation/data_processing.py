@@ -108,7 +108,7 @@ def nav_data_to_array(nav_data: list) -> np.array:
     return nav_data_array
 
 
-def find_curves(nav_data_array):
+def find_curves(nav_data_array, max_time_gap=0, min_curve_length=0):
     IDX = NavDataArrayIndices
     # sort nav_data_array by sat_id, base_freq, and abs_time
     sorted_indices = np.lexsort((nav_data_array[:, IDX.t], nav_data_array[:, IDX.fb], nav_data_array[:, IDX.id]))
@@ -118,21 +118,44 @@ def find_curves(nav_data_array):
     # find unique combinations of sat_id and base_freq
     unique_combinations, indices = np.unique(sorted_nav_data[:, [IDX.id, IDX.fb]], axis=0, return_index=True)
 
-    split_arrays = []
+    split_arrays = list()
 
-    # Split sorted_nav_data into arrays based on unique combinations
+    # split sorted_nav_data into arrays based on unique combinations
     for i in range(len(indices)):
         if i == len(indices) - 1:
             split_array = sorted_nav_data[indices[i]:]
         else:
             split_array = sorted_nav_data[indices[i]:indices[i + 1]]
 
-        # verify the splitting works
-        assert np.all(split_array[:, IDX.fb] == split_array[0, IDX.fb])  # is one base frequency
-        assert np.all(split_array[:, IDX.id] == split_array[0, IDX.id])  # is one satellite ID
-        assert np.all(np.diff(split_array[:, IDX.t]) >= 0)  # is sorted by time
+        # split the curves based on max_time_gap
+        if max_time_gap > 0:
+            gap_split_curves = list()
+            # find indices where consecutive abs_time values exceed max_time_gap
+            gap_indices = np.where(np.diff(split_array[:, 0]) > max_time_gap)[0]
 
-        if True:  # todo is_valid_curve(split_array):
-            split_arrays.append(split_array)
+            # split the array at split_indices
+            if len(gap_indices) > 0:
+                prev_idx = 0
+                for idx in gap_indices:
+                    gap_split_curves.append(split_array[prev_idx:idx + 1])
+                    prev_idx = idx + 1
+                gap_split_curves.append(split_array[gap_indices[-1] + 1:])
+            else:
+                gap_split_curves.append(split_array)
+        else:
+            gap_split_curves = [split_array]
+
+        for curve in gap_split_curves:
+            if min_curve_length and len(curve) < min_curve_length:
+                continue
+
+            # verify the splitting works
+            assert np.all(curve[:, IDX.fb] == curve[0, IDX.fb])  # is one base frequency
+            assert np.all(curve[:, IDX.id] == curve[0, IDX.id])  # is one satellite ID
+            assert np.all(np.diff(curve[:, IDX.t]) >= 0)  # is sorted by time
+            assert np.all(np.diff(curve[:, IDX.t]) <= max_time_gap) if max_time_gap > 0 else True  # max_time_gap
+            assert len(curve) >= min_curve_length if min_curve_length > 0 else True  # min_curve_length
+
+            split_arrays.append(curve)
 
     return split_arrays

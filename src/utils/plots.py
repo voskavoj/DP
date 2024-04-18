@@ -9,7 +9,7 @@ from src.config.locations import LOCATIONS
 
 
 class ColorPicker:
-    color_list = ["b", "g", "r", "c", "m", "y", "k", "w", "antiquewhite", "aqua", "aquamarine", "blue", "blueviolet",
+    color_list = ["b", "g", "r", "c", "m", "y", "k", "aqua", "aquamarine", "blue", "blueviolet",
                   "brown", "burlywood", "cadetblue", "chartreuse", "chocolate",
                   "coral", "cornflowerblue", "crimson", "cyan", "darkblue", "darkcyan", "darkgoldenrod", "darkgray",
                   "darkgreen", "darkgrey", "darkkhaki", "darkmagenta", "darkolivegreen", "darkorange", "darkorchid",
@@ -46,29 +46,40 @@ class ColorPicker:
             color = self.colors_by_line[line_name]
         else:
             color = self._choose_new_color()
+            print(f"Color for {line_name}: {color}")
             self.colors_by_line[line_name] = color
 
         return color
 
 
-def plot_results_of_iterative_position_finding(data: str | list, r=None, show=False):
+def plot_results_of_iterative_position_finding(data: str | list, r=None, show=False, map_covers_tracks=False):
     if isinstance(data, str):
         results = load_data(data)
     else:
         results = data
 
     final_lat, final_lon, final_alt = results[-1][2], results[-1][3], results[-1][4]
-
     home_lon, home_lat, home_alt = LOCATIONS["HOME"][0], LOCATIONS["HOME"][1], LOCATIONS["HOME"][2]
-
     pos_error = latlon_distance(home_lat, final_lat, home_lon, final_lon, home_alt, final_alt)
-    
+    res_arr = np.array(results)
+
+    min_lat = min(res_arr[:, 2].min(), home_lat)
+    min_lon = min(res_arr[:, 3].min(), home_lon)
+    max_lat = max(res_arr[:, 2].max(), home_lat)
+    max_lon = max(res_arr[:, 3].max(), home_lon)
+
+    if map_covers_tracks and r is not None:
+        sat_track = r.earth_location.geodetic
+        min_lon = min(sat_track.lon.min().value, min_lon)
+        max_lat = max(sat_track.lat.max().value, max_lat)
+        max_lon = max(sat_track.lon.max().value, max_lon)
+        min_lat = min(sat_track.lat.min().value, min_lat)
+
     plt.figure()
     plt.title(f"Pos. error: {pos_error:.1f} m")
-    m = Basemap(llcrnrlon=0, llcrnrlat=40, urcrnrlon=30, urcrnrlat=65,
+    m = Basemap(llcrnrlon=min_lon - 2, llcrnrlat=min_lat - 2, urcrnrlon=max_lon + 2, urcrnrlat=max_lat + 2,
                 rsphere=(6378137.00, 6356752.3142), resolution='h', projection='merc', )
-    
-    res_arr = np.array(results)
+
     if r is not None:
         sat_track = r.earth_location.geodetic
         m.plot(sat_track.lon, sat_track.lat, ".", color="red", ms=1.5, latlon=True, label="Satellite track")
@@ -120,6 +131,6 @@ def plot_measured_vs_trial_curve(measured_curve, trial_curve, lat, lon, alt, off
 
 
 if __name__ == "__main__":
-    for i in []:
+    for i in [467]:
         plot_results_of_iterative_position_finding(f"results_{i}")
     plt.show()
