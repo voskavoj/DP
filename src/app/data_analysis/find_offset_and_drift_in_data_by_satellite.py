@@ -32,14 +32,14 @@ for curve_array in detected_curves:
     off_range = range(-20000, +20000, 100)
     res = list()
     for off in off_range:
-        sos = check_trial_curve(lat, lon, alt, off, measured_curve, 0, r_sat_arr, v_sat_arr, 0)
+        sos = check_trial_curve(lat, lon, alt, off, 0, measured_curve, r_sat_arr, v_sat_arr)
         res.append((sos, off))
     off = min(res, key=lambda x: x[0])[1]
 
     off_range = range(off-100, off+100, 1)
     res = list()
     for off in off_range:
-        sos = check_trial_curve(lat, lon, alt, off, measured_curve, 0, r_sat_arr, v_sat_arr, 0)
+        sos = check_trial_curve(lat, lon, alt, off, 0, measured_curve, r_sat_arr, v_sat_arr)
         res.append((sos, off))
     off = min(res, key=lambda x: x[0])[1]
 

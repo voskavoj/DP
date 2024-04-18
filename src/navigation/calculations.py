@@ -4,6 +4,15 @@ import numpy as np
 from geopy import distance
 
 
+class StateVector:
+    def __init__(self, lat: float, lon: float, alt: float, off: float, dft: float):
+        self.lat = lat
+        self.lon = lon
+        self.alt = alt
+        self.off = off
+        self.dft = dft
+
+
 def latlon_distance(lat1, lat2, lon1, lon2, alt1=None, alt2=None):
     """
     Returns results in m

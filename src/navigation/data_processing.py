@@ -102,8 +102,8 @@ def nav_data_to_array(nav_data: list) -> np.array:
     for i, data in enumerate(nav_data):
         abs_time, freq, base_freq, sat_pos, sat_id = data
         nav_data_array[i] = [float(abs_time.to_value("unix")), freq, base_freq, sat_id,
-                             sat_pos.x.value, sat_pos.y.value, sat_pos.z.value,
-                             sat_pos.v_x.value, sat_pos.v_y.value, sat_pos.v_z.value]
+                             sat_pos.x.to("km").value, sat_pos.y.to("km").value, sat_pos.z.to("km").value,
+                             sat_pos.v_x.to("km/s").value, sat_pos.v_y.to("km/s").value, sat_pos.v_z.to("km/s").value]
 
     return nav_data_array
 
