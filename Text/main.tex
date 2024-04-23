@@ -71,11 +71,16 @@ I, the author, hereby declare that I have completed this thesis independently wi
 \vspace{10pt}
 
 Prague, \ctufield{day}~\monthinlanguage{title}~\ctufield{year} \hfill \ldots\ldots\ldots
+
+\vspace{10pt}
+
+This thesis uses several Free and Open Source programs. Attributions per the respective program's license are within the thesis text, where appropriate, and all are listed in Appendix.
 \end{declaration}
 
 \sisetup{
     range-units = single,
     % list-units = single,
+    uncertainty-mode = separate
 }
 \newcommand{\citep}[2]{\cite[p. #2]{#1}}
 
@@ -86,11 +91,12 @@ Prague, \ctufield{day}~\monthinlanguage{title}~\ctufield{year} \hfill \ldots\ldo
 \input{2 pos Overview}
 \input{2 sat Satellites}
 \input{3 sop Survey}
-% \input{4 des Design}
+\input{4 des Design}
 % \input{5 exp Experiment}
 % \input{6 con Conclusion}
 
 \appendix
+% \input{9a List of FOSS}
 \bibliographystyle{unsrt}
 \bibliography{references}
 

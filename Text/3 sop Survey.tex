@@ -1,7 +1,20 @@
-\chapter{Analysis of current SoP positioning systems}
+\chapter{Survey of current SoP positioning systems}
+
+\section{GNSS}
+
+\section{Doppler-shift positioning system}
+\subsection{Transit}
+The Navy Navigation Satellite System, commonly referred to as Transit or NAVSAT, was the first operational satellite navigation system. The system was used to provide accurate position updates for the INS equipment aboard Polaris nuclear ballistic missile submarines. Later, civilian use cases such as fishing boat navigation emerged. The system was operational from 1964. The system used the Doppler method for positioning, the details of which are described in Section \ref{s_transit_nav_method}. The transmission frequencies were \qtylist{150;400}{MHz} (two to allow for compensation of ionospheric refraction) and the system also provided a data message used for clock synchronisation. The performance of the system exceeded that of all of the early large radio systems - the RMSE of a position fix of a static naval user was \qtyrange{40}{100}{m} and the time to fix was \qtyrange{10}{16}{min}, but could be as low as \qty{2}{min} with lower accuracy\cite{sat16}.
+
+\subsection{Argos}
+Argos is a global satellite-based location and data collection system dedicated to studying and protecting Earth environment, operated through a multinational research agency collaboration. It allows any mobile object, usually a tracked animal, equipped with a compatible transmitter terminal to be located across the world\cite{sat17}. Unlike all other systems discussed, the actual position determination is done at the level of the satellite, which receives a signal (which may also contain sensor data) from a terminal and calculates its position.
+
+Argos terminal messages are transmitted at a frequency of \qty{401650(30)}{kHz}. Calculation of terminal position is done through the Doppler shift method, using a classical nonlinear least squares estimation or a multiple-model Kalman filter. The positioning accuracy typically ranges from \qty{e1}{km} to less than \qty{250}{m}, depending on the number of terminal messages received during a satellite pass\cite{sop09}. Algorithms based on animal movement models are used to resolve the symmetrical problem of Doppler positioning\cite{sat17}.
 
 
-\section{Survey of select SoP positioning systems}
+\section{Experimental SoP positioning systems}
+This section contains a survey of select experimental SoP positioning systems, each with a brief description of the implementation and experimental results. All of these system use the Doppler-shift method.
+
 %todo zkratky
 In \cite{sop07}, it is demonstrated using analysis and simulation that it is possible to obtain quick\footnote{Definition of "quick" is not provided, but it is stated that it is significantly less than \qty{16}{\s}} positioning using Doppler frequency measurements of signals from one or two satellites of the Globalstar constellation (forward down-link carrier frequency of \qty{2500}{\mega\hertz}). The error in the horizontal plane of such positioning is expected to be less than \qty{9}{\km} in \qty{90}{\percent} of cases using one satellite. Using two satellites, the error is expected to be \qty{1.4}{\km} in \qty{90}{\percent} of cases. This is without any advanced signal processing or data fusion.
 

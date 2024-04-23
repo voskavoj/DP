@@ -1,6 +1,113 @@
 \chapter{Design}
-\section{Design parameters and selection}
+% todo intro
 
-\section{Math}
+The navigation system works in several steps, each of which is discussed in detail below:
+\begin{enumerate}
+    \item Signals from satellites are captured,
+    \item data frames are extracted from the signal and decoded,
+    \item decoded frames are processed - transmitting satellite is identified, the satellite position at the transmission time is calculated and frequency curves for individual satellites are found,
+    \item initial location is estimated, and user position is calculated.  
+\end{enumerate}
 
-\section{Algorithm}
+
+\section{Capturing signals}
+The first step in determining the user position is to capture signals transmitted by the satellites used for navigation. To achieve that, an antenna and a radio are needed.
+
+\subsection{Antenna setup}
+As discussed in section \ref{s_sat_iridium_signals}, Iridium NEXT transmits in the \qtyrange{1626}{1626.5}{\MHz} frequency range, which lies within the L-band. The signal strenght on Earth is expected to be in the \qtyrange{-90}{-110}{dBm} range\cite{sop01}, which is in the order of \unit{pW} in absolute signal power.
+
+Thanks to the relative proximity (in frequency terms) of the Iridium signals to those of GPS, a GPS antenna can be used. However, some active antennas, such as the NovAtel GPS-702\cite{des03}, are severely attenuated in the Iridium signal band, and thus cannot be used.
+
+The antenna used in this work is NovAtel GPS-704-X passive GNSS antenna. 
+The 3 dB pass band of this antenna is \qtyrange{1.15}{1.65}{GHz} with minimum gain at zenith of \qty{+6.0}{dBic} in the L1 band. Additionally, the antenna features NovAtel’s patented Pinwheel technology for multipath rejection and phase centre stability\cite{des04}. The antenna was chosen due to its suitable characteristics as well as its availability.
+
+To acquire Iridium signals of sufficient strength, a low noise amplifier was found to be necessary. The amplifier used in this work is the Mini-Circuits ZX60-3018G-S coaxial amplifier with frequency range of \qtyrange{0.2}{3}{GHz}, typical maximum output power of \qty{+12.8}{dbm} and gain of \qty{20.60}{dB} for \qty{1671}{MHz}\footnote{Closest value in the datasheet.}\cite{des06}.
+
+\subsection{Radio}
+The radio used in the navigation system is the ADALM-PLUTO (in short PlutoSDR) software defined radio development kit. It is a portable self-contained RF-learning module, equipped the AD9363 RF Agile Transceiver. PlutoSDR has one TX and one RX channel with a RF range of \qtyrange{0.325}{3.8}{GHz}. The maximum bandwidth is \qty{20}{Mhz}. The SDR is powered and communicates through USB2.0 with drivers available in Windows and application programming interface (API) in, among others, C, C++ and Python. The APIs are implemented in several development platforms, notably Matlab and GNURadio (via SoapySDR). The reference clock of the SDR has a nominal frequency of \qty{40}{Mhz} and an accuracy of \num{\pm25e-6}\cite{des05}. The block diagram of the SDR is in figure \ref{f_des_pluto_block}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{img/des_pluto_block.png}
+    \caption{PlutoSDR block diagram\cite{des05}}
+    \label{f_des_pluto_block}
+\end{figure}
+
+\subsubsection{Frequency offset and drift}
+
+The synthesizer blocks that generate all data clocks, sample clocks, and local oscillators inside the PlutoSDR transceiver are supplied by a reference clock, which is external to the transceiver, but it is integrated in PlutoSDR and connected to pin \texttt{XTALN} of the transceiver (see fig. \ref{f_des_transciever_diag})\cite{des07}. Due to frequency conversion, any error in the frequency of the reference clock will be multiplied in actual measurements. Given the reference clock nominal frequency of \qty{40}{Mhz} is approximately 40x times lower than the measured band (\qty{\approx1600}{Mhz}), \qty{1}{Hz} offset in reference clock frequency will appear as \qty{-40}{Hz} shift in measured frequency.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.75\linewidth]{img/des_transciever_diag.PNG}
+    \caption{AD9363 functional diagram\cite{des07}}
+    \label{f_des_transciever_diag}
+\end{figure}
+
+Measurements of satellite signals showed that the reference clock of the PlutoSDR suffers from significant frequency offset, which varies with time. As a result, the measured signal frequency differs from actual received frequency by up to \qty{20}{kHz}. A significant cause of the change in the reference clock frequency are variations in temperature, both as a result of internal heating of the SDR components and outer environment changes, which cannot be avoided when measuring outdoors or over a long period of time.
+
+An experiment was carried out, in which the PlutoSDR reference clock frequency was compared to a precise frequency generator (an atomic clock at the FEE CUT). After SDR startup, the reference clock frequency was \qty{39999729}{Hz} (nominal frequency  $f_N$ is \qty{40000000}{Hz} - a difference of \qty{-271}{Hz} or $\num{-6.8e-6} \times f_N$). After 20 minutes of operation, the reference clock frequency was  \qty{39999571}{Hz} (\qty{-429}{Hz} or $\num{-10.7e-6} \times f_N$). After this time, the frequency varied by \qty{\pm 50}{Hz}, but mostly stabilised. Any change in external environment, such as opening the laboratory window, caused significant variation in reference clock frequency.
+
+As a result of this experiment, the PlutoSDR was covered in polystyrene case when measurements were taken, to somewhat stabilise its temperature. Additionally, the SDR was calibrated to account for some of the discrepancy in reference clock frequency, by setting the device to assume the reference clock frequency is \qty{39999571}{Hz}.
+
+This experiment, as well as the satellite signal measurements shows the navigation system needs to account for frequency offset (henceforth referred to as just \textit{offset}) and the change of this offset (henceforth referred to as \textit{drift}) in its calculations. Without precise external frequency source, such as atomic clock (which is unfeasible) or a GPS-synchronised oscillator (which introduces a reliance on GNSS), precise measurements of absolute frequency are not possible. Using a better SDR with more precise or better temperature-compensated oscillator might help, but any system needs to handle unreliable frequency measurements by itself.
+
+\subsection{Measurement setup}
+For successful signal capture, the antenna needs to have a wide and mostly unobstructed field of view. Furthermore, the radio should be appropriately protected from rapid changes in environment temperature (such as wind), and adequate power supply must be provided to the radio.
+
+An example of the measurement setup used in this work is photographed in figure \ref{f_des_meas_setup}. It consist of the GPS-704-X antenna with the amplifier (1), an antenna stand (an orange planting box with a bit of cardboard on top) (2), the PlutoSDR in polystyrene case (weighed down by nice rocks the author brought from Greece) (3), a \qty{12}{VDC} laboratory power supply (which is older than the author) (4) powering the amplifier, a Lenovo T440p laptop (5) running the measurement software and a power supply (a slightly rotten power outlet whose circuit breaker the author found after 30 minutes of searching in the \textit{basement}) (6). The measurement setup changed very little during the course of the work.
+
+The view of the antenna is unobstructed above approximately \ang{15} of elevation, with the exception of north direction, which is slightly obstructed by a tree. However, as is apparent in the data, the field of view is overall satisfactory.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{img/des_meas_setup}
+    \caption{Measurement setup}
+    \label{f_des_meas_setup}
+\end{figure}
+
+
+\section{Frame extraction and decoding}
+One of the methods of acquiring and tracking a satellite signal has been described in section \ref{s_pos_tracking_satellite}. However, that refers only to acquiring the signal itself and measuring its frequency. In this navigation system, it is highly advantageous to also demodulate and decode the data within the signal, for instance to aid in satellite identification.
+
+Extracting, demodulating and decoding frames from satellite signal is a specialised task, which is beyond the scope of this work. Therefore, two already existing programs were used - \texttt{gr-iridium}\cite{des09} and \texttt{iridium-toolkit}\cite{des10}.
+
+The \texttt{gr-iridium} package is a module for GNURadio, which handles capturing and demodulating frames sent by Iridium satellites. It works with generic SDRs and outputs decoded Iridium frames as text output in console. Provided it is supplied with proper configuration, the package works from command line and is Windows-compatible, with compiled binaries available in Conda package manager. It requires GNURadio 3.10.
+ 
+The \texttt{iridium-toolkit} is a Python application capable of decoding demodulated Iridium frames captured by \texttt{gr-iridium}. It can work from command line, is Windows-compatible and does not require compilation nor it relies on GNURadio. It can decode the data in several types of Iridium frames.
+
+Both of these packages have already been used in research, such as in \cite{sat08} to capture Iridium Ring Alert messages over a long time.
+
+\paragraph{A note on nomenclature:} In this context, \textit{extracting} frames means acquiring information about a transmitted frame that do not go beyond its RF properties, such as center frequency, signal strength or time of arrival. \textit{Demodulating} means converting captured samples into data bits, while \textit{decoding} means converting the bits into meaningful (and human-readable data).
+
+\subsubsection{Process used by \texttt{gr-iridium} to capture and decode Iridium frames}
+Below is a description of the process the \texttt{gr-iridium} uses to capture and demodulate Iridium frames. Since the documentation of the package is sparse, the information below comes was inferred from code. References to specific sections of code are in footnotes where appropriate\footnote{The source code is available at \url{https://github.com/muccc/gr-iridium/blob/v1.0.0/}}.
+
+The core of the package is a GNURadio flowgraph (see fig. \ref{f_des_gr_iridium_blocks}\footnote{The flowgraph was created by the author, it is not actually present in graphical form in the package}). Within this GNURadio environment, IQ samples are passed along the solid arrows into the blue nodes of the function blocks and Protocol Data Unit (PDU) messages are passed along the dotted arrows into the grey nodes. The process of extracting and demodulating frames is sequential - it starts in the \texttt{Soapy Custom Source} and ends in the \texttt{iridium\_frame\_printer}.
+
+% command to ease citing of code in gr-iridium
+%\newcommand{\grline}[2]{\footnote{gr-iridium v1.0.0: lib/#1\_impl.cc: line #2, available at \url{https://github.com/muccc/gr-iridium/blob/v1.0.0/lib/#1\_impl.cc\#L#2}}}
+\newcommand{\grline}[2]{\footnote{gr-iridium/lib/#1\_impl.cc, line #2}}
+\newcommand{\grlinetagger}[1]{\grline{iridium\_burst\_tagger}{#1}}
+\newcommand{\grlinedownmix}[1]{\grline{burst\_downmix}{#1}}
+\newcommand{\grlinedemod}[1]{\grline{iridium\_qpsk\_demod}{#1}}
+
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{img/des_gr_iridium_blocks}
+    \caption{\texttt{gr-iridium} flowgraph}
+    \label{f_des_gr_iridium_blocks}
+\end{figure}
+
+The \textbf{\texttt{Soapy Custom Source}} block handles communication with the PlutoSDR. It sends out raw IQ samples for further processing.
+
+The \textbf{\texttt{iridium\_burst\_tagger}} block identifies Iridium bursts in the captured data and "tags" them by creating metadata with references to burst start time (in terms of samples), magnitude, internal ID, centre frequency, rough carrier frequency offset (CFO) etc. First, the block squares the received signals twice\grlinetagger{527}. Then it performs FFT on the received samples with as fixed length window of the "Blackman-Harris" type (scaling factor \num{0.42}, equivalent noise bandwidth \num{1.72}\grlinetagger{133})\cite{des08}. After that it removes peaks around burst by the use of a burst mask, extracts the remaining peaks, updates the mask to match the new burst and passes the samples along with the tag to block output.
+
+The \textbf{\texttt{tagged\_burst\_to\_pdu}} block reads the tags and uses them to pack the raw samples belonging to a burst with the metadata from the tag into a standardised message format (a PDU), which is then passed into block output.
+
+The \textbf{\texttt{burst\_downmix}} operates on PDUs. For each PDU, it shifts the centre frequency by the rough estimate of CFO\grlinedownmix{804}, applies a low pass filter, and decimates the signal. Then it searches for start of the burst by analysing magnitude of the filtered signal. Then it seatches for the Unique BPSK synchronisation Word in the frame (see section \ref{s_sat_iridium_signals} and fig. \ref{f_sat_iridium_freq_and_frame_structure} for signal structure details) to acquire a fine estimation of CFO\grlinedownmix{520}, which is again used to shift the signal. After that, the signal is filtered and a correlation function is used to find the start of the unique word and to determine the direction of the burst (uplink or downlink)\grlinedownmix{612}. Lastly, it determines the exact frame size, appends the PDU with the new information and passes it to the block output.
+
+The \textbf{\texttt{iridium\_qpsk\_demod}} block demodulates the frame data. It decimates the signal to one sample per symbol, applies a PLL to remove remaining frequency or phase offset\grlinedemod{358}. Then it perform a QPSK demodulation, checks the unique word and passes the modified PDU to the block output.
+
+The \textbf{\texttt{frame\_sorter}} block sorts the PDU by time of arrival (the processing is multi-threaded, time ordering is thus not assured), and the \textbf{\texttt{iridium\_frame\_printer}} block prints the block into console or a file.

@@ -74,7 +74,19 @@ The only parameter which relates the position of the satellite and the user is t
 
 The user is located somewhere on an infinite cone with the centre at the position of the satellite at the time of measurement, the axis in the direction to $v$ and an opening angle $2\alpha$.
 
-If this measurement is carried out several times at a different satellite positions along its trajectory, the user position can be pinpointed further. Two measurements give two closed curves defined by the intersection of two cones, three measurements give a set of points, four measurements reduce the possibility to just one point. Additionally, if the user is assumed to be on the surface, an intersection with a sphere representing the surface can be considered, lowering the number of measurements required.
+If this measurement is carried out several times at a different satellite positions along its trajectory, the user position can be pinpointed to the intersections of the respective cones. Additionally, if the user is assumed to be on the surface, an intersection with a sphere representing the surface can be considered.
+
+However, for a pass of a single satellite, the Doppler method always yields at least two results (one actual and one shadow) symmetrical along the satellite ground track (see fig, \ref{f_pos_doppler_symmetry_problem}). Additional satellite measurements or other means are necessary to resolve the symmetry problem and determine which position is the correct one.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.75\linewidth]{img/pos_doppler_symmetry_problem}
+    \caption{Illustration of the Doppler method symmetry problem\cite{sop09}}
+    \label{f_pos_doppler_symmetry_problem}
+\end{figure}
+
+\subsection{Clock drift}
+% todo
 
 
 \section{Identifying and determining the satellite position}
@@ -123,9 +135,50 @@ The maximum Doppler shift for the satellites considered in the LEO system survey
 \end{table}
 
 \section{tracking and meas}
+\label{s_pos_tracking_satellite}
+% todo section about tracking signals from satellite e.g. from spo03 - power of 4 then FFT
 
 \section{Calculating user position}
+A review of existing work reveals three main ways of using the Doppler shift method.
+
+The first method is the one used by the Transit navigation system, based on creating a trial Doppler curve from an estimated location and fitting it to the measured curve, thus calculating the actual location\cite{sat16}.
+
+The second method is geometrical. It is based on an intersection of three surfaces - a sphere defined by a model of the surface of the Earth, a cone defined by a constant range rate (see cone in Fig. \ref{f_pos_doppler_method_simple}), and a sphere one defined by a constant range to the satellite\cite{sop22}. Since range measurements are not available in this work, the range sphere must be substituted by another surface, such as a second range-rate cone.
+
+The third method is the most common in the reviewed modern research. It is based on expressing a the range rate as a function of measured frequency and as a function of satellite position and velocity and user position. These are then equated and the user position is found\cite{sop02, sop13}.
+
+All three methods are explained in detail below.
+
+\subsection{The Doppler curve fitting method}
+\label{s_transit_nav_method}
+The Doppler curve fitting method is based on measuring the frequency emitted by a satellite, thus obtaining a Doppler shift curve, and then retroactively determining (2D) user location.
+
+The user latitude is determined by the moment when the received frequency is equal to the transmitting frequency, as in that moment the satellite range rate is zero. Thus, the user is located on a plane perpendicular to the satellite orbital velocity. The Transit satellites were on a polar orbit, therefore at the moment of zero range rate the satellite is at an equal latitude as the user.
+
+The user longitude is determined by the shape of the Doppler curve. The rate of change of Doppler frequency is the largest if the satellite passes directly overhead and smallest if the satellite passes over the horizon, as are the minima and maxima of the received frequency. The rotation of the Earth provides another part in the relative motion of the satellite and the user, and can be used to determine whether the satellite passes to the west or the east of the user.
+
+A trial Doppler curve is calculated based on an initial estimate of user position, and it is compared to the actual measured curve using a least-squares fit. The estimate of the user position is then updated and the process iterated, until the two curves match\cite{sat16}.
 
 
+\subsection{The surface intersection method}
+% todo section from sop22
 
 
+\subsection{The range rate method}
+
+\begin{equation}
+    f_D = \frac{\dot\rho f_R}{c}
+\end{equation}
+
+\begin{equation}
+    \dot\rho_i = \frac{c f_{D_i}}{f_R}
+\end{equation}
+
+\begin{equation}
+    \dot\rho_i = (V_i - V) \frac{r_i - r_0}{||r_i - r_0||^2} + c \dot\delta t - c \dot \delta t^i + v
+\end{equation}
+
+
+\begin{equation}
+    \frac{c f_{D_i}}{f_R} = (V_i - V) \frac{r_i - r_0}{||r_i - r_0||^2} + c \dot\delta t - c \dot \delta t^i + v
+\end{equation}

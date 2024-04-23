@@ -1,0 +1,51 @@
+\section{The Doppler curve fitting method algorithm}
+% TODO revise
+The principle of the Doppler curve fitting method is described in section \ref{s_transit_nav_method}. In summary, a Doppler shift curve is obtained, then the zero-Doppler-shift time is estimated, and an array of possible (trial) user locations is created based on this time. For each location, a trial Doppler curve is created and then compared against the measured curve, until a sufficiently fitting curve is found.
+
+The method works over observations collected as a set of points, each containing time of reception ($t_R$), received frequency ($f_R$), estimated carrier frequency ($f_B$), an estimation of satellite position and velocity at the time of reception from the SGP4 model ($R_S$, $V_S$), and the satellite ID (\texttt{sat-id}).
+
+
+\subsection{Curve extraction}
+First Doppler curves are extracted from the observation. A Doppler curve is defined as a curve of Doppler-shifted frequency measurements in time, belonging to one channel of one transmitting satellite, sorted by time. That is, a curve if formed by all observations with constant $f_B$ and satellite ID. Furthermore, for a correct computation, the curve must be "nice" - its observations must be mostly equally distributed (variance criterion), sufficiently numerous (density criterion), sufficiently apart in time (duration criterion), without significant gaps (gap criterion) and the $f_R$ must pass through the $f_B$ of the curve (trend criterion).
+
+The extraction of the curves follows a simple rule: an observation $m_i$ belongs to a curve $M_j$ if the respective $f_B$ and \texttt{sat-id} are equal:
+
+\begin{equation*}
+    m_i(t_R, f_R, f_B, R_S, V_S, \texttt{sat-id}) \in M_j(f_B, \texttt{sat-id}) \Leftrightarrow f_{B_i}, \texttt{sat-id}_i = f_{B_j}, \texttt{sat-id}_j
+\end{equation*}
+
+The curve $M_j$ containing $n$ observations $m_i$ ($i \in <0, n>$) is a valid curve for further computation if all conditions listed below are satisfied:
+
+\begin{align*}
+    \text{Duration}&: t_{R_n} - t_{R_0} \geq \texttt{MIN-TIME} \\
+    \text{Variance}&: \sum^n_{i=1} |f_{R_{i-1}} - f_{R_i}| \leq \texttt{MAX-VARIANCE} \\
+    \text{Density}&: \frac{n}{t_{R_n} - t_{R_0}} \geq \texttt{MIN-DENSITY} \\
+    \text{Gap}&: \max_{i \in <1, n>}(|t_{R_{i-1}} - t_{R_i}|) \leq \texttt{MAX-GAP} \\
+    \text{Trend} &: f_{R_0} > f_B > f_{R_n} \lor f_{R_0} < f_B < f_{R_n}
+\end{align*}
+where \texttt{MIN-TIME}, \texttt{MAX-VARIANCE}, \texttt{MIN-DENSITY}, and \texttt{MAX-GAP} are parameters. Note that for the trend criterion, strict criterion of $f_{R_{i-1}} \leq f_{R_i}$ or $f_{R_{i-1}} \geq f_{R_i}$ cannot be applied due to measurement noise.
+
+
+\subsection{Zero-Doppler-shift time}
+The moment at which the Doppler shift is zero is the moment at which the satellite is stationary relative to the user. Simply, it is the time $t_Z$ when $f_R = f_B$. It is improbable this moment will be captured, therefore it is necessary to interpolate. Specifically, the interpolated function is $f_d = f(t)$, where $f_d = f_R - f_B$, interpolated at $f_d = 0$. The function \texttt{numpy.interp} was used.
+
+After calculation of $t_Z$, a satellite position $R_Z$ and velocity $V_Z$ at this time can be simulated using the SGP4 model. The position is then transformed into geodetic frame of reference to acquire the satellite ground location (latitude and longitude) $P_Z$.
+
+\subsection{Trial location generation}
+The user is located somewhere on a plane perpendicular to the satellite velocity $V_Z$ and passing through the point $R_Z$. This plane is too large to be searched iteratively, therefore, it needs to be constrained.
+
+The first constraint is altitude - \texttt{MAX-ALTITUDE}. The user can be assumed to be above ground level. For simple applications, the user can also be assumed to be below \qty{2}{km} in altitude, or the altitude can omitted completely\footnote{As was done in the Transit system}. The second constraint is maximum distance from the satellite, given as the maximum line-of-sight distance:
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{img/des_early_result.png}
+    \caption{Enter Caption}
+    \label{f_des_early_result}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{img/des_symmetry.png}
+    \caption{Enter Caption}
+    \label{f_des_symmetry}
+\end{figure}

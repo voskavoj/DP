@@ -6,7 +6,7 @@ Parameters of the systems are summarised in table \ref{t_sat_general_summary}.
 
 
 \begin{table}
-\caption{Summary of \emph{approximate} parameters of LEO satellite systems: number of active satellites, number of orbital planes and inclinations, altitudes, visibility https://www.overleaf.com/project/64ec6e4d5c805295f3ac825etihttps://www.overleaf.com/project/64ec6e4d5c805295f3ac825emes for one satellite, frequency ranges, signal strengths at ground level and modulation used}
+\caption{Summary of \emph{approximate} parameters of LEO satellite systems: number of active satellites, number of orbital planes and inclinations, altitudes, visibility for one satellite, frequency ranges, signal strengths at ground level and modulation used}
 \label{t_sat_general_summary}
 \hspace*{-2cm}
 \centering
@@ -21,6 +21,7 @@ Starlink   & $>$5000   & $>$180                               & \qty{550}{\km}  
 
 
 \section{Iridium NEXT}
+\label{s_sat_iridium}
 Iridium satellite constellation, owned and operated by Iridium Communications Inc., provides global communications coverage for satellite phones, pagers and other devices, as well as an interface to terrestrial communications networks via several Gateways.
 
 The system became operational in 1998 and saw a total of 96 satellites launched, before the constellation was completely overhauled between 2017 and 2019, replacing all of the original satellites with Iridium Next satellites. Currently\footnote{As of October 2023}, no original satellite remains operational, however, 25 satellites remain defunct on orbit\cite{sat06}.
@@ -32,9 +33,10 @@ Communication is carried over Ka-band for satellite-satellite links and satellit
 The Iridium Next onboard clocks have a stability better than \num{10e-9} and a drift less than \qty{3}{\hertz\per\s}, which is sufficient for time transfers with accuracy in the order of \qty{e0}{\micro\s}\cite{sop11}.
 
 \subsection{Iridium signals}
+\label{s_sat_iridium_signals}
 Due to the scope of this work, only the satellite-user (L-band) signals are examined, as the Ka-band signals are either not globally transmitted or not aimed towards the Earth.
 
-Iridium uses a combination of Space Division Multiple Access (SDMA),  Frequency Division Multiple Access (FDMA), Time Division Multiple Access (TDMA) and Time Division Duplex (TDD) multiple access schemes\cite{sop11}. For every spot beam, channels\footnote{A channel is a specific FDMA frequency and TDMA timeslot\cite{sat07}} are implemented using TDMA architecture based on TDD using a time frame\cite{sop12}. The structure of a TDMA frame is illustrated in Fig. \ref{sat_iridium_freq_and_frame_structure}.
+Iridium uses a combination of Space Division Multiple Access (SDMA),  Frequency Division Multiple Access (FDMA), Time Division Multiple Access (TDMA) and Time Division Duplex (TDD) multiple access schemes\cite{sop11}. For every spot beam, channels\footnote{A channel is a specific FDMA frequency and TDMA timeslot\cite{sat07}} are implemented using TDMA architecture based on TDD using a time frame\cite{sop12}. The structure of a TDMA frame is illustrated in Fig. \ref{f_sat_iridium_freq_and_frame_structure}.
 
 In the \qtyrange{1626}{1626.5}{\MHz} band Iridium uses, there are 252 carriers with carrier spacing of \qty{41.667}{\kHz}, grouped into 31 sub-bands of 8 and one of 4. There are 5 simplex carriers in the band with a spacing of \qty{35}{\kHz}, one of which is the Ring Alert, and the remaining four are messaging carriers for paging and acquisition. The polarisation of both the uplink and downlink band is right-hand circular. Iridium uses DE-QPSK modulation\cite{sat04}.
 
@@ -42,7 +44,7 @@ In the \qtyrange{1626}{1626.5}{\MHz} band Iridium uses, there are 252 carriers w
     \centering
     \includegraphics[width=0.75\linewidth]{img/sat_iridium_freq_and_frame_structure.png}
     \caption{Iridium frequency allocation and frame structure\cite{sop12}}
-    \label{sat_iridium_freq_and_frame_structure}
+    \label{f_sat_iridium_freq_and_frame_structure}
 \end{figure}
 
 \subsubsection{Paging}
@@ -123,6 +125,22 @@ The user downlinks are in the frequency range from \qtyrange{2483.5}{2500}{MHz}.
 \section{Starlink}
 Of the systems discussed, Starlink has by far the most satellites. However, due to the downlink frequency exceeding \qty{10}{GHz}, it is not feasible to process Starlink signals in this work. Starlink is therefore discussed only briefly for the sake of completeness.
 
-Starlink is an satellite internet and telephony constellation. It currently\footnote{As of October 2023} features over \num{5000} satellites in over 180 orbital planes, inclined mostly at \ang{52} or \ang{97}. Up to \numrange{24000}{42000} satellites are possible\cite{sop02}. The satellites orbit at an altitude of around \qty{550}{km}, with an orbital period of \qty{91}{min} and single satellite visibility time of around \qty{4}{min}.
+Starlink is an satellite internet and telephony constellation. It currently\footnote{As of October 2023} features over \num{5000} satellites in over 180 orbital planes, inclined mostly at \ang{52} or \ang{97}. Up to 24000 - 42000 satellites are possible\cite{sop02}. The satellites orbit at an altitude of around \qty{550}{km}, with an orbital period of \qty{91}{min} and single satellite visibility time of around \qty{4}{min}.
 
 The starlink downlink signal is in the \qtyrange{10.7}{12.7}{GHz} band, with several channels of a \qty{240}{MHz} bandwidth. Furthermore, several \qty{1}{MHz} bandwidth tones were identified within the band by experimentation. The structure of the signal is not public. The reception of signals within this band usually requires a low-noise block down-converter and a parabolic antenna reflector\cite{sop04}.
+
+\section{Satellite visibility}
+% todo satellite visibility
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{img/sat_simul_vis}
+    \caption{Number of simultaneously visible Iridium, Orbcomm and Globalstar satellites during the day}
+    \label{f_sat_simul_vis}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{img/sat_ele_angles}
+    \caption{Elevation angles of Iridium, Orbcomm and Globalstar satellites during 3 hours (as viewed from Prague)}
+    \label{f_sat_ele_angles}
+\end{figure}
