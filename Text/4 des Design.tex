@@ -1,4 +1,6 @@
 \chapter{Design}
+\newcommand{\param}[1]{\texttt{#1}}
+
 % todo intro
 
 The navigation system works in several steps, each of which is discussed in detail below:
@@ -9,12 +11,14 @@ The navigation system works in several steps, each of which is discussed in deta
     \item initial location is estimated, and user position is calculated.  
 \end{enumerate}
 
+\paragraph{A note on nomenclature:} Since this chapter discusses the design of the navigation system in detail, an explanation of the used nomenclature should be given. Within the context of this chapter and the navigation system, the \textit{navigation system} refers to the application developed in this work and a \textit{frame} is a data unit sent over a channel by a communication satellite, on the reception of which the navigation system is based. \textit{Extracting} frames means acquiring information about a transmitted frame that do not go beyond its RF properties, such as centre frequency, signal strength or time of arrival. \textit{Demodulating} means converting captured samples into data bits, while \textit{decoding} means converting the bits into meaningful (and human-readable data). A frame has some properties, namely \textit{reception time} $t$, a \textit{centre frequency} $f$ which is shifted from a \textit{base frequency} of the channel $f_B$ on which the frame was transmitted by Doppler shift $f_D$ ($f_D = f - f_B$). Any value with the subscript $U$ refers to the user (i.e. the position of the antenna of the navigation system), a subscript $S$ or prefix \texttt{sat-} refers to the transmitting satellite. Unless otherwise noted, all positions denoted by $x, y, z$ are in ECEF frame (namely ITRS, the International Terrestrial Reference System) and all positions denoted by $\lambda, \phi, h$ are in the geodetic frame ($\phi, \lambda, h$ = latitude (rad), longitude (rad), height (m). In algorithms or conditions, subscript $i$ refers to the $i$-th received frame. References to \textit{Iridium}, unless noted otherwise, always mean \textit{Iridium NEXT}.
+
 
 \section{Capturing signals}
 The first step in determining the user position is to capture signals transmitted by the satellites used for navigation. To achieve that, an antenna and a radio are needed.
 
 \subsection{Antenna setup}
-As discussed in section \ref{s_sat_iridium_signals}, Iridium NEXT transmits in the \qtyrange{1626}{1626.5}{\MHz} frequency range, which lies within the L-band. The signal strenght on Earth is expected to be in the \qtyrange{-90}{-110}{dBm} range\cite{sop01}, which is in the order of \unit{pW} in absolute signal power.
+As discussed in section \ref{s_sat_iridium_signals}, Iridium NEXT transmits in the \qtyrange{1626}{1626.5}{\MHz} frequency range, which lies within the L-band. The signal strength on Earth is expected to be in the \qtyrange{-90}{-110}{dBm} range\cite{sop01}, which is in the order of \unit{pW} in absolute signal power.
 
 Thanks to the relative proximity (in frequency terms) of the Iridium signals to those of GPS, a GPS antenna can be used. However, some active antennas, such as the NovAtel GPS-702\cite{des03}, are severely attenuated in the Iridium signal band, and thus cannot be used.
 
@@ -68,17 +72,17 @@ The view of the antenna is unobstructed above approximately \ang{15} of elevatio
 
 
 \section{Frame extraction and decoding}
-One of the methods of acquiring and tracking a satellite signal has been described in section \ref{s_pos_tracking_satellite}. However, that refers only to acquiring the signal itself and measuring its frequency. In this navigation system, it is highly advantageous to also demodulate and decode the data within the signal, for instance to aid in satellite identification.
+One of the methods of acquiring and tracking a satellite signal has been described in section \ref{s_pos_tracking_satellite}. However, that refers only to acquiring the signal itself and measuring its frequency. It is highly advantageous to also demodulate and decode the data within the signal. Firstly, some frame types are associated with a specific frequency or a range of frequencies, which greatly simplifies determining the frequency on which the frames were transmitted, and thus their Doppler shift. Secondly, some frame types contain satellite identifiers, which are useful for determining which satellite is transmitting. Thirdly, some frame types contain the position of the transmitting satellite, which may be used as an initial location.
 
 Extracting, demodulating and decoding frames from satellite signal is a specialised task, which is beyond the scope of this work. Therefore, two already existing programs were used - \texttt{gr-iridium}\cite{des09} and \texttt{iridium-toolkit}\cite{des10}.
 
-The \texttt{gr-iridium} package is a module for GNURadio, which handles capturing and demodulating frames sent by Iridium satellites. It works with generic SDRs and outputs decoded Iridium frames as text output in console. Provided it is supplied with proper configuration, the package works from command line and is Windows-compatible, with compiled binaries available in Conda package manager. It requires GNURadio 3.10.
+The \texttt{gr-iridium} package is a module for GNURadio, which handles capturing and demodulating frames sent by Iridium satellites. It works with generic SDRs and outputs decoded Iridium frames as text output in console. Provided it is supplied with proper configuration, the package works from command line and is Windows-compatible, with compiled binaries available in Conda package manager. It requires GNURadio 3.10. The principle of operation is described below.
  
-The \texttt{iridium-toolkit} is a Python application capable of decoding demodulated Iridium frames captured by \texttt{gr-iridium}. It can work from command line, is Windows-compatible and does not require compilation nor it relies on GNURadio. It can decode the data in several types of Iridium frames.
+The \texttt{iridium-toolkit} is a Python application capable of decoding demodulated Iridium frames captured by \texttt{gr-iridium}. It can work from command line, is Windows-compatible and does not require compilation nor it relies on GNURadio. It can decode the data in several types of Iridium frames by matching against a known message format.
 
 Both of these packages have already been used in research, such as in \cite{sat08} to capture Iridium Ring Alert messages over a long time.
 
-\paragraph{A note on nomenclature:} In this context, \textit{extracting} frames means acquiring information about a transmitted frame that do not go beyond its RF properties, such as center frequency, signal strength or time of arrival. \textit{Demodulating} means converting captured samples into data bits, while \textit{decoding} means converting the bits into meaningful (and human-readable data).
+% \paragraph{A note on nomenclature:} In this context, \textit{extracting} frames means acquiring information about a transmitted frame that do not go beyond its RF properties, such as centre frequency, signal strength or time of arrival. \textit{Demodulating} means converting captured samples into data bits, while \textit{decoding} means converting the bits into meaningful (and human-readable data).
 
 \subsubsection{Process used by \texttt{gr-iridium} to capture and decode Iridium frames}
 Below is a description of the process the \texttt{gr-iridium} uses to capture and demodulate Iridium frames. Since the documentation of the package is sparse, the information below comes was inferred from code. References to specific sections of code are in footnotes where appropriate\footnote{The source code is available at \url{https://github.com/muccc/gr-iridium/blob/v1.0.0/}}.
@@ -91,7 +95,6 @@ The core of the package is a GNURadio flowgraph (see fig. \ref{f_des_gr_iridium_
 \newcommand{\grlinetagger}[1]{\grline{iridium\_burst\_tagger}{#1}}
 \newcommand{\grlinedownmix}[1]{\grline{burst\_downmix}{#1}}
 \newcommand{\grlinedemod}[1]{\grline{iridium\_qpsk\_demod}{#1}}
-
 
 \begin{figure}
     \centering
@@ -106,8 +109,227 @@ The \textbf{\texttt{iridium\_burst\_tagger}} block identifies Iridium bursts in 
 
 The \textbf{\texttt{tagged\_burst\_to\_pdu}} block reads the tags and uses them to pack the raw samples belonging to a burst with the metadata from the tag into a standardised message format (a PDU), which is then passed into block output.
 
-The \textbf{\texttt{burst\_downmix}} operates on PDUs. For each PDU, it shifts the centre frequency by the rough estimate of CFO\grlinedownmix{804}, applies a low pass filter, and decimates the signal. Then it searches for start of the burst by analysing magnitude of the filtered signal. Then it seatches for the Unique BPSK synchronisation Word in the frame (see section \ref{s_sat_iridium_signals} and fig. \ref{f_sat_iridium_freq_and_frame_structure} for signal structure details) to acquire a fine estimation of CFO\grlinedownmix{520}, which is again used to shift the signal. After that, the signal is filtered and a correlation function is used to find the start of the unique word and to determine the direction of the burst (uplink or downlink)\grlinedownmix{612}. Lastly, it determines the exact frame size, appends the PDU with the new information and passes it to the block output.
+The \textbf{\texttt{burst\_downmix}} operates on PDUs. For each PDU, it shifts the centre frequency by the rough estimate of CFO\grlinedownmix{804}, applies a low pass filter, and decimates the signal. Then it searches for start of the burst by analysing magnitude of the filtered signal. Then it searches for the unique BPSK synchronisation word in the frame (see section \ref{s_sat_iridium_signals} and fig. \ref{f_sat_iridium_freq_and_frame_structure} for signal structure details) to acquire a fine estimation of CFO\grlinedownmix{520}, which is again used to shift the signal. After that, the signal is filtered and a correlation function is used to find the start of the unique word and to determine the direction of the burst (uplink or downlink)\grlinedownmix{612}. Lastly, it determines the exact frame size, appends the PDU with the new information and passes it to the block output.
 
 The \textbf{\texttt{iridium\_qpsk\_demod}} block demodulates the frame data. It decimates the signal to one sample per symbol, applies a PLL to remove remaining frequency or phase offset\grlinedemod{358}. Then it perform a QPSK demodulation, checks the unique word and passes the modified PDU to the block output.
 
 The \textbf{\texttt{frame\_sorter}} block sorts the PDU by time of arrival (the processing is multi-threaded, time ordering is thus not assured), and the \textbf{\texttt{iridium\_frame\_printer}} block prints the block into console or a file.
+
+
+
+\section{Data processing}
+After the capture, demodulation and decoding of Iridium frames, some processing is needed to create data suitable for navigation calculation.
+
+
+\subsection{Parsing frames}
+Firstly, since the output of the \texttt{iridium-toolkit} is text, the output needs to be parsed. The output from \texttt{iridium-toolkit} if of the form (1) frame type (e.g. IRA = Iridium Ring Alert); (2) Unix timestamp of the start of the recording\footnote{In the setup in this work, this timestamp is incorrect}; (3) seconds from the start of the recording; (4) centre frequency of the frame; (5) demodulator confidence in percent;  (6) noise values for the frame; (7) frame data length; (8) direction of the frame (UP = uplink, DL = downlink); (9) frame-type-specific data. An example of a received frame is below.
+
+\vspace{\parskip}
+\noindent\begin{minipage}{\textwidth}
+\begin{verbatim}
+    1    2             3              4           5    6
+    IRA: p-289693-e000 000025108.8066 1626314368  91%  -29.47|
+                  7   8  9
+    -090.82|30.79 107 DL sat:067 beam:27 xyz=(+1390,+0092, ...
+\end{verbatim}
+\end{minipage}
+\vspace{\parskip}
+
+The frame-type-specific data for some frame types, namely IRA (Iridium Ring Alert, see section \ref{s_sat_iridium_signals} for details) and IBC (a frame of the duplex channels), contain a satellite identifier, e.g. \texttt{sat:067}. However, this is a system internal ID - it is not public and has no relation whatsoever to the IDs published by NORAD. Additionally, IRA frames contain information about the satellite position in geodetic frame (\texttt{pos} in degrees latitude/longitude, \texttt{alt} in km), e.g.
+
+\begin{verbatim}
+    pos=(+38.82/+003.79) alt=797
+\end{verbatim}
+
+If the \texttt{alt} is high (generally above \qty{700}{km}), the position refers to the actual satellite, if it is low, the position refers to the location on Earth where the satellite beam is hitting the surface. Some nonsensical values were also observed and filtered out by only accepting frames with $\qty{700}{km} < \texttt{alt} < \qty{900}{km}$ where satellite position information was extracted. The latitude and longitude is given with two significant digits of precision, which, for the latitude of Prague corresponds to accuracy of \qtylist{1.11; 0.71}{km} respectively - not suitable for precise navigation. The process by which Iridium satellites calculate this position is not public, but it can be assumed it has similar errors as the SGP4 algorithm.
+
+The final navigation system is capable of working with IRA and IBC frames. From these, the timestamps (2 and 3), frequency (4) and satellite ID (part of 9) are extracted for further usage where navigation is concerned, and also satellite position (part of 9) is extracted from IRA frames in other applications.
+
+\subsection{Determining frame transmission frequency}
+To calculate the Doppler shift of the received frames, it is necessary to identify the channel - and thus the channel base frequency -  on which the frame was transmitted. For IRA frames, this is simple - the transmission frequency of Ring Alert frames is set at \qty{1626.2708}{MHz}. 
+
+For IBC (and other duplex channels), the transmitting channel can be identified by looking which of the known channel centre frequencies is the closest (in frequency space). The channel spacing, which is higher than the maximum Doppler shift for line-of-sight communication, assures that there will be one and only one fit. However, this approach proved not reliable, as higher Doppler shifts were encountered (even in simplex channels where identification is certain).
+
+An additional identification mechanism was thus implemented, where the received frames were sorted by the satellite ID, and a the channel was selected by the above method while observing that the relative Doppler shift to the base frequency among the frames received from a single satellite should not change rapidly:
+
+\begin{equation*}
+    \frac{f_{D_i}}{f_{B_i}} \approx \frac{f_{D_{i-1}}}{f_{B_{i-1}}} 
+\end{equation*}
+
+However, this still did not prove sufficient and the incorrectly classified channels were a source of significant distortion. Therefore, while the capability remained in the system, the system uses only IRA frames for navigation.
+
+To filer out frames received with erroneous frequency, a thresholding filter was applied ($f_T$ is the threshold of Doppler shift, equal to the channel spacing of $\approx\qty{41.7}{kHz}$):
+
+\begin{equation*}
+    f_{D_i} < f_T
+\end{equation*}
+
+
+\subsection{Identifying the transmitting satellite}
+The satellite ID with an IRA or an IBC message identifies a satellite within the Iridium ecosystem. However, the rules by which an ID is assigned to a specific satellite are neither public nor apparent. Put simply, the ID within an Iridium frame has no relation to any other public ID of a satellite, such as those assigned by NORAD and used in TLEs. Additionally, as experiments have shown (see below), while NORAD IDs are constant in time, Iridium IDs are not. Therefore, to determine which Iridium frame ID corresponds to which NORAD ID, a mapping table needs to be constructed.
+
+The creation of the mapping table (Iridium frame ID to NORAD ID) in this work takes advantage of the satellite position information contained within an IRA frame. This can be compared to the positions of all active Iridium satellites predicted by the SGP4 algorithm for the same time. The satellite with the closest predicted position to the position in the frame can be assumed to be the one that transmitted the frame. The algorithm (in pseudocode without vector optimisation) is in alg. \ref{a_des_satellite_id}, an example of the table is in tab. \ref{t_des_sat08_table}.
+
+\begin{algorithm}
+    \centering
+    \begin{verbatim}
+satellites = download TLEs for Iridium
+frames = load decoded IRA frames
+saved_distances = list
+frame_ID = table
+
+for frame in frames:
+    parse (RX_time, frame_ID, frame_position) from frame
+
+    for sat_ID in satellites:
+        predicted_position = run SGP4 for sat_ID at RX_time
+        distance = predicted_position - frame_position
+        save distance and sat_ID into saved_distances
+
+    closest_ID = find satellite_ID for 
+                    minimum distance in saved_distances
+    save closest_ID to frame_ID row in saved_IDs
+
+for frame_ID in saved_IDs:
+    most_common_ID = find most common ID in frame_ID row
+    Iridium ID frame_ID is NORAD ID most_common_ID
+    \end{verbatim}
+    \caption{Iridium satellite identification}
+    \label{a_des_satellite_id}
+\end{algorithm}
+
+
+This process is fairly computationally demanding and not completely error-free. However, when done over several hundred frames with a follow-up application of statistical methods, the satellites can be identified fairly certainly. Uncertainly identified satellites were filtered out by maintaining that the number of frames per satellite is larger than \param{MIN-FRAME-OCCURRENCE}.
+
+\subsubsection{Using a large dataset for mapping IDs}
+Assuming the frame IDs remain constantly attached to the same satellite, it would be advantageous to use a large dataset spanning several days or weeks to identify all of the satellites within the Iridium constellation. Such dataset can be found in \cite{sat08}. The data come from Doha, Quatar, and are split into two parts. The first part, which was used for this work, spans 30 days between August 12\textsuperscript{th} and September 10\textsuperscript{th}, 2020 and includes \num{2060289} IRA frames. An excerpt from the mapping table is in tab. \ref{t_des_sat08_table}.
+
+However, a comparison of the table created from the large dataset to a table created from data measured as part of this work in March 2024 reveals the IDs are not in fact constant. Thus, an out-of-date, albeit large dataset cannot be used to create the table. Furthermore, some IDs were observed to change even during this work (Jan. to Mar. 2024). Therefore, a mapping table needs to be generated for each new data.
+
+\begin{table}
+    \centering
+    \begin{tabular}{l|ll|ll|l}
+       & \multicolumn{2}{l|}{Most common} & \multicolumn{2}{l|}{2\textsuperscript{nd} most common} & \\
+IRA ID & NORAD ID & Count                 & NORAD ID & Count                                       & Confidence \\ \hline
+036 & 122 &  8715 & 169 &   414 & 95\%     \\
+038 & 113 &  8774 &     &       & 100\%     \\
+039 & 148 &  7158 &     &       & 100\%     \\
+040 & 153 &  7300 & 124 &   334 & 95\%     \\
+... & ... & ... & ... & \\
+069 & 136 &  8930 &     &       & 100\%     \\
+071 & 167 &  9314 & 170 &   190 & 98\%     \\
+072 & 173 &  9110 & 175 &    16 & 100\%     \\
+073 & 133 &  8807 & 169 &   340 & 96\%     \\
+... & ... & ... & ... & \\
+104 & 116 &  8878 &     &       & 100\%     \\
+107 & 142 &  7343 & 124 &   182 &  98\%     \\
+109 & 130 &  8870 &     &       & 100\%     \\
+110 & 114 &  9186 &     &       & 100\%     \\
+    \end{tabular}
+    \caption{Example of ID mapping table from large dataset}
+    \label{t_des_sat08_table}
+\end{table}
+
+\begin{table}
+    \centering
+    \begin{tabular}{l|lll}
+       & \multicolumn{3}{c}{NORAD ID}  \\
+IRA ID & Aug./Sep. 2020 & Jan. 2024 & Mar. 2024 \\ \hline
+046 & 158 & 156 & 156 \\
+049 & 163 & 159 & 159 \\
+057 & 119 & \textbf{169} & \textbf{139} \\
+... & ... & ... & ... \\
+073 & 133 & 100 & 100 \\
+078 & 107 & \textbf{179} & \textbf{128} \\
+079 & 100 & 129 & 129 \\
+    \end{tabular}
+    \caption{Example of ID mapping table changing in time}
+    \label{t_des_sat08_to_now_table}
+\end{table}
+
+
+\subsection{Identifying a satellite without decoding frames}
+Not all frame types include satellite position information or a satellite ID. Furthermore, not all satellite constellations transmit readily decodable signals in the first place. Thus, a mechanism for satellite identification without relying on frame decoding is needed.
+
+One such mechanism (see alg. \ref{a_des_satellite_id_gen} is based on selecting satellites based on plausibility of Doppler shift. First, a rough user location needs to be known. Second, the constellation of the satellite needs to be determined. Thirdly, the channel needs to be identified to determine the Doppler shift. Then, the positions of all the satellites within the constellation are predicted using the SGP4 algorithm. Satellites with negative elevation angles, which cannot plausibly be received, are removed. For all the remaining satellites, the expected Doppler shift for a given channel is calculated. The satellite with the closest estimated Doppler shift is then selected. Note that because in this situation there is no way to distinguish frames belonging to one (albeit unknown) satellite, statistical methods cannot be used.
+
+This method requires prior estimate of user location, therefore it cannot be used alone. On the other hand, it requires no demodulation or decoding, and is thus far more generic. It would be suitable for extending the navigation system to other constellations than Iridium, where the IRA-based method would provide the initial position estimate. Since the navigation system uses IRA frames, this method was not implemented.
+
+\begin{algorithm}
+    \centering
+    \begin{verbatim}
+user_position = estimate of user location
+satellites = download TLEs for constellation
+frame = load a received frame
+parse (RX_time, doppler_frequency) from frame
+
+for sat_ID in satellites:
+    predicted_position = run SGP4 for sat_ID at RX_time
+    elevation = calculate elevation for
+                    predicted_position and user_position
+    if elevation < 0:
+        continue the loop with the next sat_ID
+    sat_doppler_freq = calculate doppler shift for
+                            predicted_position and user_position
+    save sat_doppler_freq and sat_ID
+
+closest_ID = find sat_ID for
+        min(abs(sat_doppler_freq - doppler_frequency) in saved data
+    \end{verbatim}
+    \caption{Generic satellite identification}
+    \label{a_des_satellite_id_gen}
+\end{algorithm}
+
+
+\subsection{Predicting satellite position}
+The final step in the data processing for navigation is to predict the position and velocity vectors of the satellite that transmitted each frame. To do this, TLEs for the satellite need to be downloaded, a prediction algorithm run and the resulting vectors converted to a proper frame of reference. This process is also commonly used in other parts of the navigation system (e.g. for satellite identification).
+
+Up-to-date TLEs can be downloaded e.g. from CelesTrak\cite{des11}. For this purpose, a script was written which first checks if up-to-date TLE files for a given constellation can be found locally from a previous download, and if not, downloads TLEs from the server. In either case, it parses the TLEs, calculates the age of the TLE and returns a dictionary. The script can be supplied with a path to a directory, in which case it loads the TLEs from there. In case data were collected but TLEs for them are no longer available, such as for the data from \cite{sat08}, a Special Request can be made on CelesTrak. The required TLEs are then sent by email. As these TLEs are packaged in files per-satellite rather than per-constellation, a  script was created which performs the conversion and automatically selects a most up-to-date TLE set for a given time.
+
+For estimation of satellite position, the widely used SGP4 algorithm was selected (see section \ref{s_pos_sgp4} for details). In Python, this algorithm was implemented e.g. in the \texttt{spg4} package\cite{des12}, which was used in this work. If provided with a Julian date or an array thereof, the algorithm returns an array of postion and velocity vectors in the TEME frame (see section \ref{s_pos_frames_of_ref}).
+
+To convert from the TEME frame to ITRS (ECEF), as well as to handle all other frame-of-reference conversions, the package \texttt{astropy}\cite{des13} was used. This package was also used to handle operations with times and dates, such as converting Georgian dates to Julian dates.
+
+Lastly, the data were packed into a two dimensional array for further calculations. The array is arranged so the "rows" (first index) are the data processed from frames, and the "columns" (second index) are
+
+\begin{itemize}
+    \item absolute time of frame reception (Unix time i.e. seconds),
+    \item centre frequency of frame (Hz),
+    \item base frequency of frame channel (Hz),
+    \item NORAD satellite ID (-),
+    \item (3x) ITRS position vector (x, y, z; m),
+    \item (3x) ITRS velocity vector (x, y, z; \unit{\m\per\s}).
+\end{itemize}
+
+
+
+\section{Calculating user position}
+For calculating the user position from the processed data, the Doppler-curve-fitting method was implemented (see \autoref{s_transit_nav_method} for theoretical basis). % todo label is wrong
+
+In principle, the method attempts to find a state vector $\Vec{s}$, so that the error function $F(c_M, c_E)$, where $c_M$ is the measured Doppler curve and $c_E$ is a trial Doppler curve based on $\Vec{s}$, is minimal. Simply, the method tries to estimate a state vector, whose corresponding Doppler curve provides the \textit{best} match for the measured Doppler curve. The form of the vector $\Vec{s}$, the specific error function and the method of creating the trial Doppler curve $c_E$, as well as the implementation of the search are described in detail below.
+
+\subsection{Estimating initial position}
+There are several ways to estimate an initial position for the method. In testing, the navigation system was shown to successfully locate the user while the initial position was well over \qty{1000}{km} away from the final position, the estimate may thus be only very rough. On the other hand, different implementations of the method may require more precise estimate.
+
+Firstly, external knowledge may be used, e.g. it the user knows they are in the Czech Republic, a geographic centre of CR may be used.
+
+Secondly, the position of any received satellite may be used, as those can be assumed to be relatively close. As apparent in \autoref{f_des_exp05_sats_extent}, the satellites are generally located within \qty{2500}{km}, with the majority of captured frames coming from less than \qty{1000}{km} away. An average of the satellite positions can be used to obtain a better estimate (see figure). However, the reliability of this method depends on the field of view of the antenna being similar in all directions - if, for instance, the antenna is shielded from the north, the resultant position will be significantly shifted southward.
+
+Thirdly, as described in \autoref{s_transit_nav_method}, the user is (in an ideal case) located on a line perpendicular to the satellite track, intersecting the satellite track at the position where the Doppler shift of the satellite signal is zero ($r_{f_D = 0}$). It follows that the position on the satellite track which is closest to the user is $r_{f_D = 0}$. Obtaining this position is straightforward as long as the measured Doppler curve for a given satellite passes through zero. The received data are split into curves per satellite and per channel, that is, a curve is formed by all observations with constant $f_B$ and satellite ID. Furthermore, curves with longer gap between two frames than \param{MAX-CURVE-GAP} seconds and split. This was necessary for very long captures, where a single satellite is captured on two or three passes. Finally, curves with fewer than \param{MIN-CURVE-LENGTH} frames are discarded. For each curve the point of $f_D = 0$ is interpolated. Positions from all successfully interpolated curves are then averaged to obtain the initial position estimate.
+
+
+
+The navigation system in this work uses the third method, with the second method as backup if no curves were interpolated. % todo tohle ted neni pravda, ale je to dobry napad do kodu
+For further navigation calculations, the curves are joined together again to form a single curve.
+
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{img/des_exp05_sats_extent.png}
+    \caption{Example of tracks of captured satellites}
+    \label{f_des_exp05_sats_extent}
+\end{figure}
+
+
+\subsection{Trial Doppler curve generation}
+
