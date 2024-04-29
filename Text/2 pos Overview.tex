@@ -49,13 +49,13 @@ First, a ideal-case example is discussed (see fig. \ref{f_pos_doppler_method_sim
 A satellite passes on a circular trajectory over the surface of the Earth with a tangential velocity $v$, transmitting a signal on a frequency $f_0$. On the surface, a user measures a Doppler-shifted frequency $f_R$.
 
 The Doppler shift can be expressed as
-\begin{align*}
+\begin{align}
     f_D &= f_R - f_0 \\
     \textnormal{substituting eq. \ref{e_pos_doppler_f0}: } 
     f_D &= f_R - f_R (1 - \frac{v_T}{c}) \\
     \textnormal{simplified as } 
-    f_D &= f_R \frac{v_T}{c}
-\end{align*}
+    f_D &= f_R \frac{v_T}{c} \label{e_pos_dopp_shift}
+\end{align}
 
 The velocity $v_T$ is a relative speed of the satellite to the user. Its direction is from the satellite to the user, and it is offset from the satellite velocity by the angle $\alpha$. It can be expressed as
 \begin{equation*}

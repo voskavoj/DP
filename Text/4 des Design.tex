@@ -1,17 +1,21 @@
 \chapter{Design}
-\newcommand{\param}[1]{\texttt{#1}}
+\newcommand{\param}[1]{\texttt{\MakeUppercase{#1}}}
+\newcommand{\variation}[1]{\paragraph{#1}}
+\newcommand{\file}[1]{\paragraph{\texttt{#1}}}
 
-% todo intro
+The principal goal of this work is the experimental demonstration of SoP positioning using the satellite signals. This chapter describes the design and implementation of the navigation system, which performs SoP positioning using Iridium NEXT signals.
 
-The navigation system works in several steps, each of which is discussed in detail below:
+Iridium NEXT was chosen for the demonstration because of all the considered systems within the capability of the available radio equipment (i.e. Iridium NEXT, Orbcomm, Globalstar), Iridium NEXT is the best documented\footnote{This is a subjective claim gained from research and interactions with the amateur radio community. However, the number of results for the system name on Google Scholar illustrates the situation: \numlist{354000; 3800; 15600} respectively for "Iridium NEXT", "Orbcomm" and "Globalstar" as of April 2024}, the format of its frames is well known, has the most satellites and the most current constellation, its signals fall within the L1 band, which means readily available antennas and its channel structure is known and includes simplex broadcast channels of fixed frequency with unencrypted data.
+
+In order to calculate the user position, the navigation system has to cover four steps, each of which is discussed in detail below:
 \begin{enumerate}
     \item Signals from satellites are captured,
     \item data frames are extracted from the signal and decoded,
     \item decoded frames are processed - transmitting satellite is identified, the satellite position at the transmission time is calculated and frequency curves for individual satellites are found,
-    \item initial location is estimated, and user position is calculated.  
+    \item initial location is estimated, and user position is calculated. 
 \end{enumerate}
 
-\paragraph{A note on nomenclature:} Since this chapter discusses the design of the navigation system in detail, an explanation of the used nomenclature should be given. Within the context of this chapter and the navigation system, the \textit{navigation system} refers to the application developed in this work and a \textit{frame} is a data unit sent over a channel by a communication satellite, on the reception of which the navigation system is based. \textit{Extracting} frames means acquiring information about a transmitted frame that do not go beyond its RF properties, such as centre frequency, signal strength or time of arrival. \textit{Demodulating} means converting captured samples into data bits, while \textit{decoding} means converting the bits into meaningful (and human-readable data). A frame has some properties, namely \textit{reception time} $t$, a \textit{centre frequency} $f$ which is shifted from a \textit{base frequency} of the channel $f_B$ on which the frame was transmitted by Doppler shift $f_D$ ($f_D = f - f_B$). Any value with the subscript $U$ refers to the user (i.e. the position of the antenna of the navigation system), a subscript $S$ or prefix \texttt{sat-} refers to the transmitting satellite. Unless otherwise noted, all positions denoted by $x, y, z$ are in ECEF frame (namely ITRS, the International Terrestrial Reference System) and all positions denoted by $\lambda, \phi, h$ are in the geodetic frame ($\phi, \lambda, h$ = latitude (rad), longitude (rad), height (m). In algorithms or conditions, subscript $i$ refers to the $i$-th received frame. References to \textit{Iridium}, unless noted otherwise, always mean \textit{Iridium NEXT}.
+\paragraph{A note on nomenclature:} Since this chapter discusses the design of the navigation system in detail, an explanation of the used nomenclature should be given. Within the context of this chapter and the navigation system, the \textit{navigation system} refers to the application developed in this work and a \textit{frame} is a data unit sent over a channel by a communication satellite, on the reception of which the navigation system is based. \textit{Extracting} frames means acquiring information about a transmitted frame that do not go beyond its RF properties, such as centre frequency, signal strength or time of arrival. \textit{Demodulating} means converting captured samples into data bits, while \textit{decoding} means converting the bits into meaningful (and human-readable data). A frame has some properties, namely \textit{reception time} $t$, a \textit{centre frequency} $f$ which is shifted from a \textit{base frequency} of the channel $f_B$ on which the frame was transmitted by Doppler shift $f_D$ ($f_D = f - f_B$). Any value with the subscript $U$ refers to the user (i.e. the position of the antenna of the navigation system), a subscript $S$ or prefix \texttt{sat-} refers to the transmitting satellite. Unless otherwise noted, all positions denoted by $x, y, z$ are in ECEF frame (namely ITRS, the International Terrestrial Reference System) and all positions denoted by $\phi, \lambda, h$ are in the geodetic frame ($\phi, \lambda, h$ = latitude (rad), longitude (rad), height (m). In algorithms or conditions, subscript $i$ refers to the $i$-th received frame. References to \textit{Iridium}, unless noted otherwise, always mean \textit{Iridium NEXT}.
 
 
 \section{Capturing signals}
@@ -38,7 +42,7 @@ The radio used in the navigation system is the ADALM-PLUTO (in short PlutoSDR) s
 \end{figure}
 
 \subsubsection{Frequency offset and drift}
-
+\label{s_des_offset_drift}
 The synthesizer blocks that generate all data clocks, sample clocks, and local oscillators inside the PlutoSDR transceiver are supplied by a reference clock, which is external to the transceiver, but it is integrated in PlutoSDR and connected to pin \texttt{XTALN} of the transceiver (see fig. \ref{f_des_transciever_diag})\cite{des07}. Due to frequency conversion, any error in the frequency of the reference clock will be multiplied in actual measurements. Given the reference clock nominal frequency of \qty{40}{Mhz} is approximately 40x times lower than the measured band (\qty{\approx1600}{Mhz}), \qty{1}{Hz} offset in reference clock frequency will appear as \qty{-40}{Hz} shift in measured frequency.
 
 \begin{figure}
@@ -202,6 +206,7 @@ for frame_ID in saved_IDs:
 This process is fairly computationally demanding and not completely error-free. However, when done over several hundred frames with a follow-up application of statistical methods, the satellites can be identified fairly certainly. Uncertainly identified satellites were filtered out by maintaining that the number of frames per satellite is larger than \param{MIN-FRAME-OCCURRENCE}.
 
 \subsubsection{Using a large dataset for mapping IDs}
+\label{s_des_sat08_id}
 Assuming the frame IDs remain constantly attached to the same satellite, it would be advantageous to use a large dataset spanning several days or weeks to identify all of the satellites within the Iridium constellation. Such dataset can be found in \cite{sat08}. The data come from Doha, Quatar, and are split into two parts. The first part, which was used for this work, spans 30 days between August 12\textsuperscript{th} and September 10\textsuperscript{th}, 2020 and includes \num{2060289} IRA frames. An excerpt from the mapping table is in tab. \ref{t_des_sat08_table}.
 
 However, a comparison of the table created from the large dataset to a table created from data measured as part of this work in March 2024 reveals the IDs are not in fact constant. Thus, an out-of-date, albeit large dataset cannot be used to create the table. Furthermore, some IDs were observed to change even during this work (Jan. to Mar. 2024). Therefore, a mapping table needs to be generated for each new data.
@@ -306,7 +311,7 @@ Lastly, the data were packed into a two dimensional array for further calculatio
 \section{Calculating user position}
 For calculating the user position from the processed data, the Doppler-curve-fitting method was implemented (see \autoref{s_transit_nav_method} for theoretical basis). % todo label is wrong
 
-In principle, the method attempts to find a state vector $\Vec{s}$, so that the error function $F(c_M, c_E)$, where $c_M$ is the measured Doppler curve and $c_E$ is a trial Doppler curve based on $\Vec{s}$, is minimal. Simply, the method tries to estimate a state vector, whose corresponding Doppler curve provides the \textit{best} match for the measured Doppler curve. The form of the vector $\Vec{s}$, the specific error function and the method of creating the trial Doppler curve $c_E$, as well as the implementation of the search are described in detail below.
+In principle, the method attempts to find a state vector $\Vec{s}$, so that the variance function $F(c_M, c_E)$, where $c_M$ is the measured Doppler curve and $c_E$ is a trial Doppler curve based on $\Vec{s}$, is minimal. Simply, the method tries to estimate a state vector, whose corresponding Doppler curve provides the \textit{best} match for the measured Doppler curve. The form of the vector $\Vec{s}$, the specific variance function and the method of creating the trial Doppler curve $c_E$, as well as the implementation of the search are described in detail below.
 
 \subsection{Estimating initial position}
 There are several ways to estimate an initial position for the method. In testing, the navigation system was shown to successfully locate the user while the initial position was well over \qty{1000}{km} away from the final position, the estimate may thus be only very rough. On the other hand, different implementations of the method may require more precise estimate.
@@ -316,8 +321,6 @@ Firstly, external knowledge may be used, e.g. it the user knows they are in the 
 Secondly, the position of any received satellite may be used, as those can be assumed to be relatively close. As apparent in \autoref{f_des_exp05_sats_extent}, the satellites are generally located within \qty{2500}{km}, with the majority of captured frames coming from less than \qty{1000}{km} away. An average of the satellite positions can be used to obtain a better estimate (see figure). However, the reliability of this method depends on the field of view of the antenna being similar in all directions - if, for instance, the antenna is shielded from the north, the resultant position will be significantly shifted southward.
 
 Thirdly, as described in \autoref{s_transit_nav_method}, the user is (in an ideal case) located on a line perpendicular to the satellite track, intersecting the satellite track at the position where the Doppler shift of the satellite signal is zero ($r_{f_D = 0}$). It follows that the position on the satellite track which is closest to the user is $r_{f_D = 0}$. Obtaining this position is straightforward as long as the measured Doppler curve for a given satellite passes through zero. The received data are split into curves per satellite and per channel, that is, a curve is formed by all observations with constant $f_B$ and satellite ID. Furthermore, curves with longer gap between two frames than \param{MAX-CURVE-GAP} seconds and split. This was necessary for very long captures, where a single satellite is captured on two or three passes. Finally, curves with fewer than \param{MIN-CURVE-LENGTH} frames are discarded. For each curve the point of $f_D = 0$ is interpolated. Positions from all successfully interpolated curves are then averaged to obtain the initial position estimate.
-
-
 
 The navigation system in this work uses the third method, with the second method as backup if no curves were interpolated. % todo tohle ted neni pravda, ale je to dobry napad do kodu
 For further navigation calculations, the curves are joined together again to form a single curve.
@@ -332,4 +335,196 @@ For further navigation calculations, the curves are joined together again to for
 
 
 \subsection{Trial Doppler curve generation}
+The Doppler frequency observed by a static user of a frame transmitted by a dynamic satellite  is (see \autoref{e_pos_dopp_shift})
 
+\begin{equation}
+    \label{e_des_dopp_shift}
+    f_D = \frac{1}{c}\dot\rho f_B
+\end{equation}
+
+where the range rate $\dot\rho$ can be expressed as
+
+\begin{equation}
+    \label{e_des_range_rate}
+    \dot\rho_i = v_S \frac{r_S - r_U}{||r_S - r_U||_2}
+\end{equation}
+
+where the satellite and user position vectors, $r_S$ and $r_U$ respectively, as well as the satellite velocity vector $v_S$, are expressed in ECEF frame.
+
+Additionally, as mentioned in \autoref{s_des_offset_drift}, the received frequency is shifted by some amount, which is not constant. This frequency shift is modelled as a constant offset $f_O$ (Hz) and time-variable drift.
+
+Experimentation has showed that the drift is not linear nor it can be accurately modelled as a polynomial. However, it was also found that within a shorter time window of about \qty{30}{min}, the drift can be approximated linearly. As a result, the drift is modelled as $f_{drift} = \dot f_O$, where $\dot f_O$ is the rate of change of the offset (\unit{\hertz\per\s}).
+
+Combining equations \ref{e_des_dopp_shift} and \ref{e_des_range_rate} with offset and drift yields
+
+
+\begin{equation}
+    \label{e_des_dopp_curve}
+    f_D = \frac{1}{c} f_B v_S \frac{r_S - r_U}{||r_S - r_U||_2} + f_O + \dot f_O t
+\end{equation}
+
+Inputting into \autoref{e_des_dopp_curve} the time $t$, frequency $f_B$ and vectors $r_S$ and $v_S$ of each frame of the measured curve $C_M$ at the trial user position $r_U$ outputs the trial $C_T$ Doppler curve, where both curves are functions of frequency by time.  % todo rename in intro
+
+Therefore, the navigation system needs to estimate the user position, the offset and the drift. For simplicity of algorithm debugging, and to ensure the user position estimate remains plausible (i.e. not beneath or high above Earth surface), the position is given in geodetic frame. The state vector is
+\begin{equation*}
+    \Vec{s} = (\phi_U, \lambda_U, h_U, f_O, \dot f_O)
+\end{equation*}
+
+\subsection{Variance}
+To evaluate how good is the trial position $r_U$, the trial curve and the measured curve are compared. To do this, a variance function $F(C_M, C_T)$ which for two curves yields a scalar value representing their similarity is needed.
+
+The variance function can take advantage of the fact that both $C_M$ and $C_T$ share the same time axis, i.e. both represent Doppler frequencies at the same times.
+
+For this work, the variance function is given as the sum of squares of the differences in frequency of both curves, that is the coefficient of similarity of the two curves $e$ is given as
+
+\begin{equation}
+    e = \sum_{i=1}^n (C_{M_i} - C_{T_i})^2
+\end{equation}
+where $n$ is the length of the two curves. The lesser the $e$, the more similar the curves are.
+
+The function which generates a trial curve for a given state vector $\Vec{s}$ and compares it to the measured curve in order to output the variance $e$ in in alg. \ref{a_des_check_trial_curve}.
+
+\begin{algorithm}
+    \centering
+%-------------------------------------------------------------|
+    \begin{verbatim}
+def check_trial_curve(lat_u, lon_u, alt_u, off_u, dft_u, 
+                      measured_data, r_s, v_s):                      
+    curve_len = lenght measured_data
+    # measured curve = [times, doppler_frequencies]
+    measured_curve, f_B = extract from measured_data
+    start_time = min(measured_curve[:, 0])
+    c = 299 792 458 m/s  # speed of light
+    
+    trial_curve = empty array of shape (curve_len, 2)
+    trial_curve[:, 0] = measured_curve[:, 0]  # copy time axis
+    r_u = convert (lat_u, lon_u, alt_u) to ECEF
+
+    # range rate (scalar mult. and norm are along asix 0)
+    Ro_dot = v_s * (r_s - r_u) / ||r_s - r_u|| 
+    # doppler frequency 
+    f_D = Ro_dot * f_b / C  
+    # drift - substract start of measurement
+    f_dft = (trial_curve[:, 0] - start_time) * dft_u
+    # trial curve = doppler frequency + offset + drift
+    trial_curve[:, 1] = f_d + off_u + f_drift
+
+    # Calculate variance
+    var = sum((measured_curve[:, 1] - trial_curve[:, 1]) **2)
+    
+    return var
+    \end{verbatim}
+    \caption{Evaluation of trial Doppler curve}
+    \label{a_des_check_trial_curve}
+\end{algorithm}
+
+
+\subsection{Searching for the variance function minimum}
+Two approaches to find the variance function minimum, i.e. the best estimate of user position, were implemented. The first is iterative - it moves the trial user position in the direction with the best improvement in variance. The second is grid-search based - the algorithm searches through a matrix of possible state vectors and picks the one with the lowest variance.
+
+The iterative algorithm is fairly fast and can converge even when the initial location is very far from the final estimate. On the other hand, it is theoretically prone to convergence into local minima. Conversely, the grid search algorithm is very slow and requires the initial estimate of the user position to be fairly close\footnote{While the algorithm can search an arbitrarily large area, it would take a \textit{very} long time}, however, it is resilient to local minima. In the final system, only the iterative algorithm was used.
+
+\subsubsection{The iterative search}
+The iterative-search algorithm takes a current best estimate of the trial state vector $\Vec{s_0}$ and calculates variance $e_0$. Then, for each member $\Vec{s_0}_k$ of the state vector $\Vec{s}$ (e.g. longitude or drift), it moves the trial state vector by a corresponding step $\Delta_k$ in both directions ($+\Delta_k$, $-\Delta_k$) and calculates variance ($e_{k+}$, $e_{k-}$), whilst keeping the other members of the state vector constant. Then it compares the new variances with the original one ($e_0$) to obtain the best direction $\delta_k$ in which to move the state vector:
+\begin{equation*}
+    \delta_k = \text{sign}(\max(0, e_0 - e_{k+}) - \max(0, e_0 - e_{k-}))
+\end{equation*}
+
+If $\delta_k \not = 0$, the variance decreased in one or both of the directions, and member $\Vec{s_1}_k$ of the state vector for the next iteration is thus modified by adding or subtracting the step $\Delta_k$. If $\delta_k = 0$, the member is kept constant, but the step size is decreased by $\dot\Delta$, down to step limit $\Delta_{k_{MIN}}$:
+
+\begin{align*}
+    \text{If } \delta_k \not &= 0: \\
+        \Vec{s_1}_k &= \Vec{s_0}_k + \delta_k \dot \Delta_k \\
+        \Delta_{k_1} &= \Delta_{k} \\
+    \text{If } \delta_k &= 0: \\
+        \Vec{s_1}_k &= \Vec{s_0}_k \\
+        \Delta_{k_1} &= \min(\dot\Delta \cdot \Delta_k, \Delta_{k_{MIN}})
+\end{align*}
+
+Variable step size, where the $\delta_k$ is used as the coefficient for the step size instead of the $\dot\Delta$, was tried, but it was found that this creates an insignificant decrease in the number of iterations compared to problems related to overstepping. Thus, fixed step size was used.
+
+After checking all members of the state vector, the algorithm continues in another iteration with $\Vec{s_0} = \Vec{s_1}$ and  $\Delta_k = \Delta_{k_1}$ for all $k$. The algorithm ends either when the number of iteration exceeds \param{iteration-limit}, or when it converges. The convergence criterion is all step sizes are at their respective limit and moving in no direction improves the variance:
+\begin{equation*}
+    \text{convergence} = \text{all}_k(\Delta_k = \Delta_{k_{MIN}}) \And \text{all}_k(\delta_k = 0)
+\end{equation*}
+
+Because the algorithm was shown to be prone to cycles, a cycle detector was implemented, which looks at the last two sets of $\delta_k$. If their member-wise sum equals the zero vector, a cycle is detected and the step size of all members with $\delta_k \not= 0$ is forcibly decreased.
+
+The number of trial curve checks is a useful metric to evaluate the algorithm speed. The algorithm performs $n+1$ trial curve checks per iteration, where $n$ is the size of $\Vec{s}$. In testing, about \numrange{200}{400} iterations, therefore \numrange{1200}{1600} searches ($n = 6$), were most common.
+
+While the algorithm is not protected against convergence into a local minimum, this was not observed during testing very often, and the local minima that were observed were within hundreds of meters of the global minimum showed by the grid search method (see below).
+
+
+\subsubsection{The grid search}
+The grid search algorithm performs the trial curve checking for a set of combinations of $\Vec{s}$ and picks the one with the lowest variance.n The process is then repeated $M$ times with decreasing grid spacing.
+
+First, an $n$-dimensional grid, where $n$ is the length of the state vector $\Vec{s}$, is constructed. Each axis belongs to one member $k$ of the state vector, and contains $g_k$ values spaced apart by step $\Delta_{k_m}$ ($m \in M$), centred on $\Vec{s_0}_k$. Then, for each point of the grid, trial checking is performed. Finally, the lowest variance is found, and the corresponding values of state vector members of the grid point are as $\Vec{s_1}$.
+
+Once the $\Vec{s_1}$ is found, $m$ is incremented and a new grid is constructed based on $\Vec{s_1}$ and $\Delta_{k_m}$, which is chosen so $\Delta{k_{m}} \approx \Delta_{k_{m-1}} / g_k$ - this way, the new grid fills one cell of the previous grid. Once the step sizes (and thus the resolutions) are sufficiently small, the search is completed.
+
+The step sizes are fixed as parameters in the form of a list of size $M$. The grid size $g_k$ is fixed for each state vector member in all iterations. If the step size in a given iteration is set to zero, the member is considered fixed in the previous value.
+
+The algorithm performs $M \cdot \Pi^n_1 g_k$ trial curve checks in total. If this algorithm was to be used on its own, a sufficiently large step in horizontal coordinate would have to be in the order of \qty{100}{km} for $g = 10$, and likewise for the other state vector members. Thus, a total of $5 \cdot (10 \cdot 10 \cdot 10 \cdot 5 \cdot 5) = \num{125000}$ was sometimes needed, making this approach very slow. On the other hand, convergence to the global minium is assured, as long as the the actual user position lays within the first (largest) grid, which places stricter requirements on the estimation of the initial position than the iterative method.
+
+To aleviate this shortcoming, a variation was considered where, if the lowest variance for a given grid was located at the edge of the grid, the grid would be extended in that direction. As this algorithm ended up not being used on its own, this was not implemented.
+
+One possible application for this algorithm is as a final step to the iterative search, which solves the problem of convergence into a local minimum close to the actual user position. However, as any meaningful search would still require \num{e4} trial curve checks, significantly slowing down the overall calculation, for no observed benefit, this was not used.
+
+
+\section{Navigation system implementation and structure}
+The navigation system is written in Python. This language was selected for four reasons. Firstly, it is widely used in Academia, it contains many scientific packages and supports all the functions required by this work. Secondly, Python supports GNURadio, which greatly enabled the signal processing part of this work. Thirdly, the author is a professional programmer working in Python, and is thus very familiar with the language. And finally, the author believes that Free and Open Source software should be the go-to choice for Academia, and writing the application in Python means that anybody can access it without financial burden.
+
+The application is written in accordance with Python coding standard, makes use of Python packages for some operations and implements its own functions for others. The code is encapsulated, uses classes where appropriate and is documented. Version control software (Git) was used extensively in development.
+
+The code of the navigation system is structured to enable operation which is independent of the specific satellite system being received. Data are passed between parts of the program in standardised structures and the navigation calculations are generic. Thus, the system should work with minimal changes (once the radio support is implemented) also on e.g. Orbcomm or Globalstar.
+
+The organisation of the project is shown in \autoref{f_des_project_structure}
+
+\begin{figure}
+    \begin{framed}
+        \raggedright
+        \texttt{+---Data} - folder with saved data from measurements \\    
+        \texttt{+---External} - folder for external packages, excluded in Git\\
+        \texttt{|   +---iridium-toolkit} - the \texttt{iridium-toolkit} package source code\\
+        \texttt{|---src} - navigation system source code\\
+        \texttt{    +---app} - executable files\\
+        \texttt{    |   +---data\_analysis} - data analysis and visualisation scripts\\
+        \texttt{    |   +---development} - other scripts used in development\\
+        \texttt{    +---config} - configuration files, parameters of algorithms etc.\\
+        \texttt{    +---navigation} - data processing, algorithms for navigation\\
+        \texttt{    +---radio   } - tools of processing frames for specific satellite constellations\\  
+        \texttt{    +---satellites} - scripts working with satellites, TLEs and SGP4\\
+        \texttt{    |---utils} - utilities for debugging, plotting and logging\\
+    \end{framed}
+    \caption{Navigation system project structure}
+    \label{f_des_project_structure}
+\end{figure}
+
+\subsection{Additional tools created as part of this work}
+Some additional tools were created to aid in analysis, development and testing of the navigation system created in this work. They all fit within the \texttt{/app} section.
+
+% todo
+\file{generate\_test\_data} This script creates simulated data, which was very useful in development of the navigation algorithms as well as in analysis of the frequency of the received frames. Plotting the received frames ($t, f$) against the simulated data shows most clearly the frequency offset and drift induced by the local SDR oscillator errors. The process of creation of the simulated data is essentially equal to the one used in trial curve checking (see \autoref{e_des_dopp_curve}), with preset position. Data points are generated for each satellite present in the measured data, in one second increments for the entire duration of the measured data. An elevation filter is applied to remove signals form satellites which rare beyond the horizon, and only signals with Doppler shift of less than \qty{\pm36}{kHz} are kept.
+
+\file{predict\_satellite\_passes} This application predicts which satellites will be visible in the near future. It first provides a summary of all visible satellites, with exact times and azimuths of rise and fall and maximum elevation. Then it each \qty{2}{seconds} prints all the visible satellites right now, with azimuth and elevation. This was useful in the early stages of developing the system to capture the satellite signals.
+
+\file{read\_time} This scripts handles time synchronisation on the PlutoSDR, as the device was shown to not keep time properly. It connects over serial port, logs in and sets the device time to current system time using the \texttt{date} command. This is done when the system time seconds counter changes, to achieve maximum accuracy (since the \texttt{date} command accepts only whole seconds).
+
+\file{convert\_tles\_from\_special\_request} This is a simple script which converts TLE files from CelesTrak special request (one file per satellite with all TLEs for a given period) into the format used for current TLEs by CelesTrak (only one file containing one TLE set each per satellite). For each satellite, the closest TLE set for a given date and time was picked. This was useful for retroactive download of TLEs (when the author forgot to download them during data capture).
+
+\file{find\_norad\_ids\_in\_sat08\_data} This script was used to identify all the satellites in the large dataset from \cite{sat08}, as described in \autoref{s_des_sat08_id}.
+
+\file{noise\_analysis} This script was used to evaluate the noise resilience of the system. Gaussian noise of increasing intensity and mean value was added to simulated data and then the navigation algorithm was run, to get an idea about the influence of noise on the precision of the navigation system. The results are shown in \autoref{s_exp}.
+
+\section{Summary}
+The navigation system is a Python application capable of calculating the user position from received satellite signal, without any prior knowledge of the user position. It is built to be independent of the actual satellite system used to navigate, and to be used with generic SDR and antenna setup. However, support of only Iridium and PlutoSDR are actually implemented and verified.
+
+First, the system receives, demodulates and decodes Iridium frames, using GNURadio with \texttt{gr-iridium} and the \texttt{iridium-toolkit} for the signal and frame processing.
+
+Next, the navigation system processes the received frames. It identifies on which channel was a frame transmitted. It is capable of working with any channel type which includes satellite identifier, but only IRA frames were used in its final form. The system downloads up-to-date TLEs from the internet and uses them for SGP4-algorithm predictions. The system matches Iridium internal IDs with NORAD IDs, and predicts the position of the transmitting satellite at frame reception time.
+
+Then, it uses the processed data to estimate the initial position for the navigation calculations. To do this, it interpolates the moment of zero-Doppler-shift for each Doppler curve, and places the initial estimate at the position where the moment occurs, averaged over all interpolated curves.
+
+Finally, the system calculates the user position using the Doppler-curve-fitting method in the iterative search algorithm. For each trial position, variance of the measured and trial curves is calculated, and the increase or decrease of the variance in all directions is evaluated. The trial position is then moved by a set step in the direction of most variance decrease, until it no longer decreases in any directions or the iteration limit is exceeded.
+
+The performance of the navigation system is examined in \autoref{s_exp}.
