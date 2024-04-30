@@ -1,5 +1,4 @@
 \section{The Doppler curve fitting method algorithm}
-% TODO revise
 The principle of the Doppler curve fitting method is described in section \ref{s_transit_nav_method}. In summary, a Doppler shift curve is obtained, then the zero-Doppler-shift time is estimated, and an array of possible (trial) user locations is created based on this time. For each location, a trial Doppler curve is created and then compared against the measured curve, until a sufficiently fitting curve is found.
 
 The method works over observations collected as a set of points, each containing time of reception ($t_R$), received frequency ($f_R$), estimated carrier frequency ($f_B$), an estimation of satellite position and velocity at the time of reception from the SGP4 model ($R_S$, $V_S$), and the satellite ID (\texttt{sat-id}).

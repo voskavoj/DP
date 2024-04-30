@@ -128,4 +128,4 @@ with open(DIRECTORY + "\\" + OUT_ABBR, 'w', newline='') as csvfile:
 
 with open(DIRECTORY + "\\" + OUT_TODO, 'w', newline='') as txtfile:
     for file, line, todo in todo_list:
-        txtfile.write(f"File {file:<30} at line {line:<3}: {todo}\n")
+        txtfile.write(f"File {file:<30} at line {line:<3}: {todo}\r\n")
