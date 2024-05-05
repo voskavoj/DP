@@ -1,3 +1,16 @@
+As outlined in section \ref{s_int_doppler_shift_method}, the three principal steps in determining a user position from Doppler frequency measurements of a satellite signal are: determining the identity and position (or trajectory) of the transmitting satellite, acquiring and tracking the transmitted signal and measuring its frequency, calculating the user position from the measured data and compensating errors. 
+
+These three steps can be further broken down to:
+\begin{enumerate}
+    \item identifying the transmitting satellite,
+    \item determining the position or trajectory of the transmitting satellite,
+    \item acquiring the transmitted signal,
+    \item tracking the transmitted signal,
+    \item measuring the frequency of the transmitted signal,
+    \item calculating the user position from the measured data,
+    \item estimating and compensating the errors introduced in each of the previous steps.
+\end{enumerate}
+
 \section{The Doppler curve fitting method algorithm}
 The principle of the Doppler curve fitting method is described in section \ref{s_transit_nav_method}. In summary, a Doppler shift curve is obtained, then the zero-Doppler-shift time is estimated, and an array of possible (trial) user locations is created based on this time. For each location, a trial Doppler curve is created and then compared against the measured curve, until a sufficiently fitting curve is found.
 

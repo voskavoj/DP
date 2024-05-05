@@ -1,21 +1,23 @@
-\chapter{A survey of current LEO satellite systems}
+\chapter{Overview of LEO satellite systems suitable for SoP positioning}
 \label{s_sat}
-This chapter describes current LEO satellite constellations which are readily usable for SoP navigation, namely  Iridium Next, Orbcommm, Globalstar and Starlink. For each system, the orbital parameters, constellation status, frequency ranges and communication schemes are described, in addition to select signal types deemed of particular importance for this work.
+This chapter describes current LEO satellite constellations which are readily usable for SoP navigation, namely  Iridium NEXT, Orbcommm, Globalstar and Starlink. For each system, the orbital parameters, constellation status, frequency ranges and communication schemes are described, in addition to select signal types deemed of particular importance for this work.
 
 Parameters of the systems are summarised in table \ref{t_sat_general_summary}.
-
 
 \begin{table}
 \caption{Summary of \emph{approximate} parameters of LEO satellite systems: number of active satellites, number of orbital planes and inclinations, altitudes, visibility for one satellite, frequency ranges, signal strengths at ground level and modulation used}
 \label{t_sat_general_summary}
-\hspace*{-2cm}
 \centering
-\begin{tabular}{lllllp{0.15\linewidth}ll}
-System     & Sat. & Orb. planes                   & Altitude         & Visibility     & Frequency                     & Strength         & Modul.   \\ \hline
-Iridium    & 66   & 6 $\times$ \ang{86.4}         & \qty{781}{\km}   & \qty{7}{\min}  & \qtyrange{1616}{1626.5}{\MHz} & \qty{-100}{dBm}  & DE-QPSK           \\
-Orbcomm    & 30   & 4 $\times$ \ang{47}           & \qty{715}{\km}   & \qty{7}{\min}  & \qtyrange{137}{138}{\MHz}     & \qty{-118}{dBm}  & SD-QPSK     \\
-Globalstar & 48   & 8 $\times$ \ang{52}           & \qty{1414}{\km}  & \qty{14}{\min} & \qtyrange{2483.5}{2500}{\MHz} & not found   & QPSK        \\
-Starlink   & $>$5000   & $>$180                               & \qty{550}{\km}   & \qty{4}{\min}  & \qtyrange{10.7}{12.7}{GHz}  & N/A        &   16QAM            
+\begin{tabular}{l|llll}
+            & Iridium               & Orbcomm             & Globalstar           & Starlink \\ \hline
+Satellites  & 66                    & 30                  & 48                   & $>$5000 \\
+Orb. planes & 6 $\times$ \ang{86.4} & 4 $\times$ \ang{47} & 8 $\times$ \ang{52}  & $>$180 \\
+Altitude    & \qty{781}{\km}        & \qty{715}{\km}      & \qty{1414}{\km}      & \qty{550}{\km} \\
+Visibility  & \qty{7}{\min}         & \qty{7}{\min}       & \qty{14}{\min}       & \qty{4}{\min} \\
+Frequency   & \qty{1616}{\MHz} -    & \qty{137}{\MHz} -   & \qty{2483.5}{\MHz} - & \qty{10.7}{GHz} -\\
+range       & \qty{1626.5}{\MHz}    & \qty{138}{\MHz}     & \qty{2500}{\MHz}     & \qty{12.7}{GHz} \\
+Strength    & \qty{-100}{dBm}       & \qty{-118}{dBm}     & not found            & not found \\
+Modulation  & DE-QPSK               & SD-QPSK             & QPSK                 & 16QAM \\      
 \end{tabular}
 \end{table}
 
@@ -24,13 +26,13 @@ Starlink   & $>$5000   & $>$180                               & \qty{550}{\km}  
 \label{s_sat_iridium}
 Iridium satellite constellation, owned and operated by Iridium Communications Inc., provides global communications coverage for satellite phones, pagers and other devices, as well as an interface to terrestrial communications networks via several Gateways.
 
-The system became operational in 1998 and saw a total of 96 satellites launched, before the constellation was completely overhauled between 2017 and 2019, replacing all of the original satellites with Iridium Next satellites. Currently\footnote{As of October 2023}, no original satellite remains operational, however, 25 satellites remain defunct on orbit\cite{sat06}.
+The system became operational in 1998 and saw a total of 96 satellites launched, before the constellation was completely overhauled between 2017 and 2019, replacing all of the original satellites with Iridium NEXT satellites. Currently\footnote{As of October 2023}, no original satellite remains operational, however, 25 satellites remain defunct on orbit\cite{sat06}. In this work, unless specifically noted, Iridium refers to Iridium NEXT.
 
 The constellation consists of 66\footnote{Satellites 102-114, 116-123, 125-160, 163-168, 171-173, 180. All ranges are inclusive.} satellites, 11 each in six orbital planes, spaced \ang{30} apart. The altitude of the satellites is approx. \qty{781}{\km}, the inclination is \ang{86.4} and the orbital period is approx. \qty{100}{\min}. For a ground user, one satellite is visible for about \qty{7}{\min}. The constellation covers the entire global surface\cite{sat01}.
 
 Communication is carried over Ka-band for satellite-satellite links and satellite-gateway links, and over L-band (\qtyrange{1616}{1626.5}{\mega\hertz}) for satellite-user links. Each satellite provides 48 individual spot beams, sharing 240 traffic channels with a frequency re-use pattern\cite{sat07}. At ground level with an Iridium antenna, the signal strength can be expected to be \qtyrange{-90}{-110}{dBm}\cite{sop01}.
 
-The Iridium Next onboard clocks have a stability better than \num{10e-9} and a drift less than \qty{3}{\hertz\per\s}, which is sufficient for time transfers with accuracy in the order of \qty{e0}{\micro\s}\cite{sop11}.
+The Iridium NEXT onboard clocks have a stability better than \num{10e-9} and a drift less than \qty{3}{\hertz\per\s}, which is sufficient for time transfers with accuracy in the order of \qty{e0}{\micro\s}\cite{sop11}.
 
 \subsection{Iridium signals}
 \label{s_sat_iridium_signals}
@@ -129,18 +131,37 @@ Starlink is an satellite internet and telephony constellation. It currently\foot
 
 The starlink downlink signal is in the \qtyrange{10.7}{12.7}{GHz} band, with several channels of a \qty{240}{MHz} bandwidth. Furthermore, several \qty{1}{MHz} bandwidth tones were identified within the band by experimentation. The structure of the signal is not public. The reception of signals within this band usually requires a low-noise block down-converter and a parabolic antenna reflector\cite{sop04}.
 
-\section{Satellite visibility}
-% todo satellite visibility
+\section{Summary}
+Iridium NEXT, Orbcommm, Globalstar and Starlink were discussed in this chapter, but only the frequency ranges of Iridium NEXT, Orbcommm, and Globalstar fit within the bounds set by available antennas. Thus, only those three will be considered in this work.
+
+Iridium NEXT constellation has the most satellites, while Globalstar has the most simultaneously visible satellites. At least one Iridium NEXT and Globalstar satellite is always visible, while for Orbcomm this is not the case. As many as 6, 6, and 13 Iridium, Orbcomm and Globalstar satellites respectively are visible simultaneously. On average, 2.2, 1.6, and 5.8 respectively are visible simultaneously. These values are summarised in \autoref{t_sat_simul_vis} and visualised in \autoref{f_sat_simul_vis}. Elevation angles for the visible satellites of one constellation (Iridium NEXT) are in \autoref{f_sat_elev_iri}.
+
+The visibility was simulated relative to the location of CUT FEE (\ang{50;6;11}N, \ang{14;23;32}E, \qty{225}{m}) over 36 hours starting on May 1\textsuperscript{nd} 2024 00:00 UTC. The plots are 2-hour excerpts from the middle of the time window.
+
+The signal power at the receiver location for Iridium and Orbcomm is \qtylist{-100;-118}{dBm} respectively, compared to the power of GPS signal of \qty{-128}{dBm}\citep{pos04}{11} (difference of 63x, 10x respectively), which clearly illustrates the advantage of signal strength the SoP positioning systems enjoy over GNSS.
+
+\begin{table}
+    \centering
+    \begin{tabular}{llll}
+ & Iridium & Orbcomm & Globalstar \\ \hline
+Min & 1 & 0 & 1 \\
+Avg & 2.2 & 1.6 & 5.8 \\
+Max & 6 & 6 & 13 \\
+    \end{tabular}
+    \caption{Number of simultaneously visible satellites for Iridium, Orbcomm and Globalstar over 36 hours}
+    \label{t_sat_simul_vis}
+\end{table}
+
 \begin{figure}
     \centering
-    \includegraphics[width=\linewidth]{img/sat_simul_vis}
-    \caption{Number of simultaneously visible Iridium, Orbcomm and Globalstar satellites during the day}
+    \includegraphics[width=0.9\linewidth]{img/sat_simul_vis}
+    \caption{Number of simultaneously visible Iridium, Orbcomm and Globalstar satellites during 2 hours of a day}
     \label{f_sat_simul_vis}
 \end{figure}
 
 \begin{figure}
     \centering
-    \includegraphics[width=\linewidth]{img/sat_ele_angles}
-    \caption{Elevation angles of Iridium, Orbcomm and Globalstar satellites during 3 hours (as viewed from Prague)}
-    \label{f_sat_ele_angles}
+    \includegraphics[width=0.9\linewidth]{img/sat_elev_iri}
+    \caption{Elevation angles of Iridium satellites during during 2 hours of a day}
+    \label{f_sat_elev_iri}
 \end{figure}

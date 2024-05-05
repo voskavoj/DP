@@ -12,6 +12,7 @@
 	titlelanguage = english,
 	otherlanguages = {czech},
 	title-english = {Signals of opportunity positioning using LEO satellites},
+    title-czech = {Využití signálů družic na nízké oběžné dráze k určování polohy},
 	doctype = M,
 	faculty = F3,
 	department-english = {Department of Measurement},
@@ -19,10 +20,10 @@
 	supervisor = {Ing. Jiří Svatoň, Ph.D.},
 	fieldofstudy-english = {Aerospace Engineering},
 	subfieldofstudy-english = {Avionics},
-	keywords-czech = {TODO keywords},
-	keywords-english = {TODO keywords},
+	keywords-czech = {Navigace příležitostnými signály, Dopplerovská navigace, Dopplerův jev, Iridium, Orbcomm, Globalstar, Starlink, NAVSAT, Argos, GNSS, fázové klíčování, satelitní konstelace, LEO satelity, softwarově definované rádio},
+	keywords-english = {Signals Of Opportunity Navigation, Doppler Positioning, Doppler Shift, Iridium, Orbcomm, Globalstar, Starlink, NAVSAT, Argos, GNSS, Phase-Shift Keying Modulation, Satellite Constellation, LEO Satellites, Software-Defined Radio},
 	day = 1, % TODO date
-	month = 1,
+	month = 5,
 	year = 2024,
 	specification-file = {Assignment.pdf},
     front-specification = true,
@@ -51,17 +52,21 @@
 
 % Abstract in Czech
 \begin{abstract-czech}
-TODO abstrakt
+Tato práce je studií a experimentální demonstrací systému určení polohy na základě zpracování oportunních signálů Dopplerovskou metodou. Tato metoda určení polohy využívá příjmu signálů vyslaných za jiným účelem než navigace a měření jejich Dopplerovské frekvence. Dopplerovská metoda je popsána a některé satelitní systémy na nízké orbitě Země potenciálně použitelné pro oportunní navigaci jsou diskutovány. Je provedena rešerše soudobého výzkumu v této oblasti, a vyvinuté systémy jsou porovnány s dedikovanými satelitními navigačními systémy. Je detailně popsán vývoj plnohodnotného oportunního navigační systému, schopného přijmout a zpracovat signál, spočítat polohu vysílacího satelitu a odhadnou polohu statického uživatele. Tento systém je pak experimentálně prověřen a jeho parametry analyzovány.
 \end{abstract-czech}
 
 % Abstract in English
 \begin{abstract-english}
-TODO abstract
+This work is a study and an experimental demonstration of satellite-aided Signals of Opportunity (SoP) positioning using the Doppler shift method. This method of positioning uses the reception of satellites signals which were transmitted for other purposes than navigation to determine the position of the user by means of measuring the Doppler shift of the signal. The Doppler method is discussed and some Low Earth Orbit satellite communication systems potentially useful for SoP positioning are described. A survey of current research on the topic is conducted and the SoP systems developed therein are compared to dedicated navigation systems. A full-stack SoP navigation system, capable of signal capture, satellite position determination and static user position estimation is developed and described in detail. The system is then experimentally evaluated and its parameters analysed.
 \end{abstract-english}
 
 % Acknowledgements / Podekovani
 \begin{thanks}
-TODO thanks
+I would like to thank my family for all their support, patience and understanding.
+
+I would also like to thank my friends for their advice during the times I felt stuck, and for their help in the tedious task of proofreading this thesis.
+
+Finally, I would like to thank my supervisor for his patience, advice, support and for the trust with which he let me continue in my own pace.
 \end{thanks}
 
 % Declaration / Prohlaseni
@@ -70,7 +75,7 @@ I, the author, hereby declare that I have completed this thesis independently wi
 
 \vspace{10pt}
 
-Prague, \ctufield{day}~\monthinlanguage{title}~\ctufield{year} \hfill \ldots\ldots\ldots
+In Prague, \ctufield{day}~\monthinlanguage{title}~\ctufield{year} \hfill \ldots\ldots\ldots
 
 \vspace{10pt}
 
@@ -82,7 +87,13 @@ This thesis uses several Free and Open Source programs. Attributions per the res
     % list-units = single,
     uncertainty-mode = separate
 }
+
+% custom commands
 \newcommand{\citep}[2]{\cite[p. #2]{#1}}
+\newcommand{\param}[1]{\texttt{\MakeUppercase{#1}}}
+\newcommand{\variation}[1]{\paragraph{#1}}
+\newcommand{\file}[1]{\paragraph{\texttt{#1}}}
+\renewcommand{\sc}[1]{\textsuperscript{#1}}
 
 \begin{document}
 \maketitle
