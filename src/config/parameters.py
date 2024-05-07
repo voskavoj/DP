@@ -18,7 +18,7 @@ class CurveFitIterationParameters:
     def __init__(self):
         self.lat = _CurveFitStepParameter(100e3, 1)
         self.lon = _CurveFitStepParameter(100e3, 1)
-        self.alt = _CurveFitStepParameter(10,    1, 0, 3000)
+        self.alt = _CurveFitStepParameter(0,    1, 0, 3000)
         self.off = _CurveFitStepParameter(3000,  1)
         self.dft = _CurveFitStepParameter(0.1,   0.001)
 
