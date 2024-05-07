@@ -59,6 +59,10 @@ def plot_results_of_iterative_position_finding(data: str | list, r=None, show=Fa
         results = data
 
     final_lat, final_lon, final_alt = results[-1][2], results[-1][3], results[-1][4]
+    try:
+        final_off, final_dft = results[-1][5], results[-1][6]
+    except IndexError:
+        final_off, final_dft = None, None
     home_lon, home_lat, home_alt = LOCATIONS["HOME"][0], LOCATIONS["HOME"][1], LOCATIONS["HOME"][2]
     pos_error = latlon_distance(home_lat, final_lat, home_lon, final_lon, home_alt, final_alt)
     res_arr = np.array(results)
@@ -77,6 +81,9 @@ def plot_results_of_iterative_position_finding(data: str | list, r=None, show=Fa
 
     plt.figure()
     plt.title(f"Pos. error: {pos_error:.1f} m")
+    plt.figtext(.15, .05, f"Lat.: {final_lat:.2f}°, Lon.: {final_lon:.2f}°, Alt.: {final_alt:.0f} m" +
+                f", Offset: {final_off / 1e3:.2f} kHz, Drift: {final_dft * 1e3:.0f} mHz/s" if final_off is not None else "")
+
     m = Basemap(llcrnrlon=min_lon - 2, llcrnrlat=min_lat - 2, urcrnrlon=max_lon + 2, urcrnrlat=max_lat + 2,
                 rsphere=(6378137.00, 6356752.3142), resolution='h', projection='merc', )
 

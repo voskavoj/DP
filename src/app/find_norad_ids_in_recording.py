@@ -9,6 +9,7 @@ from src.radio.iridium_frame_operations import decompose_ira_frame
 from src.satellites.download_tle import download_tles, unpack
 from src.satellites.predictions import find_closest_tle_id_to_ira_id_by_position
 from src.utils.data import dump_data, load_data
+from src.radio.iridium_channels import TLE_ID_TO_IRI_ID_MAP
 
 
 LOG_LINES = False
@@ -87,8 +88,16 @@ if __name__ == "__main__":
         for iri_id, dist_list in iri_data:
             occurrences = len(dist_list)
             avg_dist = np.mean(dist_list)
+
+            if sat_id not in TLE_ID_TO_IRI_ID_MAP:
+                status = "NEWS"
+            elif iri_id == TLE_ID_TO_IRI_ID_MAP[sat_id]:
+                status = "SAME"
+            else:
+                status = "DIFF"
+
             if occurrences > 10 and avg_dist < 100e3:
                 dict_style = f" | {sat_id:.0f}: {iri_id:.0f},  # {occurrences}"
             else:
                 dict_style = ""
-            print(f"  IRI ID: {iri_id: 4.0f}, Occurrences: {occurrences: 4d}, Average Distance: {avg_dist/1000: 7.1f} km" + dict_style)
+            print(f"  IRI ID: {iri_id: 4.0f} ({status}), Occurrences: {occurrences: 4d}, Average Distance: {avg_dist/1000: 7.1f} km" + dict_style)

@@ -1,7 +1,8 @@
 # Experiment settings
-EXP_NAME = "exp05"
+EXP_NAME = "val03"
 LOCATION = "HOME"
-START_TIME = "2024-04-12 09:51:16.4"  # UTC
+# START_TIME = "2024-04-12 09:51:16.4"  # UTC
+START_TIME = None
 
 # Paths
 WORKING_DIR = "C:\\Git\\Personal\\DP\\"

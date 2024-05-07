@@ -10,7 +10,10 @@ from sgp4.conveniences import sat_epoch_datetime
 class Satellite:
     def __init__(self, constellation, number, tle_line_1, tle_line_2):
         self.name = constellation + " " + number
-        self.number = int(number)
+        try:
+            self.number = int(number)
+        except ValueError:
+            self.number = number
         self.tle_line_1 = tle_line_1
         self.tle_line_2 = tle_line_2
         self.satrec = Satrec.twoline2rv(tle_line_1, tle_line_2)

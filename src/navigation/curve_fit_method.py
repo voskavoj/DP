@@ -416,4 +416,6 @@ def solve(nav_data, satellites):
     # dump_data("results", results)
     # plot_results_of_iterative_position_finding(results, r)
 
+    sos = check_trial_curve(lat, lon, alt, off, dft, measured_curve, r_sat_arr, v_sat_arr, plot=True)
+
     return lat, lon, alt, off, dft
