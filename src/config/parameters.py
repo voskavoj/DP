@@ -5,6 +5,9 @@ class CurveFitMethodParameters:
         self.min_curve_length = 10
         self.max_time_gap = 60
 
+        self.iteration = _CurveFitIterationParameters()
+        self.grid_search = _CurveFitGridSearchParameters()
+
 
 class _CurveFitStepParameter:
     def __init__(self, init_step, step_limit, lower_bound=None, upper_bound=None):
@@ -14,11 +17,11 @@ class _CurveFitStepParameter:
         self.upper_bound = upper_bound
 
 
-class CurveFitIterationParameters:
+class _CurveFitIterationParameters:
     def __init__(self):
         self.lat = _CurveFitStepParameter(100e3, 1)
         self.lon = _CurveFitStepParameter(100e3, 1)
-        self.alt = _CurveFitStepParameter(0,    1, 0, 3000)
+        self.alt = _CurveFitStepParameter(10,    1, 0, 3000)
         self.off = _CurveFitStepParameter(3000,  1)
         self.dft = _CurveFitStepParameter(0.1,   0.001)
 
@@ -33,7 +36,7 @@ class _CurveFitGridSearchParameter:
         self.upper_bound = upper_bound
 
 
-class CurveFitGridSearchParameters:
+class _CurveFitGridSearchParameters:
     def __init__(self):
         self.lat = _CurveFitGridSearchParameter([10], 10)
         self.lon = _CurveFitGridSearchParameter([10], 10)

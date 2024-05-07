@@ -10,8 +10,7 @@ from src.navigation.calculations import m_to_deg_lat, m_to_deg_lon, latlon_dista
 from src.satellites.predictions import predict_satellite_positions
 from src.navigation.data_processing import nav_data_to_array, find_curves
 from src.navigation.data_processing import NavDataArrayIndices as IDX
-from src.config.parameters import CurveFitIterationParameters, CurveFitGridSearchParameters, CurveFitMethodParameters, \
-    _CurveFitGridSearchParameter
+from src.config.parameters import CurveFitMethodParameters
 from src.config.locations import LOCATIONS
 from src.utils.data import dump_data
 from src.utils.plots import plot_results_of_iterative_position_finding, plot_analyzed_curve, \
@@ -26,10 +25,6 @@ GRID_SIZE = 10
 GRID_INIT_STEP_LL = 100e3  # km
 GRID_INIT_STEP_ALT = 100  # m
 GRID_INIT_STEP_OFF = 3000  # Hz
-
-PARAMS = CurveFitMethodParameters()
-ITER = CurveFitIterationParameters()
-GRID = CurveFitGridSearchParameters()
 
 # Constants
 C = 299792458  # m/s
@@ -145,16 +140,16 @@ class RatioCycleDetector:
         return cycle
 
 
-def fit_curve(results, lat_0, lon_0, alt_0, off_0, dft_0, measured_curve, r_sat_arr, v_sat_arr):
+def fit_curve(results, lat_0, lon_0, alt_0, off_0, dft_0, measured_curve, r_sat_arr, v_sat_arr, params):
     iteration_result = IterationResults.limit
     cycle_detector = RatioCycleDetector()
 
     # initialization
-    step_lat = ITER.lat.init_step
-    step_lon = ITER.lon.init_step
-    step_alt = ITER.alt.init_step
-    step_off = ITER.off.init_step
-    step_dft = ITER.dft.init_step
+    step_lat = params.lat.init_step
+    step_lon = params.lon.init_step
+    step_alt = params.alt.init_step
+    step_off = params.off.init_step
+    step_dft = params.dft.init_step
     lat = lat_0
     lon = lon_0
     alt = alt_0
@@ -165,7 +160,7 @@ def fit_curve(results, lat_0, lon_0, alt_0, off_0, dft_0, measured_curve, r_sat_
     sos = check_trial_curve(lat, lon, alt, off, 0, measured_curve, r_sat_arr, v_sat_arr)
     results.append([sos, -1, lat, lon, alt, off, dft])
 
-    for i in range(ITER.iteration_limit):
+    for i in range(params.iteration_limit):
         # nORTH, sOUTH, wEST, eAST, uP, dOWN, mORE_OFFSET, lESS_OFFSET
 
         # 1. calculate SOS for each direction
@@ -219,17 +214,17 @@ def fit_curve(results, lat_0, lon_0, alt_0, off_0, dft_0, measured_curve, r_sat_
 
         # 3. check if current position is the best
 
-        if (alt <= ITER.alt.lower_bound and diff_alt < 0) or (alt >= ITER.alt.upper_bound and diff_alt > 0):
+        if (alt <= params.alt.lower_bound and diff_alt < 0) or (alt >= params.alt.upper_bound and diff_alt > 0):
             diff_alt = 0
 
-        step_lat = _adjust_step(step_lat, diff_lat, ITER.lat.step_limit)
-        step_lon = _adjust_step(step_lon, diff_lon, ITER.lon.step_limit)
-        step_alt = _adjust_step(step_alt, diff_alt, ITER.alt.step_limit)
-        step_off = _adjust_step(step_off, diff_off, ITER.off.step_limit)
-        step_dft = _adjust_step(step_dft, diff_dft, ITER.dft.step_limit)
+        step_lat = _adjust_step(step_lat, diff_lat, params.lat.step_limit)
+        step_lon = _adjust_step(step_lon, diff_lon, params.lon.step_limit)
+        step_alt = _adjust_step(step_alt, diff_alt, params.alt.step_limit)
+        step_off = _adjust_step(step_off, diff_off, params.off.step_limit)
+        step_dft = _adjust_step(step_dft, diff_dft, params.dft.step_limit)
 
         if (diff_lat == 0 and diff_lon == 0 and diff_off == 0 and diff_alt == 0 and diff_dft == 0
-                and step_lat <= ITER.lat.step_limit and step_lon <= ITER.lon.step_limit):
+                and step_lat <= params.lat.step_limit and step_lon <= params.lon.step_limit):
 
             results.append([sos, i, lat, lon, alt, off, dft])
             print(f"Iteration {i + 1:03d}: lat {lat:03.3f}°, lon {lon:02.3f}°, alt {alt:04.0f} m, off {off:05.0f} Hz, dft {dft:05.3f} Hz/s, "
@@ -251,22 +246,22 @@ def fit_curve(results, lat_0, lon_0, alt_0, off_0, dft_0, measured_curve, r_sat_
         # 5. move trial position and calculate new SOS
         # lat = lat + m_to_deg_lat(step_lat * ratio_lat, lat)
         # lon = lon + m_to_deg_lon(step_lon * ratio_lon, lat)
-        # alt = min(ITER.alt.upper_bound, max(ITER.alt.lower_bound, alt + step_alt * ratio_alt))
+        # alt = min(params.alt.upper_bound, max(params.alt.lower_bound, alt + step_alt * ratio_alt))
         # off = off + step_off * ratio_off
         # dft = dft + step_dft * ratio_dft
 
         # check if the algorithm is not stuck in a cycle
         cycle_detector.update([ratio_lat, ratio_lon, ratio_alt, ratio_off])
         if cycle_detector.is_cycle():  # cycle detection
-            step_lat = _adjust_step(step_lat, diff_lat, ITER.lat.step_limit, force=ratio_lat != 0)
-            step_lon = _adjust_step(step_lon, diff_lon, ITER.lon.step_limit, force=ratio_lon != 0)
-            step_alt = _adjust_step(step_alt, diff_alt, ITER.alt.step_limit, force=ratio_alt != 0)
-            step_off = _adjust_step(step_off, diff_off, ITER.off.step_limit, force=ratio_off != 0)
-            step_dft = _adjust_step(step_dft, diff_dft, ITER.dft.step_limit, force=ratio_dft != 0)
+            step_lat = _adjust_step(step_lat, diff_lat, params.lat.step_limit, force=ratio_lat != 0)
+            step_lon = _adjust_step(step_lon, diff_lon, params.lon.step_limit, force=ratio_lon != 0)
+            step_alt = _adjust_step(step_alt, diff_alt, params.alt.step_limit, force=ratio_alt != 0)
+            step_off = _adjust_step(step_off, diff_off, params.off.step_limit, force=ratio_off != 0)
+            step_dft = _adjust_step(step_dft, diff_dft, params.dft.step_limit, force=ratio_dft != 0)
 
         lat = lat + m_to_deg_lat(step_lat * ratio_lat, lat)
         lon = lon + m_to_deg_lon(step_lon * ratio_lon, lat)
-        alt = min(ITER.alt.upper_bound, max(ITER.alt.lower_bound, alt + step_alt * ratio_alt))
+        alt = min(params.alt.upper_bound, max(params.alt.lower_bound, alt + step_alt * ratio_alt))
         off = off + step_off * ratio_off
         dft = dft + step_dft * ratio_dft
 
@@ -283,7 +278,7 @@ def fit_curve(results, lat_0, lon_0, alt_0, off_0, dft_0, measured_curve, r_sat_
     return iteration_result, lat, lon, alt, off, dft, results
 
 
-def _generate_grid_search_steps(val, step, params: _CurveFitGridSearchParameter):
+def _generate_grid_search_steps(val, step, params):
 
     if step == 0:
         return [val]
@@ -303,7 +298,7 @@ def _generate_grid_search_steps(val, step, params: _CurveFitGridSearchParameter)
     return steps
 
 
-def fit_curve_grid(results, lat_0, lon_0, alt_0, off_0, dft_0, measured_curve, r_sat_arr, v_sat_arr):
+def fit_curve_grid(results, lat_0, lon_0, alt_0, off_0, dft_0, measured_curve, r_sat_arr, v_sat_arr, params):
 
     lat = lat_0
     lon = lon_0
@@ -313,18 +308,18 @@ def fit_curve_grid(results, lat_0, lon_0, alt_0, off_0, dft_0, measured_curve, r
 
     res = list()
 
-    for i in range(GRID.grid_search_depth):
-        step_lat = m_to_deg_lat(GRID.lat.steps[i], lat)
-        step_lon = m_to_deg_lat(GRID.lon.steps[i], lat)
-        step_alt = GRID.alt.steps[i]
-        step_off = GRID.off.steps[i]
-        step_dft = GRID.dft.steps[i]
+    for i in range(params.grid_search_depth):
+        step_lat = m_to_deg_lat(params.lat.steps[i], lat)
+        step_lon = m_to_deg_lat(params.lon.steps[i], lat)
+        step_alt = params.alt.steps[i]
+        step_off = params.off.steps[i]
+        step_dft = params.dft.steps[i]
 
-        lats = _generate_grid_search_steps(lat, step_lat, GRID.lat)
-        lons = _generate_grid_search_steps(lon, step_lon, GRID.lon)
-        alts = _generate_grid_search_steps(alt, step_alt, GRID.alt)
-        offs = _generate_grid_search_steps(off, step_off, GRID.off)
-        dfts = _generate_grid_search_steps(dft, step_dft, GRID.dft)
+        lats = _generate_grid_search_steps(lat, step_lat, params.lat)
+        lons = _generate_grid_search_steps(lon, step_lon, params.lon)
+        alts = _generate_grid_search_steps(alt, step_alt, params.alt)
+        offs = _generate_grid_search_steps(off, step_off, params.off)
+        dfts = _generate_grid_search_steps(dft, step_dft, params.dft)
 
         for lat, lon, alt, off, dft in itertools.product(lats, lons, alts, offs, dfts):
             sos = check_trial_curve(lat, lon, alt, off, dft, measured_curve, r_sat_arr, v_sat_arr)
@@ -333,7 +328,7 @@ def fit_curve_grid(results, lat_0, lon_0, alt_0, off_0, dft_0, measured_curve, r
         sos, _, lat, lon, alt, off, dft = min(res, key=lambda x: x[0])
         res.append([sos, 0, lat, lon, alt, off, dft])
         print(f"Grid {i + 1:03d}: lat {lat:05.3f}°, lon {lon:05.3f}°, alt {alt:04.0f} m, off {off:05.0f} SOS {sos:09.0f}, "
-              f"step_lat {GRID.lat.steps[i]:05.0f} m, step_lon {GRID.lat.steps[i]:05.0f} m, step_alt {GRID.alt.steps[i]:03.0f} m, step_off {GRID.off.steps[i]:04.0f} Hz, step_dft {GRID.dft.steps[i]:04.0f} Hz,"
+              f"step_lat {params.lat.steps[i]:05.0f} m, step_lon {params.lat.steps[i]:05.0f} m, step_alt {params.alt.steps[i]:03.0f} m, step_off {params.off.steps[i]:04.0f} Hz, step_dft {params.dft.steps[i]:04.0f} Hz,"
               f"dist {latlon_distance(LAT_HOME, lat, LON_HOME, lon):07.0f} m")
 
     results.extend(res)
@@ -366,18 +361,20 @@ def iterative_algorithm(curve_array, lat_0, lon_0, alt_0, off_0, dft_0):
     return lat, lon, alt, off, dft
 
 
-def solve(nav_data, satellites):
+def solve(nav_data, satellites, params: CurveFitMethodParameters, init_state=None):
     """
 
     :param nav_data: list: absolute time (Time) | frequency (float) | base frequency (float) | satellite position at time (ITRS) | ID
     :param satellites:
+    :param params: parameters of solving
+    :param init_state: initial state, if None, the function will estimate it
     :return:
     """
 
     # filter curves
     print("SOLVING POSITION")
     detected_curves = find_curves(nav_data,
-                                  max_time_gap=PARAMS.max_time_gap, min_curve_length=PARAMS.min_curve_length)
+                                  max_time_gap=params.max_time_gap, min_curve_length=params.min_curve_length)
     print("Detected curves ", len(detected_curves))
 
     # estimate initial position
@@ -406,13 +403,14 @@ def solve(nav_data, satellites):
 
     # iterative method
     iter_res, lat, lon, alt, off, dft, results = fit_curve(results, lat_0, lon_0, alt_0, off_0, dft_0,
-                                                           measured_curve, r_sat_arr, v_sat_arr)
+                                                           measured_curve, r_sat_arr, v_sat_arr,
+                                                           params.iteration)
     dump_data("results", results)
     plot_results_of_iterative_position_finding(results, r)
 
     # grid search method as a followup
     # iter_res, lat, lon, alt, off, dft, results = fit_curve_grid(results, lat, lon, 1500, off, dft,
-    #                                                             measured_curve, r_sat_arr, v_sat_arr)
+    #                                                             measured_curve, r_sat_arr, v_sat_arr, params.iteration)
     # dump_data("results", results)
     # plot_results_of_iterative_position_finding(results, r)
 
