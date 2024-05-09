@@ -75,3 +75,23 @@ for idx_iri in range(id_table.shape[1]):
 
 import astropy
 print(astropy.__citation__)
+
+
+frame =  "IBC: p-452199-e000 004766669.4456 1625198080  98% -66.56|-115.83|18.45 135 DL bc:0 sat:096 cell:34 0 slot:1 sv_blkn:0 aq_cl:1111111111111111 aq_sb:28 aq_ch:2 00 0000 time:2024-03-17T15:24:12.89Z                 [111 Rid:136 ts:1 ul_sb:07 dl_sb:31 access:7 dtoa:+053 dfoa:45 00] [111 Rid:136 ts:1 ul_sb:07 dl_sb:31 access:7 dtoa:+053 dfoa:45 00]"
+frame = frame.split()
+
+rel_time = float(frame[2])
+freq = int(frame[3])
+
+sat_id, sync_time = False, False
+for part in frame[8:]:
+    try:
+        if "sat" in part:
+            sat_id = int(part.split("sat:")[1])
+        if "time" in part:
+            sync_time = Time(part.split("time:")[1], format="isot", scale="utc")
+            break  # the time comes after the sat_id
+    except ValueError:
+        print(f"Part {part} of frame could not be parsed")
+
+print(sat_id, rel_time, freq, sync_time)

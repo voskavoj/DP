@@ -12,10 +12,7 @@ from src.radio.iridium_frame_operations import decompose_ira_frame, decompose_ib
 
 
 class IridiumOfflineRadio:
-    def __init__(self, file_path: str, file_is_parsed=False, non_ira_frames=True, drop_frequencies=True):
-        with open(file_path, "r") as file:
-            frames = file.readlines()
-
+    def __init__(self, frames: list, file_is_parsed=False, non_ira_frames=True, drop_frequencies=True):
         self.frames_list = list()
 
         if not file_is_parsed:
@@ -29,7 +26,7 @@ class IridiumOfflineRadio:
                 if drop_frequencies and abs(base_freq - freq) > CHANNEL_ID_THRESHOLD:
                     continue
             elif non_ira_frames and frame.startswith("IBC"):
-                sat_id, rel_time, freq = decompose_ibc_frame(frame)
+                sat_id, rel_time, freq, sync_time = decompose_ibc_frame(frame)
                 base_freq = find_tx_base_frequency(freq, drop=drop_frequencies)
             else:
                 continue

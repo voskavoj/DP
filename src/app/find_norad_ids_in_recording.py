@@ -58,14 +58,7 @@ def find_norad_ids_in_recording(satellites, frame_file=FRAME_FILE, print_log=Fal
     return ress
 
 
-if __name__ == "__main__":
-    if LOAD_DATA_IDX is None:
-        ress = find_norad_ids_in_recording(download_tles(constellations=CONSTELLATIONS, offline_dir=DATA_PATH),
-                                           FRAME_FILE, print_log=LOG_LINES)
-        dump_data(f"iridium_id_comparison_results_{EXP_NAME}", ress)
-    else:
-        ress = load_data(f"iridium_id_comparison_results_{EXP_NAME}_{LOAD_DATA_IDX}")
-
+def print_found_norad_ids_in_recording(ress):
     ress_arr = np.array(ress)
 
     # Dictionary to store results
@@ -100,4 +93,16 @@ if __name__ == "__main__":
                 dict_style = f" | {sat_id:.0f}: {iri_id:.0f},  # {occurrences}"
             else:
                 dict_style = ""
-            print(f"  IRI ID: {iri_id: 4.0f} ({status}), Occurrences: {occurrences: 4d}, Average Distance: {avg_dist/1000: 7.1f} km" + dict_style)
+            print(
+                f"  IRI ID: {iri_id: 4.0f} ({status}), Occurrences: {occurrences: 4d}, Average Distance: {avg_dist / 1000: 7.1f} km" + dict_style)
+
+
+if __name__ == "__main__":
+    if LOAD_DATA_IDX is None:
+        ress = find_norad_ids_in_recording(download_tles(constellations=CONSTELLATIONS, offline_dir=DATA_PATH),
+                                           FRAME_FILE, print_log=LOG_LINES)
+        dump_data(f"iridium_id_comparison_results_{EXP_NAME}", ress)
+    else:
+        ress = load_data(f"iridium_id_comparison_results_{EXP_NAME}_{LOAD_DATA_IDX}")
+
+    print_found_norad_ids_in_recording(ress)

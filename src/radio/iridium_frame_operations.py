@@ -1,5 +1,8 @@
 import subprocess
 
+from astropy.time import Time, TimeDelta
+import astropy.units as unit
+
 IRIDIUM_PARSER_PATH = "External/iridium-toolkit/iridium-parser.py"
 
 
@@ -70,31 +73,71 @@ def decompose_ira_frame(frame: str) -> tuple[int, float, int, tuple[int, float, 
     return sat_id, rel_time, freq, ira_data
 
 
-def decompose_ibc_frame(frame: str) -> tuple[int, float, int]:
+def decompose_ibc_frame(frame: str) -> tuple[int, float, int, float]:
     """
     Decompose an IBC frame into its components.
 
     Example parsed frame:
-    IBC: p-349207-e000 000044922.3846 1624230912 93% -84.44|-137.62|20.52 138 DL bc:0 sat:057 cell:24 0 slot:1 ...
+    IBC: p-349207-e000 000044922.3846 1624230912 93% -84.44|-137.62|20.52 138 DL bc:0 sat:057 cell:24 0 slot:1
+        sv_blkn:0 aq_cl:1111111111111111 aq_sb:28 aq_ch:2 00 0000 time:2024-03-17T15:24:12.89Z ...
 
     :param frame: ibc frame
-    :return: sat_id, rel_time, freq
+    :return: sat_id, rel_time (ms), freq (Hz), sync_time (unix)
     """
     frame = frame.split()
 
     rel_time = float(frame[2])
     freq = int(frame[3])
 
-    sat_id = False
+    sat_id, sync_time, slot = False, False, False
     for part in frame[8:]:
         try:
             if "sat" in part:
                 sat_id = int(part.split("sat:")[1])
-                break
+            if "slot" in part:
+                slot = int(part.split("slot:")[1])
+            if "time" in part:
+                sync_time = Time(part.split("time:")[1], format="isot", scale="utc")
+                break  # the time comes after the sat_id
         except ValueError:
             print(f"Part {part} of frame could not be parsed")
 
-    return sat_id, rel_time, freq
+    if sync_time and slot:
+        sync_time = _correct_ibc_time(sync_time, slot).to_value("unix")
+    else:
+        sync_time = False
+
+    return sat_id, rel_time, freq, sync_time
+
+
+def _correct_ibc_time(ibc_time: Time, slot: int):
+    """
+    Correct the time of an IBC frame for slot number and beginning of frame and signal
+
+    Returns time in the same reference frame as the gr-iridium time
+
+    The time in the IBC frame is the time at the start of the 90 ms L-Band frame that contained the IBC frame
+    Source: https://github.com/muccc/iridium-toolkit/issues/40
+    Code from: https://github.com/muccc/iridium-toolkit/blob/master/iridiumtk/reassembler/ppm.py#L48-L66
+
+    :param ibc_time: timestamp of the frame (Time)
+    :param slot: slot of the frame (int)
+    :return: corrected timestamp
+    """
+    # correct for slot:
+    # 1st vs. 4th slot is 3 * (downlink + guard)
+    ibc_time += TimeDelta((slot * (3 * float(8.28 + 0.1))) * unit.ms)
+
+    # correct to beginning of frame:
+    # guard + simplex + guard + 4*(uplink + guard) + extra_guard
+    ibc_time += TimeDelta((1 + 20.32 + 1.24 + 4 * float(8.28 + 0.22) + 0.02) * unit.ms)
+
+    # correct to beginning of signal:
+    # gr-iridium timestamp is "the middle of the first symbol of the 12-symbol BPSK Iridium sync word"
+    # so correct for 64 symbols preamble & one half symbol.
+    ibc_time += TimeDelta((64.5 / 25000) * unit.ms)
+
+    return ibc_time
 
 
 def decompose_generic_frame(frame: str) -> tuple[float, int]:
