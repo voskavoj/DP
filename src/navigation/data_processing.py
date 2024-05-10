@@ -1,10 +1,15 @@
 import numpy as np
+from astropy.coordinates import EarthLocation
 from astropy.time import Time, TimeDelta
 import astropy.units as unit
 
 from src.radio.iridium_channels import map_sat_id_to_tle_id
 from src.satellites.predictions import predict_satellite_positions
+from src.config.locations import LOCATIONS
+from src.config.setup import LOCATION
 
+LON_HOME, LAT_HOME, ALT_HOME = LOCATIONS[LOCATION][0], LOCATIONS[LOCATION][1], LOCATIONS[LOCATION][2]
+C = 299792458  # m/s
 
 SATELLITE_FRAME_COUNT_FILTER = 10
 TIME_CORRECTION_FACTOR = 1  # ms/ms
@@ -38,6 +43,9 @@ class NavDataArrayIndices:
     vx = 7
     vy = 8
     vz = 9
+
+
+IDX = NavDataArrayIndices
 
 
 def process_received_frames(frames_array: np.array, start_time: str, satellites: dict,
@@ -109,7 +117,6 @@ def nav_data_to_array(nav_data: list) -> np.array:
 
 
 def find_curves(nav_data_array, max_time_gap=0, min_curve_length=0):
-    IDX = NavDataArrayIndices
     # sort nav_data_array by sat_id, base_freq, and abs_time
     sorted_indices = np.lexsort((nav_data_array[:, IDX.t], nav_data_array[:, IDX.fb], nav_data_array[:, IDX.id]))
 
@@ -159,3 +166,56 @@ def find_curves(nav_data_array, max_time_gap=0, min_curve_length=0):
             split_arrays.append(curve)
 
     return split_arrays
+
+
+def generate_trial_curve(nav_data, lat=LAT_HOME, lon=LON_HOME, alt=ALT_HOME, off=0, dft=0, abs_freq=True):
+    """
+    Generate a trial curve based on the input navigation data and the provided parameters.
+    Copied from curve_fit_method
+
+    :param nav_data: navigation data array
+    :param lat: latitude
+    :param lon: longitude
+    :param alt: altitude
+    :param off: offset
+    :param dft: drift
+    :param abs_freq: generate absolute frequency (if False, Doppler shift curve is generated)
+    :return: trial curve as array
+    """
+
+    # prepare data
+    curve_array = nav_data
+    measured_curve = np.column_stack((curve_array[:, IDX.t],
+                                      curve_array[:, IDX.f] - curve_array[:, IDX.fb],
+                                      curve_array[:, IDX.fb]))
+    r_sat_arr = np.column_stack((curve_array[:, IDX.x], curve_array[:, IDX.y], curve_array[:, IDX.z]))
+    v_sat_arr = np.column_stack((curve_array[:, IDX.vx], curve_array[:, IDX.vy], curve_array[:, IDX.vz]))
+
+    # generate trial curve
+    curve_len = measured_curve.shape[0]
+
+    trial_curve = np.empty((curve_len, 2))
+    trial_curve[:, 0] = measured_curve[:, 0]  # times are the same
+    r_user_arr = (EarthLocation.from_geodetic(lon, lat, alt)
+                  .get_itrs().cartesian.without_differentials())
+
+    vs, rs, ru = v_sat_arr.T * 1000, r_sat_arr.T * 1000, r_user_arr * np.ones(curve_len)
+    ru = np.array([ru.x.to("km").value, ru.y.to("km").value, ru.z.to("km").value]) * 1000
+    f_b = measured_curve[:, 2]
+
+    # Calculate range rate: Ro_dot = (V_s - V_u) * (r_s - r_u) / ||r_s - r_u||
+    rel_vel = np.sum(vs * (rs - ru) / np.linalg.norm(rs - ru, axis=0), axis=0)
+    # Calculate doppler frequency
+    f_d = -1 * rel_vel * f_b / C
+
+    # Calculate drift
+    f_drift = (trial_curve[:, 0] - np.min(trial_curve[:, 0])) * dft
+
+    # Construct trial curve
+    if abs_freq:
+        trial_curve[:, 1] = f_d + f_b + off + f_drift
+    else:
+        trial_curve[:, 1] = f_d + off + f_drift
+
+    return trial_curve
+

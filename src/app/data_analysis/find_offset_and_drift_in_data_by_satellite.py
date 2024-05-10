@@ -26,8 +26,8 @@ for curve_array in detected_curves:
              v_z=curve_array[:, IDX.vz] * unit.km / unit.s)
     measured_curve = np.column_stack(
         (curve_array[:, IDX.t], curve_array[:, IDX.f] - curve_array[:, IDX.fb], curve_array[:, IDX.fb]))
-    r_sat_arr = r.cartesian.without_differentials()
-    v_sat_arr = r.velocity
+    r_sat_arr = np.column_stack((curve_array[:, IDX.x], curve_array[:, IDX.y], curve_array[:, IDX.z]))
+    v_sat_arr = np.column_stack((curve_array[:, IDX.vx], curve_array[:, IDX.vy], curve_array[:, IDX.vz]))
 
     off_range = range(-20000, +20000, 100)
     res = list()

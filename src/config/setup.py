@@ -25,6 +25,8 @@ class DEBUG:
     plot_analyzed_curve = False
     plot_final_curve_fit = False
 
+    dump_results = True
+
 
 
 if START_TIME is None:

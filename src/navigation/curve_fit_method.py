@@ -376,14 +376,16 @@ def solve(nav_data, satellites, params: CurveFitMethodParameters, init_state: tu
     iter_res, lat, lon, alt, off, dft, results = fit_curve(results, lat_0, lon_0, alt_0, off_0, dft_0,
                                                            measured_curve, r_sat_arr, v_sat_arr,
                                                            params.iteration)
-    dump_data("results", results)
+    if DEBUG.dump_results:
+        dump_data("results", results)
     if DEBUG.plot_results:
         plot_results_of_iterative_position_finding(results, r)
 
     # grid search method as a followup
     # iter_res, lat, lon, alt, off, dft, results = fit_curve_grid(results, lat, lon, 1500, off, dft,
     #                                                             measured_curve, r_sat_arr, v_sat_arr, params.iteration)
-    # dump_data("results", results)
+    # if DEBUG.dump_results:
+    #     dump_data("results", results)
     # if DEBUG.plot_results:
     #     plot_results_of_iterative_position_finding(results, r)
 

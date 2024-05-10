@@ -14,12 +14,6 @@ from src.config.parameters import CurveFitMethodParameters
 
 LON_HOME, LAT_HOME, ALT_HOME = LOCATIONS["HOME"][0], LOCATIONS["HOME"][1], LOCATIONS["HOME"][2]
 
-with open(DATA_PATH + SAVED_DATA_FILE, "rb") as file:
-    saved_nav_data = pickle.load(file)
-
-# with open(DATA_PATH + TEST_DATA_FILE, "rb") as file:
-#     test_nav_data = pickle.load(file)
-
 
 def slice_data_into_time_chunks(data, chunk_time):
     if chunk_time is None:
@@ -37,8 +31,15 @@ def slice_data_into_time_chunks(data, chunk_time):
     return time_chunks
 
 
+with open(DATA_PATH + SAVED_DATA_FILE, "rb") as file:
+    saved_nav_data = pickle.load(file)
+
+# with open(DATA_PATH + TEST_DATA_FILE, "rb") as file:
+#     test_nav_data = pickle.load(file)
+
 satellites = download_tles(constellations=CONSTELLATIONS, offline_dir=DATA_PATH)["Iridium"]
 parameters = CurveFitMethodParameters()
+
 
 est_state = None
 for data in slice_data_into_time_chunks(saved_nav_data, None):
