@@ -336,7 +336,7 @@ def solve(nav_data, satellites, params: CurveFitMethodParameters, init_state: tu
     :param satellites:
     :param params: parameters of solving
     :param init_state: initial state, if None, the function will estimate it
-    :return:
+    :return: final lat, lon, alt, off, dft
     """
 
     # filter curves

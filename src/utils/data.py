@@ -59,8 +59,12 @@ def load_data(name, index=None):
     else:
         raise ValueError("Index must be an integer or None")
 
-    with open(filename, "rb") as file:
-        data = pickle.load(file)
+    try:
+        with open(filename, "rb") as file:
+            data = pickle.load(file)
+    except FileNotFoundError:
+        print(f"File {filename} not found")
+        return None
     return data
 
 
