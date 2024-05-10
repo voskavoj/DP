@@ -6,10 +6,10 @@ from src.config.setup import *
 from src.config.locations import LOCATIONS
 from src.radio.iridium_channels import map_tle_id_to_sat_id, IRA_BASE_FREQUENCY
 from src.satellites.download_tle import download_tles
-from src.navigation.data_processing import process_received_frames
+from src.navigation.data_processing import process_received_frames, find_curves, NavDataArrayIndices as IDX
 from src.satellites.predictions import predict_satellite_doppler_shift
 
-TEST_SAT_IDS = [109, 110, 111, 112, 114, 136, 139, 147, 152, 154, 155, 156, 158, 159, 160, 163, 164, 165, 166]
+TEST_SAT_MIN_SAMPLES = 50
 BASE_FREQ = IRA_BASE_FREQUENCY
 TEST_DATA_MINUTES = 160
 SKIPPED_MINUTES = 100
@@ -21,8 +21,18 @@ satellites = download_tles(constellations=CONSTELLATIONS, offline_dir=DATA_PATH)
 start_time = Time(START_TIME) + TimeDelta(SKIPPED_MINUTES * 60, format="sec")
 lon, lat, alt = LOCATIONS[LOCATION]
 
-test_sat_list = [satellites["Iridium"][str(idx)] for idx in TEST_SAT_IDS]
-print(test_sat_list)
+# ---------------------------- get satellites present in actual data
+with open(DATA_PATH + SAVED_DATA_FILE, "rb") as file:
+    saved_nav_data = pickle.load(file)
+
+
+test_sat_list = list()
+for curve_array in find_curves(saved_nav_data):
+    sat = satellites["Iridium"][str(int(curve_array[0, IDX.sat_id]))]
+    sat_no, length = sat.number, curve_array.shape[0]
+    if length > TEST_SAT_MIN_SAMPLES:
+        test_sat_list.append(sat)
+        print(f"\t {sat.name}: {length: 5d} samples")
 
 # [rel_time, shifted frequency, abs_doppler_shift, rel_doppler_shift]
 dopp_predictions = predict_satellite_doppler_shift(test_sat_list, lat, lon, alt, BASE_FREQ,
