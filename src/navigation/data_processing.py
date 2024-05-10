@@ -6,7 +6,7 @@ from src.radio.iridium_channels import map_sat_id_to_tle_id
 from src.satellites.predictions import predict_satellite_positions
 
 
-SATELLITE_FRAME_COUNT_FILTER = 100
+SATELLITE_FRAME_COUNT_FILTER = 10
 TIME_CORRECTION_FACTOR = 1  # ms/ms
 
 

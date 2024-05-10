@@ -15,16 +15,8 @@ from src.config.locations import LOCATIONS
 from src.utils.data import dump_data
 from src.utils.plots import plot_results_of_iterative_position_finding, plot_analyzed_curve, \
     plot_measured_vs_trial_curve
+from src.config.setup import DEBUG
 
-
-STEP_LIMIT = 10  # m
-
-# Grid search parameters
-GRID_SEARCH_DEPTH = 5
-GRID_SIZE = 10
-GRID_INIT_STEP_LL = 100e3  # km
-GRID_INIT_STEP_ALT = 100  # m
-GRID_INIT_STEP_OFF = 3000  # Hz
 
 # Constants
 C = 299792458  # m/s
@@ -47,7 +39,8 @@ def estimate_zero_doppler_shift_position(detected_curves, satellites):
     estimated_init_locations = list()
     for curve_array in detected_curves:
         sat = satellites[str(int(curve_array[0, IDX.sat_id]))]
-        print(f"\t {sat.name}, {curve_array[0, IDX.fb]:.0f} Hz, {curve_array.shape[0]: 5d} samples")
+        if DEBUG.log_detected_curves:
+            print(f"\t {sat.name}, {curve_array[0, IDX.fb]:.0f} Hz, {curve_array.shape[0]: 5d} samples")
 
         # interpolate moment of zero doppler shift
         dopp_shift_arr = curve_array[:, IDX.f] - curve_array[:, IDX.fb]
@@ -269,12 +262,12 @@ def fit_curve(results, lat_0, lon_0, alt_0, off_0, dft_0, measured_curve, r_sat_
 
         # 6. log results
         results.append([sos, i, lat, lon, alt, off, dft])
-        print(f"\tIteration {i + 1:03d}: lat {lat:05.3f}°, lon {lon:05.3f}°, alt {alt:04.0f} m, off {off:05.0f} Hz, dft {dft:05.3f} Hz/s, SOS {sos:09.0f}, "
-              f"step_lat {step_lat:05.0f} m, step_lon {step_lon:05.0f} m, step_alt {step_alt:03.0f} m, step_off {step_off:04.0f} Hz, step_dft {step_dft:05.3f} Hz/s,"
-              f"dist {latlon_distance(LAT_HOME, lat, LON_HOME, lon):07.0f} m, "
-              f"rlat {ratio_lat: 2.0f}, rlon {ratio_lon: 2.0f}, ralt {ratio_alt: 2.0f}, roff {ratio_off: 2.0f}, rdft {ratio_dft: 2.0f}{', Cycle' if cycle_detector.was_cycle else ''}")
+        if DEBUG.log_detail_progress:
+            print(f"\tIteration {i + 1:03d}: lat {lat:05.3f}°, lon {lon:05.3f}°, alt {alt:04.0f} m, off {off:05.0f} Hz, dft {dft:05.3f} Hz/s, SOS {sos:09.0f}, "
+                  f"step_lat {step_lat:05.0f} m, step_lon {step_lon:05.0f} m, step_alt {step_alt:03.0f} m, step_off {step_off:04.0f} Hz, step_dft {step_dft:05.3f} Hz/s,"
+                  f"dist {latlon_distance(LAT_HOME, lat, LON_HOME, lon):07.0f} m, "
+                  f"rlat {ratio_lat: 2.0f}, rlon {ratio_lon: 2.0f}, ralt {ratio_alt: 2.0f}, roff {ratio_off: 2.0f}, rdft {ratio_dft: 2.0f}{', Cycle' if cycle_detector.was_cycle else ''}")
 
-    # check_trial_curve(lat, lon, alt, off, 0, measured_curve, r_sat_arr, v_sat_arr, plot=True)
     return iteration_result, lat, lon, alt, off, dft, results
 
 
@@ -327,41 +320,16 @@ def fit_curve_grid(results, lat_0, lon_0, alt_0, off_0, dft_0, measured_curve, r
 
         sos, _, lat, lon, alt, off, dft = min(res, key=lambda x: x[0])
         res.append([sos, 0, lat, lon, alt, off, dft])
-        print(f"Grid {i + 1:03d}: lat {lat:05.3f}°, lon {lon:05.3f}°, alt {alt:04.0f} m, off {off:05.0f} SOS {sos:09.0f}, "
-              f"step_lat {params.lat.steps[i]:05.0f} m, step_lon {params.lat.steps[i]:05.0f} m, step_alt {params.alt.steps[i]:03.0f} m, step_off {params.off.steps[i]:04.0f} Hz, step_dft {params.dft.steps[i]:04.0f} Hz,"
-              f"dist {latlon_distance(LAT_HOME, lat, LON_HOME, lon):07.0f} m")
+        if DEBUG.log_detail_progress:
+            print(f"Grid {i + 1:03d}: lat {lat:05.3f}°, lon {lon:05.3f}°, alt {alt:04.0f} m, off {off:05.0f} SOS {sos:09.0f}, "
+                  f"step_lat {params.lat.steps[i]:05.0f} m, step_lon {params.lat.steps[i]:05.0f} m, step_alt {params.alt.steps[i]:03.0f} m, step_off {params.off.steps[i]:04.0f} Hz, step_dft {params.dft.steps[i]:04.0f} Hz,"
+                  f"dist {latlon_distance(LAT_HOME, lat, LON_HOME, lon):07.0f} m")
 
     results.extend(res)
     return IterationResults.found, lat, lon, alt, off, dft, results
 
 
-def iterative_algorithm(curve_array, lat_0, lon_0, alt_0, off_0, dft_0):
-
-    measured_curve = np.column_stack((curve_array[:, IDX.t], curve_array[:, IDX.f] - curve_array[:, IDX.fb], curve_array[:, IDX.fb]))
-
-    r = ITRS(x=curve_array[:, IDX.x] * unit.km, y=curve_array[:, IDX.y] * unit.km, z=curve_array[:, IDX.z] * unit.km,
-             v_x=curve_array[:, IDX.vx] * unit.km / unit.s, v_y=curve_array[:, IDX.vy] * unit.km / unit.s,
-             v_z=curve_array[:, IDX.vz] * unit.km / unit.s)
-
-    r_sat_arr = np.column_stack((curve_array[:, IDX.x], curve_array[:, IDX.y], curve_array[:, IDX.z]))
-    v_sat_arr = np.column_stack((curve_array[:, IDX.vx], curve_array[:, IDX.vy], curve_array[:, IDX.vz]))
-
-    results = list()
-
-    iter_res, lat, lon, alt, off, dft, results = fit_curve(results, lat_0, lon_0, alt_0, off_0, dft_0,
-                                                           measured_curve, r_sat_arr, v_sat_arr)
-    dump_data("results", results)
-    plot_results_of_iterative_position_finding(results, r)
-
-    # iter_res, lat, lon, alt, off, dft, results = fit_curve_grid(results, lat, lon, 1500, off, dft,
-    #                                                             measured_curve, r_sat_arr, v_sat_arr)
-    # dump_data("results", results)
-    # plot_results_of_iterative_position_finding(results, r)
-
-    return lat, lon, alt, off, dft
-
-
-def solve(nav_data, satellites, params: CurveFitMethodParameters, init_state=None):
+def solve(nav_data, satellites, params: CurveFitMethodParameters, init_state: tuple[float, float, float, float, float] | None = None):
     """
 
     :param nav_data: list: absolute time (Time) | frequency (float) | base frequency (float) | satellite position at time (ITRS) | ID
@@ -378,8 +346,11 @@ def solve(nav_data, satellites, params: CurveFitMethodParameters, init_state=Non
     print("Detected curves ", len(detected_curves))
 
     # estimate initial position
-    lat_0, lon_0 = estimate_zero_doppler_shift_position(detected_curves, satellites)
-    alt_0, off_0, dft_0 = 0, 0, 0
+    if init_state is None:
+        lat_0, lon_0 = estimate_zero_doppler_shift_position(detected_curves, satellites)
+        alt_0, off_0, dft_0 = 0, 0, 0
+    else:
+        lat_0, lon_0, alt_0, off_0, dft_0 = init_state
 
     # join satellite curves into one array
     curve_array = np.vstack(detected_curves)
@@ -406,14 +377,17 @@ def solve(nav_data, satellites, params: CurveFitMethodParameters, init_state=Non
                                                            measured_curve, r_sat_arr, v_sat_arr,
                                                            params.iteration)
     dump_data("results", results)
-    plot_results_of_iterative_position_finding(results, r)
+    if DEBUG.plot_results:
+        plot_results_of_iterative_position_finding(results, r)
 
     # grid search method as a followup
     # iter_res, lat, lon, alt, off, dft, results = fit_curve_grid(results, lat, lon, 1500, off, dft,
     #                                                             measured_curve, r_sat_arr, v_sat_arr, params.iteration)
     # dump_data("results", results)
-    # plot_results_of_iterative_position_finding(results, r)
+    # if DEBUG.plot_results:
+    #     plot_results_of_iterative_position_finding(results, r)
 
-    sos = check_trial_curve(lat, lon, alt, off, dft, measured_curve, r_sat_arr, v_sat_arr, plot=True)
+    if DEBUG.plot_final_curve_fit:
+        check_trial_curve(LAT_HOME, LON_HOME, ALT_HOME, 0, 0, measured_curve, r_sat_arr, v_sat_arr, plot=True)
 
     return lat, lon, alt, off, dft
