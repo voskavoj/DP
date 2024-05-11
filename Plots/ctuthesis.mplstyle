@@ -2,3 +2,8 @@ figure.figsize : 5, 4.5
 font.size:    9.0
 axes.titlesize: medium
 figure.titlesize: medium
+errorbar.capsize: 2
+axes.grid: True
+grid.linestyle: :   
+#grid.linewidth: 0.6
+#grid.alpha:     0.5

@@ -28,6 +28,7 @@ def run_for_all_data(cb_solve, test_name):
 
 def load_results(test_name, index=-1, unpack=False):
     results = load_data("validation\\" + f"{test_name}", index)
+    results: dict
 
     if unpack:
         return list(results.values())
