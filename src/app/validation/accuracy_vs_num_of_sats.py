@@ -6,15 +6,15 @@ from src.utils.data import get_fig_filename
 from src.utils.printing import tableify
 from src.utils.run_for_all_data import run_for_all_data, load_results
 from src.config.locations import LOCATIONS
-from src.navigation.calculations import latlon_distance, m_to_deg_lon, m_to_deg_lat
-from src.navigation.curve_fit_method import solve, C
+from src.navigation.calculations import latlon_distance
+from src.navigation.curve_fit_method import solve
+from src.navigation.data_processing import find_curves
 from src.config.parameters import CurveFitMethodParameters
 
 # first: 5, alt
 # second: 5, no alt
 # third: 5, alt, no eststate
 RUN_NEW_DATA = False
-TIME_STEP = 5  # min
 DATA_IDX = 0
 EXCLUDED_DATA = []
 
@@ -42,28 +42,33 @@ def slice_data_into_time_chunks(data, chunk_time):
 
 def cb_solve(nav_data, satellites, default_parameters: CurveFitMethodParameters):
     results = list()
-    default_parameters.min_curve_length = 0
-    # default_parameters.iteration.alt.init_step = 0
     est_state = None
 
+    sat_data_chunks = find_curves(nav_data,
+                                  max_time_gap=default_parameters.max_time_gap,
+                                  min_curve_length=default_parameters.min_curve_length)
+    sat_data_chunks = sorted(sat_data_chunks, key=lambda x: x.shape[0], reverse=True)
+
+    sat_lens = list([str(ss.shape[0]) for ss in sat_data_chunks])
+
     cummulative_data = None
-    for data_chunk in slice_data_into_time_chunks(nav_data, TIME_STEP * 60):
+    for sat_cnt, data_chunk in enumerate(sat_data_chunks):
+        sat_cnt += 1
         if cummulative_data is None:
             cummulative_data = data_chunk
         else:
             cummulative_data = np.vstack((cummulative_data, data_chunk))
-        print(cummulative_data.shape)
         res = solve(cummulative_data, satellites, default_parameters, init_state=est_state)
         est_state = res
-        results.append((*res, cummulative_data.shape[0]))
-    return results
+        results.append((*res, cummulative_data.shape[0], sat_cnt))
+    return (results, sat_lens)
 
 
 # section: ------------------------------------------------------------------------- ANALYSIS
-results = load_results("accuracy_vs_meas_time", index=DATA_IDX)
+results = load_results("accuracy_vs_num_of_sats", index=DATA_IDX)
 if RUN_NEW_DATA or results is None:
-    run_for_all_data(cb_solve, "accuracy_vs_meas_time")
-    results = load_results("accuracy_vs_meas_time")
+    run_for_all_data(cb_solve, "accuracy_vs_num_of_sats")
+    results = load_results("accuracy_vs_num_of_sats")
 
 # section: data
 for excl in EXCLUDED_DATA:
@@ -76,11 +81,12 @@ for res in results.values():
 
 parsed_results = list()
 parsed_counts = list()
-for exp_name, res_exp in results.items():
+for exp_name, res_data in results.items():
+    res_exp, sat_lens = res_data
     ress = list()
     count = list()
     for i, res in enumerate(res_exp):
-        lat, lon, alt, off, dft, cnt = res
+        lat, lon, alt, off, dft, cnt, sat_cnt = res
         hor_dist = latlon_distance(LAT_HOME, lat, LON_HOME, lon)
         abs_dist = latlon_distance(LAT_HOME, lat, LON_HOME, lon, ALT_HOME, alt)
         #                    0    1    2    3    4    5         6
@@ -119,21 +125,21 @@ for i, exp_res in enumerate(parsed_results):
     plt.plot(exp_res, label=i+1)
 # plt.yscale('log')
 plt.legend()
-plt.savefig(get_fig_filename(f"accuracy_vs_meas_time"))
+plt.savefig(get_fig_filename(f"accuracy_vs_num_of_sats"))
 
 # all results, just for debug
 plt.figure()
 for i, exp_res in enumerate(parsed_counts):
     plt.plot(exp_res, label=i+1)
 plt.legend()
-plt.savefig(get_fig_filename(f"accuracy_vs_meas_time_cnt"))
+plt.savefig(get_fig_filename(f"accuracy_vs_num_of_sats_cnt"))
 
 for res_arr, cnt_arr, name in zip([res_arr_all, res_arr_cep, res_arr_95], [cnt_arr_all, cnt_arr_cep, cnt_arr_95], ["All", "CEP", "95%"]):
     fig, ax1 = plt.subplots()
     res_arr /= 1000
     max_arr, mean_arr, min_arr = res_arr.max(axis=0), res_arr.mean(axis=0), res_arr.min(axis=0)
     max_cnt_arr, mean_cnt_arr, min_cnt_arr = cnt_arr.max(axis=0), cnt_arr.mean(axis=0), cnt_arr.min(axis=0)
-    times = np.array((list(range(1, len(mean_arr) + 1)))) * TIME_STEP
+    times = np.array((list(range(1, len(mean_arr) + 1))))  # todo: actual count in case it should differ
     eb = ax1.errorbar(times, mean_arr, yerr=[min_arr, max_arr], fmt=".-", label=name)
     eb[-1][0].set_linestyle('--')
     eb[-1][0].set_linewidth(0.8)
@@ -144,10 +150,10 @@ for res_arr, cnt_arr, name in zip([res_arr_all, res_arr_cep, res_arr_95], [cnt_a
     ax2.set_ylabel("Frame count")
     ax2.grid(False)
 
-    ax1.set_xlabel("Time (min)")
+    ax1.set_xlabel("Satellite count")
     fig.legend()
     fig.tight_layout()
 
-    plt.savefig(get_fig_filename(f"accuracy_vs_meas_time_{name.lower()}"))
+    plt.savefig(get_fig_filename(f"accuracy_vs_num_of_sats_{name.lower()}"))
 
 plt.show()
