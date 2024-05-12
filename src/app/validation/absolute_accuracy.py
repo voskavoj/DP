@@ -17,7 +17,7 @@ plt.style.use("Plots/ctuthesis.mplstyle")
 
 
 # section: ------------------------------------------------------------------------- SOLVING
-def cb_solve(nav_data, satellites, default_parameters):
+def cb_solve(nav_data, satellites, default_parameters, *_):
     res = solve(nav_data, satellites, default_parameters)
     return res
 
@@ -41,7 +41,8 @@ for exp_name, res in results.items():
 res_arr = np.array(list(results.values()))
 tableify(list(results.values()),
          col_dec=[3, 3, 0, 0, 3, 0, 0],
-         col_head=["Lat", "Lon", "Alt (m)", "Offset (Hz)", "Drift (Hz/s)", "Hor. error (m)", "Abs. error (m)"])
+         col_head=["ID", "Lat", "Lon", "Alt (m)", "Offset (Hz)", "Drift (Hz/s)", "Hor. error (m)", "Abs. error (m)"],
+         row_head=list(results.keys()))
 
 
 # section: error and spread

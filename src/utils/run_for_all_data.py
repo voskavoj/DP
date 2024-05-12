@@ -20,7 +20,7 @@ def run_for_all_data(cb_solve, test_name):
         default_parameters = CurveFitMethodParameters()
 
         # run callback
-        retval = cb_solve(saved_nav_data, satellites["Iridium"], default_parameters)
+        retval = cb_solve(saved_nav_data, satellites["Iridium"], default_parameters, exp_name)
         results[exp_name] = retval
 
     dump_data("validation\\" + f"{test_name}", results)

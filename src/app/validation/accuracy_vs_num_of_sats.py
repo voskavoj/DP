@@ -40,7 +40,7 @@ def slice_data_into_time_chunks(data, chunk_time):
     return time_chunks
 
 
-def cb_solve(nav_data, satellites, default_parameters: CurveFitMethodParameters):
+def cb_solve(nav_data, satellites, default_parameters: CurveFitMethodParameters, *_):
     results = list()
     est_state = None
 
