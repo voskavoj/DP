@@ -19,10 +19,13 @@ def tableify(data, col_dec=None, col_unit=None, col_head=None, row_head=None):
 
             for i, col in enumerate(row_data):
                 if col_dec:
-                    if col_dec[i] == 0:
-                        col = round(col)
-                    else:
-                        col = round(col, col_dec[i])
+                    try:
+                        if col_dec[i] == 0:
+                            col = round(col)
+                        else:
+                            col = round(col, col_dec[i])
+                    except Exception:
+                        pass
 
                 if col_unit:
                     cu = " " + col_unit[i]
