@@ -1,13 +1,11 @@
-from mpl_toolkits.basemap import Basemap
 import numpy as np
 import matplotlib.pyplot as plt
 
 from src.utils.data import get_fig_filename
-from src.utils.printing import tableify
 from src.utils.run_for_all_data import run_for_all_data, load_results
 from src.config.locations import LOCATIONS
-from src.navigation.calculations import latlon_distance, m_to_deg_lon, m_to_deg_lat
-from src.navigation.curve_fit_method import solve, C
+from src.navigation.calculations import latlon_distance
+from src.navigation.curve_fit_method import solve
 from src.config.parameters import CurveFitMethodParameters
 
 # first: 5, alt
@@ -119,14 +117,12 @@ for i, exp_res in enumerate(parsed_results):
     plt.plot(exp_res, label=i+1)
 # plt.yscale('log')
 plt.legend()
-plt.savefig(get_fig_filename(f"accuracy_vs_meas_time"))
 
 # all results, just for debug
 plt.figure()
 for i, exp_res in enumerate(parsed_counts):
     plt.plot(exp_res, label=i+1)
 plt.legend()
-plt.savefig(get_fig_filename(f"accuracy_vs_meas_time_cnt"))
 
 for res_arr, cnt_arr, name in zip([res_arr_all, res_arr_cep, res_arr_95], [cnt_arr_all, cnt_arr_cep, cnt_arr_95], ["All", "CEP", "95%"]):
     fig, ax1 = plt.subplots()
@@ -148,6 +144,6 @@ for res_arr, cnt_arr, name in zip([res_arr_all, res_arr_cep, res_arr_95], [cnt_a
     fig.legend()
     fig.tight_layout()
 
-    plt.savefig(get_fig_filename(f"accuracy_vs_meas_time_{name.lower()}"))
+    plt.savefig(get_fig_filename("validation\\" + f"accuracy_vs_meas_time_{name.lower()}", idx=False), dpi=600)
 
 plt.show()

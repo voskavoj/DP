@@ -1,8 +1,8 @@
 # Experiment settings
 EXP_NAME = "val01"
 LOCATION = "HOME"
-# START_TIME = "2024-04-12 09:51:16.4"  # UTC
 START_TIME = None
+VALIDATION_DATA_SETS = ["val01", "val02", "val03", "val04", "val05"]
 
 # Paths
 WORKING_DIR = "C:\\Git\\Personal\\DP\\"
@@ -18,15 +18,14 @@ TEST_DATA_FILE = "test_nav_data.pickle"
 
 # LOGGING
 class DEBUG:
-    log_detected_curves = True
+    log_detected_curves = False
     log_detail_progress = False
 
-    plot_results = True
+    plot_results = False
     plot_analyzed_curve = False
     plot_final_curve_fit = False
 
     dump_results = True
-
 
 
 if START_TIME is None:

@@ -2,11 +2,12 @@ from mpl_toolkits.basemap import Basemap
 import numpy as np
 import matplotlib.pyplot as plt
 
+from src.utils.data import get_fig_filename
 from src.utils.printing import tableify
 from src.utils.run_for_all_data import run_for_all_data, load_results
 from src.config.locations import LOCATIONS
 from src.navigation.calculations import latlon_distance, m_to_deg_lon, m_to_deg_lat
-from src.navigation.curve_fit_method import solve, C
+from src.navigation.curve_fit_method import solve
 
 
 RUN_NEW_DATA = False
@@ -123,7 +124,7 @@ def make_latlon_circle(center_lat, center_lon, radius):
 
 
 plt.figure()
-plt.figtext(.15, .05, f"Grid size is 1 km")
+plt.figtext(.12, .92, f"Grid size is 1 km")
 ll_lon = LON_HOME - m_to_deg_lon(4e3, home_lat)
 ll_lat = LAT_HOME - m_to_deg_lat(4e3, home_lat)
 ur_lon = LON_HOME + m_to_deg_lon(4e3, home_lat)
@@ -149,8 +150,10 @@ m.drawcoastlines()
 m.drawcountries()
 m.drawrivers(color="blue")
 m.drawparallels(np.arange(ll_lat, ur_lat, m_to_deg_lat(1e3, home_lat)), labels=[0, 1, 0, 0])
-m.drawmeridians(np.arange(ll_lon, ll_lat, m_to_deg_lon(1e3, home_lat)), labels=[0, 0, 0, 1])
+m.drawmeridians(np.arange(ll_lon, ll_lat, m_to_deg_lon(1e3, home_lat)), labels=[0, 0, 0, 1], rotation="vertical")
 plt.legend()
+plt.tight_layout()
+plt.savefig(get_fig_filename("validation\\" + f"absolute_accuracy", idx=False), dpi=600)
 
 
 # plt.figure()
@@ -170,15 +173,23 @@ plt.plot(cumm_func_all_spread[:, 0], cumm_func_all_spread[:, 1], ".-", label="To
 plt.xlabel("Error (m)")
 plt.ylabel("Probability (-)")
 plt.legend()
+plt.savefig(get_fig_filename("validation\\" + f"absolute_accuracy_all", idx=False), dpi=600)
 
 plt.figure()
 plt.plot(cumm_func_cep[:, 0],        cumm_func_cep[:, 1], ".-", label="To actual postion")
 plt.plot(cumm_func_cep_spread[:, 0], cumm_func_cep_spread[:, 1], ".-", label="To mean postion")
+plt.xlabel("Error (m)")
+plt.ylabel("Probability (-)")
+plt.legend()
+plt.savefig(get_fig_filename("validation\\" + f"absolute_accuracy_cep", idx=False), dpi=600)
+
+plt.figure()
 plt.plot(cumm_func_95[:, 0],        cumm_func_95[:, 1], ".-", label="To actual postion")
 plt.plot(cumm_func_95_spread[:, 0], cumm_func_95_spread[:, 1], ".-", label="To mean postion")
 plt.xlabel("Error (m)")
 plt.ylabel("Probability (-)")
 plt.legend()
+plt.savefig(get_fig_filename("validation\\" + f"absolute_accuracy_95", idx=False), dpi=600)
 
 
 plt.show()

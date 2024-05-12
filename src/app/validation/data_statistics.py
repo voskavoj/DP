@@ -1,28 +1,20 @@
 from astropy.coordinates import ITRS
-from astropy.time import Time, TimeDelta
+from astropy.time import Time
 from astropy import units as unit
-from mpl_toolkits.basemap import Basemap
 import numpy as np
 import matplotlib.pyplot as plt
 
-from src.utils.data import get_fig_filename
 from src.utils.printing import tableify
 from src.utils.run_for_all_data import run_for_all_data, load_results
 from src.config.locations import LOCATIONS
 from src.navigation.calculations import latlon_distance
-from src.navigation.curve_fit_method import solve
 from src.navigation.data_processing import find_curves
 from src.config.parameters import CurveFitMethodParameters
 from src.navigation.data_processing import NavDataArrayIndices as IDX
 from src.config.setup import *
 
-# first: 5, alt
-# second: 5, no alt
-# third: 5, alt, no eststate
 RUN_NEW_DATA = False
-TIME_STEP = 5  # min
 DATA_IDX = 0
-EXCLUDED_DATA = []
 
 home_lon, home_lat, home_alt = LOCATIONS["HOME"][0], LOCATIONS["HOME"][1], LOCATIONS["HOME"][2]
 LON_HOME, LAT_HOME, ALT_HOME = LOCATIONS["HOME"][0], LOCATIONS["HOME"][1], LOCATIONS["HOME"][2]
@@ -154,10 +146,6 @@ if RUN_NEW_DATA or results is None:
     results = load_results("data_statistics")
 
 # section: data
-for excl in EXCLUDED_DATA:
-    print(f"Excluding {excl}")
-    results.pop(excl)
-
 min_results, mean_results, max_results = DataStatistics(), DataStatistics(), DataStatistics()
 exps = results.keys()
 for res_name in mean_results.__dict__.keys():

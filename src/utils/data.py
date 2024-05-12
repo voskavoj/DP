@@ -68,10 +68,13 @@ def load_data(name, index=None):
     return data
 
 
-def get_fig_filename(name):
+def get_fig_filename(name, idx=True):
     global FIG_IDX
 
     create_tmp_dir()
+    if not idx:
+        return f"{TMP_PATH}{name}.png"
+
     filename = f"{TMP_PATH}{name}_{FIG_IDX}.png"
 
     while True:
