@@ -336,6 +336,7 @@ def solve(nav_data, satellites, params: CurveFitMethodParameters, init_state: tu
     :param satellites:
     :param params: parameters of solving
     :param init_state: initial state, if None, the function will estimate it
+    :param repeats: number of repeats
     :return: final lat, lon, alt, off, dft
     """
 
@@ -373,9 +374,12 @@ def solve(nav_data, satellites, params: CurveFitMethodParameters, init_state: tu
     results = list()
 
     # iterative method
-    iter_res, lat, lon, alt, off, dft, results = fit_curve(results, lat_0, lon_0, alt_0, off_0, dft_0,
-                                                           measured_curve, r_sat_arr, v_sat_arr,
-                                                           params.iteration)
+    lat, lon, alt, off, dft = lat_0, lon_0, alt_0, off_0, dft_0
+    for _ in range(params.iteration.repeats):
+        iter_res, lat, lon, alt, off, dft, results = fit_curve(results, lat, lon, alt, off, dft,
+                                                               measured_curve, r_sat_arr, v_sat_arr,
+                                                               params.iteration)
+
     if DEBUG.dump_results:
         dump_data("results", results)
     if DEBUG.plot_results:

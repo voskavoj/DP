@@ -26,6 +26,7 @@ class _CurveFitIterationParameters:
         self.dft = _CurveFitStepParameter(0.1,   0.001)
 
         self.iteration_limit = 500
+        self.repeats = 3
 
 
 class _CurveFitGridSearchParameter:
