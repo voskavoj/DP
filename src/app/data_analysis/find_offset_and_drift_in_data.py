@@ -48,38 +48,42 @@ def check_trial_curve(lat, lon, alt, off, measured_curve, time_arr, r_sat_arr, v
     return trial_curve
 
 
-satellites = download_tles(constellations=CONSTELLATIONS, offline_dir=DATA_PATH)
-lon, lat, alt = LOCATIONS[LOCATION][0], LOCATIONS[LOCATION][1], LOCATIONS[LOCATION][2]
+def find_offset_and_drift_in_data():
+    satellites = download_tles(constellations=CONSTELLATIONS, offline_dir=DATA_PATH)
+    lon, lat, alt = LOCATIONS[LOCATION][0], LOCATIONS[LOCATION][1], LOCATIONS[LOCATION][2]
 
 
-with open(DATA_PATH + SAVED_DATA_FILE, "rb") as file:
-    nav_data = pickle.load(file)
-detected_curves = find_curves(nav_data)
-curve_array = np.vstack(detected_curves)
+    with open(DATA_PATH + SAVED_DATA_FILE, "rb") as file:
+        nav_data = pickle.load(file)
+    detected_curves = find_curves(nav_data)
+    curve_array = np.vstack(detected_curves)
 
-r = ITRS(x=curve_array[:, IDX.x] * unit.km, y=curve_array[:, IDX.y] * unit.km, z=curve_array[:, IDX.z] * unit.km,
-         v_x=curve_array[:, IDX.vx] * unit.km / unit.s, v_y=curve_array[:, IDX.vy] * unit.km / unit.s,
-         v_z=curve_array[:, IDX.vz] * unit.km / unit.s)
-measured_curve = np.column_stack(
-    (curve_array[:, IDX.t], curve_array[:, IDX.f] - curve_array[:, IDX.fb], curve_array[:, IDX.fb]))
-r_sat_arr = r.cartesian.without_differentials()
-v_sat_arr = r.velocity
+    r = ITRS(x=curve_array[:, IDX.x] * unit.km, y=curve_array[:, IDX.y] * unit.km, z=curve_array[:, IDX.z] * unit.km,
+             v_x=curve_array[:, IDX.vx] * unit.km / unit.s, v_y=curve_array[:, IDX.vy] * unit.km / unit.s,
+             v_z=curve_array[:, IDX.vz] * unit.km / unit.s)
+    measured_curve = np.column_stack(
+        (curve_array[:, IDX.t], curve_array[:, IDX.f] - curve_array[:, IDX.fb], curve_array[:, IDX.fb]))
+    r_sat_arr = r.cartesian.without_differentials()
+    v_sat_arr = r.velocity
 
-trial_curve = check_trial_curve(lat, lon, alt, 0, measured_curve, 0, r_sat_arr, v_sat_arr, 0, plot=True)
-diff_curve = measured_curve[:, 1] - trial_curve[:, 1]
-time = measured_curve[:, 0] - np.min(measured_curve[:, 0])
-color = curve_array[:, IDX.id] - np.min(curve_array[:, IDX.id])
+    trial_curve = check_trial_curve(lat, lon, alt, 0, measured_curve, 0, r_sat_arr, v_sat_arr, 0, plot=True)
+    diff_curve = measured_curve[:, 1] - trial_curve[:, 1]
+    time = measured_curve[:, 0] - np.min(measured_curve[:, 0])
+    color = curve_array[:, IDX.id] - np.min(curve_array[:, IDX.id])
 
-plt.figure()
-plt.scatter(time, diff_curve, c=color, label="Diff")
+    plt.figure()
+    plt.scatter(time, diff_curve, c=color, label="Diff")
 
-fit = np.polyfit(time, diff_curve, 1)
-p = np.poly1d(fit)
-print("Fit: ", fit)
+    fit = np.polyfit(time, diff_curve, 1)
+    p = np.poly1d(fit)
+    print("Fit: ", fit)
 
-ptime = np.linspace(np.min(time), np.max(time), 100)
-plt.plot(ptime, p(ptime), color="black", label="Fit")
-plt.figtext(.15, .12, f"Fit parameters ($Hz/s^n$): {fit}")
-plt.legend()
-plt.show()
+    ptime = np.linspace(np.min(time), np.max(time), 100)
+    plt.plot(ptime, p(ptime), color="black", label="Fit")
+    plt.figtext(.15, .12, f"Fit parameters ($Hz/s^n$): {fit}")
+    plt.legend()
+    plt.show()
 
+
+if __name__ == "__main__":
+    find_offset_and_drift_in_data()
