@@ -42,31 +42,32 @@ for exp_name, res in results.items():
 res_arr = np.array(list(results.values()))
 tableify(list(results.values()),
          col_dec=[3, 3, 0, 0, 3, 0, 0],
-         col_head=["ID", "Lat", "Lon", "Alt (m)", "Offset (Hz)", "Drift (Hz/s)", "Hor. error (m)", "Abs. error (m)"],
+         col_head=["ID", "Lat", "Lon", "Alt (m)", "Offset (Hz)", "Drift (Hz/s)", "2D error (m)", "3D error (m)"],
          row_head=list(results.keys()))
 
 
 # section: error and spread
 def get_pos_circle(res_arr, percentile):
-    mask = res_arr[:, 6] <= np.percentile(res_arr[:, 6], percentile)
-    lat_arr, lon_arr, dist_arr = res_arr[mask, 0], res_arr[mask, 1], res_arr[mask, 6]
-
+    lat_arr, lon_arr, dist_arr = res_arr[:, 0], res_arr[:, 1], res_arr[:, 6]
     mean_lat = lat_arr.mean()
     mean_lon = lon_arr.mean()
 
     rel_dist_arr = np.array([latlon_distance(mean_lat, lat, mean_lon, lon) for lat, lon in zip(lat_arr, lon_arr)])
+
+    mask = rel_dist_arr <= np.percentile(rel_dist_arr, percentile)
+    rel_dist_arr = rel_dist_arr[mask]
     spread = latlon_distance(mean_lat, lat_arr[rel_dist_arr.argmax()], mean_lon, lon_arr[rel_dist_arr.argmax()])
     err = latlon_distance(mean_lat, LAT_HOME, mean_lon, LON_HOME)
 
     return mean_lat, mean_lon, err, spread
 
 
-mean_lat_all, mean_lon_all, err_all, spread_all = get_pos_circle(res_arr, 100)
-mean_lat_cep, mean_lon_cep, err_cep, spread_cep = get_pos_circle(res_arr, 50)
-mean_lat_95,  mean_lon_95,  err_95,  spread_95 = get_pos_circle(res_arr, 95)
+mean_lat, mean_lon, err, spread_all = get_pos_circle(res_arr, 100)
+_, _, _, spread_cep = get_pos_circle(res_arr, 50)
+_, _, _, spread_95 = get_pos_circle(res_arr, 95)
 
-tableify([get_pos_circle(res_arr, 100), get_pos_circle(res_arr, 50), get_pos_circle(res_arr, 95)],
-         col_dec=[3, 3, 0, 0], col_head=["", "Mean lat", "Mean lon", "Error (m)", "Spread (m)"], row_head=["All", "CEP", "95%"])
+tableify([[mean_lat, mean_lon, err, spread_all], [mean_lat, mean_lon, err, spread_cep], [mean_lat, mean_lon, err, spread_95]],
+         col_dec=[3, 3, 0, 0], col_head=["Data", "Mean lat", "Mean lon", "Bias (m)", "Std. dev. (m)"], row_head=["All", "50%", "95%"])
 
 
 # section: probability
@@ -97,24 +98,7 @@ cumm_func_all = get_cumulative_distribution_fcn(res_arr[:, 6], 3500)
 cumm_func_all_spread = get_cumulative_distribution_fcn_spread(res_arr, 3500, 100)
 
 
-# cumulative function for CEP
-cumm_func_cep = get_cumulative_distribution_fcn(res_arr[:, 6], 3500, 50)
-cumm_func_cep_spread = get_cumulative_distribution_fcn_spread(res_arr, 3500, 50)
-
-# cumulative function for CEP
-cumm_func_95 = get_cumulative_distribution_fcn(res_arr[:, 6], 3500, 95)
-cumm_func_95_spread = get_cumulative_distribution_fcn_spread(res_arr, 3500, 95)
-
-
 # section: plotting
-def make_circle(center_x, center_y, radius):
-    point_count = int(radius / 1000 * 400)
-    angles = np.linspace(0, 2 * np.pi, point_count)
-    x = center_x + radius * np.cos(angles)
-    y = center_y + radius * np.sin(angles)
-    return x, y
-
-
 def make_latlon_circle(center_lat, center_lon, radius):
     point_count = int(radius / 1000 * 400)
     angles = np.linspace(0, 2 * np.pi, point_count)
@@ -124,7 +108,7 @@ def make_latlon_circle(center_lat, center_lon, radius):
 
 
 plt.figure()
-plt.figtext(.12, .92, f"Grid size is 1 km")
+plt.figtext(.55, .92, f"Grid size is 1 km")
 ll_lon = LON_HOME - m_to_deg_lon(4e3, home_lat)
 ll_lat = LAT_HOME - m_to_deg_lat(4e3, home_lat)
 ur_lon = LON_HOME + m_to_deg_lon(4e3, home_lat)
@@ -136,12 +120,10 @@ m = Basemap(llcrnrlon=ll_lon, llcrnrlat=ll_lat, urcrnrlon=ur_lon, urcrnrlat=ur_l
 m.plot(home_lon, home_lat,           "x", color="blue",   latlon=True, label="Actual position")
 m.plot(res_arr[:, 1], res_arr[:, 0], "o", color="orange", latlon=True, label="Estimated positions")
 # spread
-m.plot(mean_lon_all, mean_lat_all, marker=".", color="red",   latlon=True, label="Mean all")
-m.plot(mean_lon_cep, mean_lat_cep, marker=".", color="green", latlon=True, label="Mean CEP")
-m.plot(mean_lon_95,  mean_lat_95,  marker=".", color="blue",  latlon=True, label="Mean 95%")
-m.plot(*make_latlon_circle(mean_lat_all, mean_lon_all, spread_all), ".", ms=1, color="red",   label="_nolegend_", alpha=0.5, latlon=True)
-m.plot(*make_latlon_circle(mean_lat_cep, mean_lon_cep, spread_cep), ".", ms=1, color="green", label="_nolegend_", alpha=0.5, latlon=True)
-m.plot(*make_latlon_circle(mean_lat_95,  mean_lon_95,  spread_95),  ".", ms=1, color="blue",  label="_nolegend_", alpha=0.5, latlon=True)
+m.plot(mean_lon, mean_lat, ".", marker="x", color="red",   latlon=True, label="All")
+m.plot(*make_latlon_circle(mean_lat, mean_lon, spread_all), "-", ms=1, color="red",   label="All data", alpha=0.5, latlon=True)
+m.plot(*make_latlon_circle(mean_lat, mean_lon, spread_cep), "-", ms=1, color="green", label="Best 50%", alpha=0.5, latlon=True)
+m.plot(*make_latlon_circle(mean_lat, mean_lon, spread_95),  "-", ms=1, color="blue",  label="Best 95%", alpha=0.5, latlon=True)
 # distance around home
 m.plot(*make_latlon_circle(home_lat, home_lon, 1000), ".", ms=1, color="black", label="_nolegend_", alpha=0.25, latlon=True)
 m.plot(*make_latlon_circle(home_lat, home_lon, 2000), ".", ms=1, color="black", label="_nolegend_", alpha=0.25, latlon=True)
@@ -153,43 +135,15 @@ m.drawparallels(np.arange(ll_lat, ur_lat, m_to_deg_lat(1e3, home_lat)), labels=[
 m.drawmeridians(np.arange(ll_lon, ll_lat, m_to_deg_lon(1e3, home_lat)), labels=[0, 0, 0, 1], rotation="vertical")
 plt.legend()
 plt.tight_layout()
-plt.savefig(get_fig_filename("validation\\" + f"absolute_accuracy", idx=False), dpi=600)
+plt.savefig(get_fig_filename("validation\\" + f"exp_absolute_accuracy", idx=False), dpi=600)
 
-
-# plt.figure()
-# plt.figtext(.15, .05, f"")
-# plt.plot(deg_lon_to_m(res_arr[:, 1] - home_lon, home_lat), deg_lat_to_m(res_arr[:, 0] - home_lat, home_lat), marker=".", color="orange", label="Estimated positions")
-# plt.plot(0, 0, "x", color="blue", label="Actual position")
-# plt.plot(*make_circle(0, 0, 1000), ".", ms=1, color="black", label="_nolegend_", alpha=0.25)
-# plt.plot(*make_circle(0, 0, 2000), ".", ms=1, color="black", label="_nolegend_", alpha=0.25)
-# plt.plot(*make_circle(0, 0, 3000), ".", ms=1, color="black", label="_nolegend_", alpha=0.25)
-# plt.grid()
-# plt.axis('square')
-# plt.legend()
 
 plt.figure()
 plt.plot(cumm_func_all[:, 0], cumm_func_all[:, 1], ".-", label="To actual postion")
-plt.plot(cumm_func_all_spread[:, 0], cumm_func_all_spread[:, 1], ".-", label="To mean postion")
+plt.plot(cumm_func_all_spread[:, 0], cumm_func_all_spread[:, 1], ".-", color="red", label="To mean postion")
 plt.xlabel("Error (m)")
 plt.ylabel("Probability (-)")
 plt.legend()
-plt.savefig(get_fig_filename("validation\\" + f"absolute_accuracy_all", idx=False), dpi=600)
-
-plt.figure()
-plt.plot(cumm_func_cep[:, 0],        cumm_func_cep[:, 1], ".-", label="To actual postion")
-plt.plot(cumm_func_cep_spread[:, 0], cumm_func_cep_spread[:, 1], ".-", label="To mean postion")
-plt.xlabel("Error (m)")
-plt.ylabel("Probability (-)")
-plt.legend()
-plt.savefig(get_fig_filename("validation\\" + f"absolute_accuracy_cep", idx=False), dpi=600)
-
-plt.figure()
-plt.plot(cumm_func_95[:, 0],        cumm_func_95[:, 1], ".-", label="To actual postion")
-plt.plot(cumm_func_95_spread[:, 0], cumm_func_95_spread[:, 1], ".-", label="To mean postion")
-plt.xlabel("Error (m)")
-plt.ylabel("Probability (-)")
-plt.legend()
-plt.savefig(get_fig_filename("validation\\" + f"absolute_accuracy_95", idx=False), dpi=600)
-
+plt.savefig(get_fig_filename("validation\\" + f"exp_absolute_accuracy_dist", idx=False), dpi=600)
 
 plt.show()

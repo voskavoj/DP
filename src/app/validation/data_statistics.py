@@ -14,7 +14,7 @@ from src.navigation.data_processing import NavDataArrayIndices as IDX
 from src.config.setup import *
 
 RUN_NEW_DATA = False
-DATA_IDX = 0
+DATA_IDX = -1
 
 home_lon, home_lat, home_alt = LOCATIONS["HOME"][0], LOCATIONS["HOME"][1], LOCATIONS["HOME"][2]
 LON_HOME, LAT_HOME, ALT_HOME = LOCATIONS["HOME"][0], LOCATIONS["HOME"][1], LOCATIONS["HOME"][2]
@@ -30,6 +30,7 @@ class DataStatistics:
         self.min_fps = None
         self.mean_fps = None
         self.max_fps = None
+        self.sat_num = None
         self.received_sats = None
         self.svt_min = None
         self.svt_mean = None
@@ -37,12 +38,12 @@ class DataStatistics:
         self.tlg_min = None
         self.tlg_mean = None
         self.tlg_max = None
-        self.min_lon = None
-        self.max_lat = None
-        self.max_lon = None
         self.min_lat = None
         self.avg_lat = None
+        self.max_lon = None
+        self.min_lon = None
         self.avg_lon = None
+        self.max_lat = None
         self.extent_n = None
         self.extent_s = None
         self.extent_e = None
@@ -55,7 +56,41 @@ class DataStatistics:
 
     def print_data(self):
         for k, v in self.__dict__.items():
-            print(k, ": ", v)
+            print(k, ": ", v, "|", self.format(k))
+
+    def format(self, key):
+        try:
+            if self.__dict__[key] is None:
+                return None
+            elif key == "start_time":
+                return self.start_time.strftime("%Y-%m-%d %H:%M:%S")
+            elif key == "duration":
+                return s_to_hhmmss(self.duration)
+            elif key == "svt_min" or key == "svt_mean" or key == "svt_max":
+                return s_to_hhmmss(self.__dict__[key])
+            elif key == "tlg_min" or key == "tlg_mean" or key == "tlg_max":
+                return s_to_hhmmss(self.__dict__[key])
+            elif key == "min_fps" or key == "mean_fps" or key == "max_fps":
+                return f"{self.__dict__[key]:.0f}"
+            elif key == "min_lat" or key == "avg_lat" or key == "max_lat" or key == "min_lon" or key == "avg_lon" or key == "max_lon":
+                return f"{self.__dict__[key]:.2f}"
+            elif key == "extent_n" or key == "extent_s" or key == "extent_e" or key == "extent_w":
+                return f"{self.__dict__[key]:.0f}"
+            elif key == "mean_noise":
+                return "|".join(f"{n:.1f}" for n in self.__dict__[key])
+            elif key == "mean_conf":
+                return f"{self.__dict__[key]:.1f}"
+            else:
+                return self.__dict__[key]
+        except Exception:
+            return self.__dict__[key]
+
+
+def s_to_hhmmss(s):
+    if isinstance(s, list) or isinstance(s, tuple):
+        return [f"{int(ss // 3600):02d}:{int((ss % 3600) // 60):02d}:{int(ss % 60):02d}" for ss in s]
+    else:
+        return f"{int(s // 3600):02d}:{int((s % 3600) // 60):02d}:{int(s % 60):02d}"
 
 
 # section: ------------------------------------------------------------------------- SOLVING
@@ -78,6 +113,7 @@ def cb_solve(nav_data, satellites, default_parameters: CurveFitMethodParameters,
     # sats and fps
     sats, frames_per_sat = np.unique(nav_data[:, IDX.sat_id], return_counts=True)
     results.min_fps, results.mean_fps, results.max_fps = min_mean_max(frames_per_sat)
+    results.sat_num = len(sats)
     results.received_sats = ", ".join(str(int(s)) for s in sats)
     sat_vis_times = [nav_data[nav_data[:, IDX.sat_id] == s, IDX.t].max() - nav_data[nav_data[:, IDX.sat_id] == s, IDX.t].min() for s in sats]
     results.svt_min, results.svt_mean, results.svt_max = min_mean_max(sat_vis_times)
@@ -106,15 +142,15 @@ def cb_solve(nav_data, satellites, default_parameters: CurveFitMethodParameters,
     avg_lon /= len(curves)
 
     results.avg_lat, results.avg_lon = avg_lat, avg_lon
-    results.min_lon = min_lon
-    results.max_lat = max_lat
-    results.max_lon = max_lon
-    results.min_lat = min_lat
+    results.min_lon = round(min_lon, 2)
+    results.max_lat = round(max_lat, 2)
+    results.max_lon = round(max_lon, 2)
+    results.min_lat = round(min_lat, 2)
 
-    results.extent_n = latlon_distance(home_lat, max_lat, home_lon, home_lon)
-    results.extent_s = latlon_distance(home_lat, min_lat, home_lon, home_lon)
-    results.extent_e = latlon_distance(home_lat, home_lat, home_lon, max_lon)
-    results.extent_w = latlon_distance(home_lat, home_lat, home_lon, min_lon)
+    results.extent_n = latlon_distance(home_lat, max_lat, home_lon, home_lon) // 1000
+    results.extent_s = latlon_distance(home_lat, min_lat, home_lon, home_lon) // 1000
+    results.extent_e = latlon_distance(home_lat, home_lat, home_lon, max_lon) // 1000
+    results.extent_w = latlon_distance(home_lat, home_lat, home_lon, min_lon) // 1000
 
     # frame statistics
     with open(data_path + "decoded.txt", "r") as file:
@@ -133,7 +169,7 @@ def cb_solve(nav_data, satellites, default_parameters: CurveFitMethodParameters,
     results.cnt_ira, results.cnt_ibc = cnt_ira, cnt_ira
     results.cnt_all = len(frames)
     results.mean_noise = np.array(fr_noise).mean(axis=0)
-    results.mean_conf = np.mean(fr_conf)
+    results.mean_conf = round(np.mean(fr_conf), 1)
 
     results.print_data()
     return results
@@ -153,9 +189,9 @@ for res_name in mean_results.__dict__.keys():
     for exp in exps:
         ress.append(results[exp].__dict__[res_name])
     try:
-        min_res = np.min(ress)
-        mean_res = np.mean(ress)
-        max_res = np.max(ress)
+        min_res = np.min(ress, axis=0)
+        mean_res = np.mean(ress, axis=0)
+        max_res = np.max(ress, axis=0)
 
         min_results.__dict__[res_name] = min_res
         mean_results.__dict__[res_name] = mean_res
@@ -166,16 +202,16 @@ for res_name in mean_results.__dict__.keys():
         pass
 
 # table of results
-table_data = [r.__dict__.values() for r in results.values()]
+keys = ["name", "start_time", "duration", "length", "sat_num", "tlg_mean", "mean_noise"]
+table_data = [[r.format(k) for k in keys] for r in results.values()]
 tableify(table_data,
-         col_head=list(mean_results.__dict__.keys()),
-         row_head=list(results.keys()),
+         col_head=keys,
          col_dec=[0]*len(list(mean_results.__dict__.keys())))
 
-# table of mean result
+# table of min mean max results
 table_data = list()
 for res_name in mean_results.__dict__.keys():
-    table_data.append([min_results.__dict__[res_name], mean_results.__dict__[res_name], max_results.__dict__[res_name], ""])
+    table_data.append([min_results.format(res_name), mean_results.format(res_name), max_results.format(res_name), ""])
 
 tableify(table_data,
          row_head=list(mean_results.__dict__.keys()),

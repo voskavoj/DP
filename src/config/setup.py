@@ -2,7 +2,7 @@
 EXP_NAME = "val01"
 LOCATION = "HOME"
 START_TIME = None
-VALIDATION_DATA_SETS = ["val01", "val02", "val03", "val04", "val05"]
+VALIDATION_DATA_SETS = ["val01", "val02", "val03", "val04", "val05", "val06", "val07", "val08", "val09", "val10"]
 
 # Paths
 WORKING_DIR = "C:\\Git\\Personal\\DP\\"
@@ -25,9 +25,13 @@ class DEBUG:
     plot_analyzed_curve = False
     plot_final_curve_fit = False
 
-    dump_results = True
+    dump_results = False
 
 
 if START_TIME is None:
-    with open(DATA_PATH + "start_time.txt", "r") as file:
-        START_TIME = file.readlines()[0].strip()
+    try:
+        with open(DATA_PATH + "start_time.txt", "r") as file:
+            START_TIME = file.readlines()[0].strip()
+    except FileNotFoundError:
+        START_TIME = None
+        print("WARNING: Start time not found in experiment data folder!")

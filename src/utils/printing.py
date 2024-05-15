@@ -38,7 +38,7 @@ def tableify(data, col_dec=None, col_unit=None, col_head=None, row_head=None):
 
         print()
         for r in rows:
-            print(r.replace("%", "\%"))
+            print(r.replace("%", "\%").replace("_", "\_"))
         print()
 
     except Exception as e:

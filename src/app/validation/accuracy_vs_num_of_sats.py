@@ -13,7 +13,7 @@ from src.config.parameters import CurveFitMethodParameters
 # second: 5, no alt
 # third: 5, alt, no eststate
 RUN_NEW_DATA = False
-DATA_IDX = 0
+DATA_IDX = -1
 EXCLUDED_DATA = []
 
 home_lon, home_lat, home_alt = LOCATIONS["HOME"][0], LOCATIONS["HOME"][1], LOCATIONS["HOME"][2]
@@ -130,13 +130,13 @@ for i, exp_res in enumerate(parsed_counts):
     plt.plot(exp_res, label=i+1)
 plt.legend()
 
-for res_arr, cnt_arr, name in zip([res_arr_all, res_arr_cep, res_arr_95], [cnt_arr_all, cnt_arr_cep, cnt_arr_95], ["All", "CEP", "95%"]):
+for res_arr, cnt_arr in zip([res_arr_all], [cnt_arr_all]):
     fig, ax1 = plt.subplots()
     res_arr /= 1000
     max_arr, mean_arr, min_arr = res_arr.max(axis=0), res_arr.mean(axis=0), res_arr.min(axis=0)
     max_cnt_arr, mean_cnt_arr, min_cnt_arr = cnt_arr.max(axis=0), cnt_arr.mean(axis=0), cnt_arr.min(axis=0)
     times = np.array((list(range(1, len(mean_arr) + 1))))  # todo: actual count in case it should differ
-    eb = ax1.errorbar(times, mean_arr, yerr=[min_arr, max_arr], fmt=".-", label=name)
+    eb = ax1.errorbar(times, mean_arr, yerr=[min_arr, max_arr], fmt=".-", label="Accuracy")
     eb[-1][0].set_linestyle('--')
     eb[-1][0].set_linewidth(0.8)
     ax1.set_ylabel("Horizontal error (km)")
@@ -150,6 +150,6 @@ for res_arr, cnt_arr, name in zip([res_arr_all, res_arr_cep, res_arr_95], [cnt_a
     fig.legend()
     fig.tight_layout()
 
-    plt.savefig(get_fig_filename("validation\\" + f"accuracy_vs_num_of_sats_{name.lower()}", idx=False), dpi=600)
+    plt.savefig(get_fig_filename("validation\\" + f"accuracy_vs_num_of_sats", idx=False), dpi=600)
 
 plt.show()
