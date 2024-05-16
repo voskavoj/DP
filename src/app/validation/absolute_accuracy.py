@@ -66,6 +66,11 @@ mean_lat, mean_lon, err, spread_all = get_pos_circle(res_arr, 100)
 _, _, _, spread_cep = get_pos_circle(res_arr, 50)
 _, _, _, spread_95 = get_pos_circle(res_arr, 95)
 
+
+print(f"NS error {latlon_distance(mean_lat, home_lat, home_lon, home_lon):.0f} m, SE error {latlon_distance(home_lat, home_lat, mean_lon, home_lon):.0f} m"
+      f" (total {np.sqrt(latlon_distance(mean_lat, home_lat, home_lon, home_lon)**2 + latlon_distance(home_lat, home_lat, mean_lon, home_lon)**2):.0f} m)")
+print(f"NS group {latlon_distance(res_arr[:, 0].min(), res_arr[:, 0].max(), home_lon, home_lon):.0f} m, SE group {latlon_distance(home_lat, home_lat, res_arr[:, 1].min(), res_arr[:, 1].max()):.0f} m")
+
 tableify([[mean_lat, mean_lon, err, spread_all], [mean_lat, mean_lon, err, spread_cep], [mean_lat, mean_lon, err, spread_95]],
          col_dec=[3, 3, 0, 0], col_head=["Data", "Mean lat", "Mean lon", "Bias (m)", "Std. dev. (m)"], row_head=["All", "50%", "95%"])
 

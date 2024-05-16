@@ -12,7 +12,7 @@ from src.config.parameters import CurveFitMethodParameters
 # first: 5, alt
 # second: 5, no alt
 # third: 5, alt, no eststate
-RUN_NEW_DATA = False
+RUN_NEW_DATA = True
 DATA_IDX = -1
 EXCLUDED_DATA = []
 
@@ -120,18 +120,18 @@ res_arr_95 , cnt_arr_95  = clip_to_min_len(parsed_results, parsed_counts, 95)
 # all results, just for debug
 plt.figure()
 for i, exp_res in enumerate(parsed_results):
-    plt.plot(exp_res, label=i+1)
+    plt.plot(exp_res, label=list(results.keys())[i])
 # plt.yscale('log')
 plt.legend()
 
 # all results, just for debug
 plt.figure()
 for i, exp_res in enumerate(parsed_counts):
-    plt.plot(exp_res, label=i+1)
+    plt.plot(exp_res, label=list(results.keys())[i])
 plt.legend()
 
 for res_arr, cnt_arr in zip([res_arr_all], [cnt_arr_all]):
-    fig, ax1 = plt.subplots()
+    fig, (ax1, axB) = plt.subplots(2, figsize=(5, 6))
     res_arr /= 1000
     max_arr, mean_arr, min_arr = res_arr.max(axis=0), res_arr.mean(axis=0), res_arr.min(axis=0)
     max_cnt_arr, mean_cnt_arr, min_cnt_arr = cnt_arr.max(axis=0), cnt_arr.mean(axis=0), cnt_arr.min(axis=0)
@@ -139,17 +139,25 @@ for res_arr, cnt_arr in zip([res_arr_all], [cnt_arr_all]):
     eb = ax1.errorbar(times, mean_arr, yerr=[min_arr, max_arr], fmt=".-", label="Accuracy")
     eb[-1][0].set_linestyle('--')
     eb[-1][0].set_linewidth(0.8)
-    ax1.set_ylabel("Horizontal error (km)")
+    ax1.set_ylabel("2D error (km)")
 
     ax2 = ax1.twinx()
     eb2 = ax2.plot(times, mean_cnt_arr, ".-", color="orange", label="Mean frame count")
     ax2.set_ylabel("Frame count")
     ax2.grid(False)
 
+    eb = axB.errorbar(times, mean_arr, yerr=[min_arr, max_arr], fmt=".-", label="__nolabel__")
+    eb[-1][0].set_linestyle('--')
+    eb[-1][0].set_linewidth(0.8)
+    axB.set_xlim([3.75, ax1.get_xlim()[1]])
+    axB.set_ylim([0, 10])
+    axB.set_ylabel("2D error (km)")
+    axB.set_xlabel("Satellite count (close-up)")
+
     ax1.set_xlabel("Satellite count")
     fig.legend()
     fig.tight_layout()
 
-    plt.savefig(get_fig_filename("validation\\" + f"accuracy_vs_num_of_sats", idx=False), dpi=600)
+    plt.savefig(get_fig_filename("validation\\" + f"exp_accuracy_vs_num_of_sats", idx=False), dpi=600)
 
 plt.show()

@@ -11,10 +11,15 @@ from src.config.parameters import CurveFitMethodParameters
 # first: 5, alt
 # second: 5, no alt
 # third: 5, alt, no eststate
-RUN_NEW_DATA = True
+RUN_NEW_DATA = False
 TIME_STEP = 5  # min
 DATA_IDX = -1
-EXCLUDED_DATA = []
+EXCLUDED_DATA = ["val07",
+                 "val05",
+                 # "val10",
+                 "val04",
+                 # "val08"
+                 ]
 
 home_lon, home_lat, home_alt = LOCATIONS["HOME"][0], LOCATIONS["HOME"][1], LOCATIONS["HOME"][2]
 LON_HOME, LAT_HOME, ALT_HOME = LOCATIONS["HOME"][0], LOCATIONS["HOME"][1], LOCATIONS["HOME"][2]
@@ -65,8 +70,9 @@ if RUN_NEW_DATA or results is None:
 
 # section: data
 for excl in EXCLUDED_DATA:
-    print(f"Excluding {excl}")
-    results.pop(excl)
+    if excl in results:
+        print(f"Excluding {excl}")
+        results.pop(excl)
 
 parsed_results = dict()
 for res in results.values():
@@ -114,18 +120,18 @@ res_arr_95 , cnt_arr_95  = clip_to_min_len(parsed_results, parsed_counts, 95)
 # all results, just for debug
 plt.figure()
 for i, exp_res in enumerate(parsed_results):
-    plt.plot(exp_res, label=i+1)
+    plt.plot(exp_res, label=list(results.keys())[i])
 # plt.yscale('log')
 plt.legend()
 
 # all results, just for debug
 plt.figure()
 for i, exp_res in enumerate(parsed_counts):
-    plt.plot(exp_res, label=i+1)
+    plt.plot(exp_res, label=list(results.keys())[i])
 plt.legend()
 
 for res_arr, cnt_arr in zip([res_arr_all], [cnt_arr_all]):
-    fig, ax1 = plt.subplots()
+    fig, (ax1, axB) = plt.subplots(2, figsize=(5, 6))
     res_arr /= 1000
     max_arr, mean_arr, min_arr = res_arr.max(axis=0), res_arr.mean(axis=0), res_arr.min(axis=0)
     max_cnt_arr, mean_cnt_arr, min_cnt_arr = cnt_arr.max(axis=0), cnt_arr.mean(axis=0), cnt_arr.min(axis=0)
@@ -133,14 +139,23 @@ for res_arr, cnt_arr in zip([res_arr_all], [cnt_arr_all]):
     eb = ax1.errorbar(times, mean_arr, yerr=[min_arr, max_arr], fmt=".-", label="Accuracy")
     eb[-1][0].set_linestyle('--')
     eb[-1][0].set_linewidth(0.8)
-    ax1.set_ylabel("Horizontal error (km)")
+    ax1.set_ylabel("2D error (km)")
 
     ax2 = ax1.twinx()
     eb2 = ax2.plot(times, mean_cnt_arr, ".-", color="orange", label="Mean frame count")
     ax2.set_ylabel("Frame count")
     ax2.grid(False)
-
     ax1.set_xlabel("Time (min)")
+
+    eb = axB.errorbar(times, mean_arr, yerr=[min_arr, max_arr], fmt=".-", label="__nolabel__")
+    eb[-1][0].set_linestyle('--')
+    eb[-1][0].set_linewidth(0.8)
+    axB.set_xlim([14, ax1.get_xlim()[1]])
+    axB.set_ylim([0, 8])
+    # axB.set(xlim=[14, ax1.get_xlim()[1]], ylim=[0, 8], aspect=1)
+    axB.set_ylabel("2D error (km)")
+    axB.set_xlabel("Time (min) (close-up)")
+
     fig.legend()
     fig.tight_layout()
 

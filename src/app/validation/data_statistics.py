@@ -53,6 +53,9 @@ class DataStatistics:
         self.cnt_all = None
         self.mean_noise = None
         self.mean_conf = None
+        self.min_dopp = None
+        self.mean_dopp = None
+        self.max_dopp = None
 
     def print_data(self):
         for k, v in self.__dict__.items():
@@ -60,7 +63,9 @@ class DataStatistics:
 
     def format(self, key):
         try:
-            if self.__dict__[key] is None:
+            if key not in self.__dict__:
+                return None
+            elif self.__dict__[key] is None:
                 return None
             elif key == "start_time":
                 return self.start_time.strftime("%Y-%m-%d %H:%M:%S")
@@ -80,6 +85,8 @@ class DataStatistics:
                 return "|".join(f"{n:.1f}" for n in self.__dict__[key])
             elif key == "mean_conf":
                 return f"{self.__dict__[key]:.1f}"
+            elif key == "min_dopp" or key == "mean_dopp" or key == "max_dopp":
+                return f"{self.__dict__[key]/1000:.2f}"
             else:
                 return self.__dict__[key]
         except Exception:
@@ -170,6 +177,9 @@ def cb_solve(nav_data, satellites, default_parameters: CurveFitMethodParameters,
     results.cnt_all = len(frames)
     results.mean_noise = np.array(fr_noise).mean(axis=0)
     results.mean_conf = round(np.mean(fr_conf), 1)
+
+    dopps = nav_data[:, IDX.f] - nav_data[:, IDX.fb]
+    results.min_dopp, results.mean_dopp, results.max_dopp = min_mean_max(dopps)
 
     results.print_data()
     return results
