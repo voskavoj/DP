@@ -26,7 +26,7 @@ Assuming $c \gg v_T$ and therefore $\frac{v_T}{c} \ll 1$, a substitution using a
     \frac{v_R v_T}{c^2} \rightarrow 0: f_R &= \left( 1 + \frac{v_R - v_T}{c} \right) f_0 \nonumber \\
     \text{substituting } \Delta v = v_R - v_T: f_R &= \left( 1 + \frac{\Delta v}{c} \right) f_0 \label{e_pos_dopp_fr}
 \end{align}
-
+% Kde jste tahle odvození vzal :-) ? To bych asi jen tak z hlavy %nedal. Hlavně pokud jsou ok. (příp. citace.). Ale výsledek je %jasný. OK.
 $\Delta v$ is the relative velocity of the receiver and transmitter, alternatively labelled as range rate $\dot\rho$. By convention it is positive if the range between the transmitter and receiver decreases.
 
 The Doppler shift $f_D = f_R - f_0$ can be expressed from \autoref{e_pos_dopp_fr} as:
@@ -80,6 +80,7 @@ Thus, the Doppler shift can be expressed as
 \end{align}
 
 The user is located somewhere on an infinite cone (the \textit{isodoppler cone}) with the centre at the position of the satellite at the time of measurement, the axis in the direction of $v$ and an opening angle $2\alpha$.
+% "cone" - ne rotační hyperboloid? Možná v angličtině je to jinak než v ČJ. "Cone" jste našel v literatuře? Pokud ano, asi OK. Měl jsem vždy dojem, že jsme tomu v češtině říkali rotační hyperboloid, ne kužel. Ale možná je to opravdu kužel, ne hyperboloid, a říkal jsem nesmysly.
 
 If the measurement is carried multiple times, a \textit{Doppler curve} is be obtained - a curve of Doppler shifts in time ($t$, $f_D$). The user is located at the intersections of the respective isodoppler cones. If the user is assumed to be on the surface, an intersection with a sphere representing the surface can be considered.
 
@@ -106,6 +107,7 @@ The Doppler curve fitting method is based on measuring the frequency emitted by 
 
 \subsection{The Observation Model method}
 The second method is the most common in the reviewed research. It is based on creating an observation model and injecting Doppler measurements into an Extended Kalman Filter (EKF) to estimate the user location\cite{sop02, sop03, sop13}.
+% Super - díky za uvedení i této metody
 
 The range rate measurement of $i$\textsuperscript{th} satellite was usually modelled as
 \begin{equation}
@@ -135,7 +137,9 @@ where $\mu$ is the standard gravitational parameter. Thus, substituting the abov
     f_{D max} \approx f_R \frac{1}{c} \sqrt{\frac{\mu}{R_E + h}} \frac{R_E}{R_E + h}
 \end{equation}
 
-The maximum Doppler shift for the satellites considered in the LEO system survey in section \ref{s_sat} is in table \ref{t_pos_max_fd}.
+The calculated maximum Doppler shift for the satellites considered in the LEO system survey in section \ref{s_sat} is in table \ref{t_pos_max_fd}.
+% OK. Ty vzorce vypadají opět hezky. Odvozeno, nebo někde z literatury? Ptám se jen kvůli možnosti kontroly. Stejně jako tabulka 2.1.
+%% odvozeno a spočítáno mnou, přidal jsem popisky
 
 \begin{table}
     \centering
@@ -145,7 +149,7 @@ The maximum Doppler shift for the satellites considered in the LEO system survey
     Orbcomm    &  715  &  138  & \num{3.1} \\
     Globalstar &  1414 &  2500 & \num{48.9}
     \end{tabular}
-    \caption{Maximum Doppler shift for select LEO satellites}
+    \caption{Maximum Doppler shift for select LEO satellites (calculated)}
     \label{t_pos_max_fd}
 \end{table}
 
@@ -203,12 +207,14 @@ The samples within those times enter a Phase Lock Loop (PLL) to refine the frequ
 \caption{General process of capturing a satellite signal}
 \label{f_pos_tracking_block}
 \end{figure}
-
+% Zde, jako radioelektronik bych měl asi spoustu otázek. Ale lidi %mimo to nenapadne. Stejný obrázek 2.3 byl i v literatuře? Otázka %by byla, co tam dělá to násobení, a jestli PLL je skutečně %zavěšeno na tom signálu po kvadrátu, a zda je to skutečně PLL, %nebo i FLL. Mluvíte o těchto věcech někde dál? Pokud ne, mělo by %být zmíněno že tohle řeší už nějaký hotový SW. Ale citace %16,17,18 tam jsou, ok.
 
 
 \section{Calculating satellite position}
 \label{s_pos_tle_sgp4} 
-The Doppler method requires the knowledge of the position of the transmitting satellite, which is then used as a reference. Unless the satellite itself transmits its position (which is the case for Iridium Ring Alert messages, albeit in a low resolution), the position needs to be calculated on the user side. To do this, the satellite orbit needs to be known and a propagation model used to calculate the satellite position at a given time.
+The Doppler method requires the knowledge of the position of the transmitting satellite, which is then used as a reference. Unless the satellite itself transmits its position (which is the case for Iridium Ring Alert messages, albeit in a low resolution), the 
+% to malé rozlišení - bude někde ještě zmíněn ten rozdíl co mezi ním a TLE od Noradu je, a jak jste na něj přišel?
+position needs to be calculated on the user side. To do this, the satellite orbit needs to be known and a propagation model used to calculate the satellite position at a given time.
 
 A widely used approach utilises Two Line Element (TLE) sets, which contain orbital parameters for satellites, and the Simplified General Perturbations-4 (SGP4) model for propagation. TLEs are regularly updated by the North American Aerospace Defense Command (NORAD) and are publicly available via e.g. the CelesTrak project website\cite{des11}. An analysed example of TLE is shown in \autoref{f_pos_tle}. A TLE is valid for a given time, called an \textit{epoch}.
 
@@ -241,3 +247,5 @@ The International Terrestrial Reference System (ITRS) is a standard Cartesian EC
 
 \subsection{World Geodetic System Geodetic Datum}
 The World Geodetic System-84 (WGS84), where 84 refers to the most recent version from 1984, is an ECEF frame maintained by the U.S. National Geospatial-Intelligence Agency. The WGS84 and ITRS agree on a level of \unit{cm}\citep{pos01}{203}. The geodetic datum  (hereafter referred to as only \textit{geodetic frame}) is a latitude-longitude-altitude ($\phi, \lambda, h$ respectively) frame defined within WGS84. In this work, the estimated position is in the geodetic frame for clarity, however, for navigation calculations themselves the position is always converted to ITRS.
+
+% Opět, výborně.

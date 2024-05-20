@@ -1,31 +1,271 @@
 \chapter{Experimental demonstration of SoP positioning}
 \label{s_exp}
+This chapter describes the evaluation of the navigation system, the data used in testing and the navigation system performance. First, the evaluation data are discussed, as they provide a useful insight into the radio environment of Iridium signals. Second, evaluation methods are explained and results presented. Then, the navigation system is compared to the existing SoP systems. Finally, the details of the system performance are discussed and some explanations offered.
 
-datasets
-
-general data analysis
-    sats
-    freqs
-    sat locations
-    elev angles
-    skyplots
-    tracks
-    ...
-
-iri pos vs sgp4 pos§
+\section{Navigation data}
+Ten data sets were collected for the purpose of navigation system testing and validation (\textit{validation} data, prefix \texttt{val}), in addition to data which were used during development (\textit{experimental} data, prefix \texttt{exp}).
 
 
-final iri map ? (separate for datasets)
-table of parameters
+\subsection{Data parameters}
+Select parameters of each data set are in \autoref{t_exp_data_overview}. These include the time of the start of the collection (UTC), duration and length (in data points, i.e. processed IRA frames), the number of satellites whose transmitted frames are present in the data set, mean age of the TLEs, and mean signal parameters - the signal level, the level of the ambient noise, and Signal to Noise Ratio (SNR). 
 
-perfrormance
-    precision
-    accuracy
-    how long data vs. prec
-    noise analysis
-    max distance to  initial point
+Detailed parameters of the validation data are in \autoref{t_exp_data_param}. Those are presented as minimum, mean, and maximum values across all data sets. In addition to the parameters mentioned above, the table includes the number of received frames per satellite in the data set, visibility time of satellites, the latitude and longitude of the satellite at the time of frame reception, the extent of satellite coverage, which refers to the distance to the furthest satellite in a given geographical direction (North, South, East, West), the count of some frame types in the data sets, the confidence of the demodulator in the demodulated bits, and the Doppler shift received.
+
+Of particular importance is the TLE age, as the errors in predicted satellite position can reach several kilometres when the TLE set is one day old (see \autoref{s_pos_tle_sgp4}). In the validation data, the mean TLE age is \qty{16}{hours} and ages up to \qty{40}{hours} were observed. This also demonstrates that the TLE publishing is not regular.
+
+The mean satellite visibility time is around \qty{7}{min}, which corresponds to the theoretical visibility time for Iridium from \autoref{t_sat_general_summary}. The maximum visibility time of over an hour is due to one satellite being captured on multiple passes during one measurement.
+
+Interestingly, the maximum Doppler shift of \qty{37.7}{kHz} is larger than the maximum of \qty{36}{kHz} from \autoref{t_pos_max_fd}. This suggest that a limited reception from beyond the horizon is possible. The mean Doppler shift is positive, which suggests the mean direction of the captured frames is biased to the south, as most of the Iridium constellation orbits (from Earth-based observer perspective) from the south to the north. This is easily explained by the measurement site geographic layout (there is a tree and then a hill right to the north).
 
 
-\section{Results}
+\subsection{Data collection}
+The validation data were all collected during the first half of May 2024, in four batches on May 5\sc{th}, 6\sc{th}, 13\sc{th} and 14\sc{th}, using the measurement setup described in \autoref{s_des}. The desired duration of the collection was \qty{1.5}{hours}, but this was not always possible due to the weather, as the measurement setup is not rainproof. Generally, the validation data were collected from the afternoon to late evening\footnote{Note that the times in \autoref{t_exp_data_overview} are in UTC and local time during measurement is CEST, so 2 hours ahead.}, under clear to thickly clouded sky.
 
-\section{Comparison to existing methods}
+Each data set was trimmed to remove the frequency variations caused by temperature fluctuations in the SDR after startup. The NORAD IDs of the satellites captured within the data were estimated and used to construct the NORAD ID to Iridium ID mapping table (see \autoref{t_exp_tle_iri_table} for the version valid for the validation data). The data were then processed by the navigation system to produce user position estimates. The parameters of the navigation system, mentioned throughout \autoref{s_des}, are summarised in \autoref{t_exp_final_parameters} along with the values used in the validation data processing.
+
+
+
+\section{Navigation system performance}
+The main parameters of the performance of the navigation system are
+\begin{enumerate}
+    \item Accuracy or Bias, i.e. the distance from the estimated user position to the actual user position. Both 2D (horizontal) and 3D (accounting for altitude) accuracy is presented, but in further analysis (e.g. accuracy as a function of measurement time), only horizontal accuracy is considered.
+    \item Precision or Standard Deviation, i.e. the deviation of the estimated user position from the mean estimate in the horizontal plane only. Three metrics were considered - all of the data, best \qty{95}{\percent} and best \qty{50}{\percent} of the data.
+    \item Time To Fix (TTF), i.e. the measurement time required to achieve an estimate. As the system is capable of estimating user position from very few frames, but such estimation have enormous errors, the TTF is defined as the time at which the estimated position accuracy begins to approach the eventual accuracy from the whole data set.
+    \item Number of satellites required to produce an estimate. Same concerns apply here as for the TTF.
+\end{enumerate}
+
+The user location estimate produced by the navigation system for each data set, along with the 2D and 3D errors, is in \autoref{t_exp_data_results}.
+
+
+\subsection{Accuracy and precision}
+The accuracy of the navigation system (see \autoref{t_exp_accuracy}) was calculated from the mean of all the position estimates, and it is \qty{1669}{m}. The precision of all data is \qty{1611}{m}, of the best \qty{50}{\percent} it is \qty{572}{m}, and of the best \qty{95}{\percent} it is \qty{1467}{m}. The estimates are visualised in \autoref{f_exp_absolute_accuracy}.  The corresponding probability distribution function is in \autoref{f_exp_absolute_accuracy_dist}, where the blue line represents the 2D error relative to the actual position, and the red line represents the 2D error relative to the mean estimate.
+
+All of the estimates are to the south of the actual position - in fact, the mean error in the E-W direction is \qty{144}{m} eastwards (as opposed to the N-S directional error of \qty{1662}{m} southwards). Furthermore, the grouping of the estimates around the mean is more tight in the N-S direction than in the E-W direction (\qty{2090}{m} and \qty{2836}{m}, respectively).
+
+\subsection{Accuracy and measurement time}
+The accuracy of the navigation system as a function of measurement time is shown in \autoref{f_exp_accuracy_vs_meas_time}. It was calculated by splitting the validation data into 5-minute chunks and solving the user position using the cumulative data. The blue curve is the mean across the validation data, with error bars representing the minimum and maximum values in the data set. The datasets shorter than one hour were excluded. The orange line is the frame count in time (mean across validation data). The relationship between measurement time and frame count is linear. Based on \autoref{f_exp_accuracy_vs_meas_time}, the time to fix of the navigation system can be said to be \qtyrange{25}{30}{minutes}.
+
+\subsection{Accuracy and number of satellites}
+The accuracy of the navigation system as a function of received satellites is shown in \autoref{f_exp_accuracy_vs_num_of_sats}. Similarly to the measurement time function, it was calculated by splitting the validation data into chunks by satellite, in the descending order of received frames, and solving the user position using the cumulative data. The plot is laid out similarly to  \autoref{f_exp_accuracy_vs_meas_time}. The relationship between the number of received satellites time and frame count is not linear, however, which is due to the sorting of the chunks by size. Based on \autoref{f_exp_accuracy_vs_num_of_sats}, it can be said the that the system can reliably function with Doppler curves from as few as two satellites.
+
+
+
+\section{Discussion of the results}
+As seen in \autoref{f_exp_absolute_accuracy}, the distribution of the user position estimates is significantly biased south and slightly west. In fact, the bias roughly follows the direction of the satellite track (see e.g. \autoref{f_des_exp05_sats_extent}). This is a systematic error of the method, the cause of which is not known to the author. 
+
+It may arise due to incorrect timing, as during development, it was shown that an incorrectly set time of start of recording would move the estimate in the direction of the satellite tracks, by approximately \qty{+5}{km} for each additional second. Another explanation might be incorrectly estimated frequency offset, or combination of both factors. It is important to note that signal flight time is not compensated, which may account for some of the discrepancy.
+
+As mentioned previously, the distribution of the user position estimates is more tight in the N-S direction (approx. parallel to the satellite tracks) than in the E-W direction (approx. perpendicular to the satellite tracks), which is inconsistent with the reviewed literature (e.g. \cite{sop10, sop12}), where the distribution was significantly broader in the direction perpendicular to the satellite track. This may hint at a possible advantage of the curve fitting method, however, the results presented here are neither numerous nor distinctly distributed enough to prove this.
+
+In both the measurement time and satellite number accuracy functions, the accuracy generally improves with measurement time or satellite number, respectively. However, the accuracy can also decrease with a step in meas. time or the number of satellites. This may be due to the added data being of lower quality (e.g. in \texttt{val03} there is a gap caused by a drop in communication), or by the added data having a different drift, which the linear estimator cannot compensate.
+
+Comparison of the measurement time and satellite number accuracy functions reveals the system works much better over a small set of complete Doppler curves than over longer, but incomplete data. This is not surprising, as the method chosen was designed to work over curves rather than data points. Theoretical minimum TTF is therefore around \qty{10}{minutes}, as this is the time required for two consecutive satellites to pass over the user (based on the mean satellite visibility time).
+
+The overall accuracy of the system is lowered by several factors. Firstly, the the satellite positions and velocities were calculated by SGP4 propagation from TLE sets, which can have substantial errors. However, this cannot be avoided unless a dedicated satellite tracking system is developed. It seems that the errors in the TLE-SGP4 positions are somewhat random, as the estimates with old TLE sets are more accurate than the satellite position estimates, as suggested by the analysis in \autoref{s_pos_tle_sgp4}.
+
+Secondly, ionospheric and tropospheric delays were neglected, as was the time of flight of the signal. Furthermore, the satellite clock was assumed to be perfectly accurate, which is likely not the case.
+
+Most important source of inaccuracy is thought to be the SDR frequency offset and drift. This can be somewhat compensated e.g. by introducing a temperature-coupled compensator, or by better estimation of drift by the navigation system, as the linear compensation proved somewhat insufficient.
+
+
+
+\section{Comparison to existing SoP positioning systems}
+To compare the navigation system (NS) against the existing SoP positioning systems (reviewed in \autoref{s_sop}), the two model SoP systems from \autoref{s_sop_comparison} are used: SoP A and SoP B. The SoP A has an accuracy of \qty{200}{m} and time to fix of \qty{10}{min}, whereas the SoP B has an accuracy of \qty{700}{m} and TTF of \qty{2}{min} (see \autoref{t_sop_comparison}). The NS has an accuracy of \qty{1669}{m} and TTF of \qty{30}{min}. Precision or accuracy as a function of number of satellites is not known for the SoP positioning systems from the literature and therefore cannot be compared.
+
+The navigation system developed in this work performs worse than the SoP systems from the literature, both in terms of accuracy and time to fix. This is partially due to the existing system generally using much more complex error estimation and more accurate frequency measurements. Furthermore, unlike the existing systems, the NS is a full-stack system capable of performing all the required tasks, which introduces many more avenues for errors, such as satellite or channel misidentification, and makes the identification and correction of these errors more difficult.
+
+
+% Ke grafům 6.1 až 6.3 se vyjdářím asi až bude text
+
+% FIGURES NAD TABLES FROM HERE ON
+% final TLE:IRI table
+\begin{table}
+    \centering
+    \begin{tabular}{llll}
+100: 73  & 120: 38  & 139: 57  & 155: 25 \\
+102: 112 & 121: 42  & 140: 39  & 156: 46 \\
+103: 103 & 122: 44  & 141: 51  & 157: 6  \\
+104: 110 & 123: 48  & 142: 82  & 158: 18 \\
+106: 114 & 125: 69  & 143: 43  & 159: 49 \\
+107: 115 & 126: 71  & 144: 74  & 160: 90 \\
+108: 2   & 128: 78  & 145: 5   & 163: 3  \\
+109: 4   & 129: 79  & 146: 107 & 164: 13 \\
+110: 9   & 130: 85  & 147: 7   & 165: 23 \\
+111: 16  & 131: 87  & 148: 77  & 166: 96 \\
+112: 17  & 132: 88  & 149: 30  & 167: 67 \\
+113: 24  & 133: 89  & 150: 40  & 168: 68 \\
+114: 26  & 134: 92  & 151: 111 & 171: 81 \\
+116: 28  & 135: 93  & 152: 22  & 172: 72 \\
+117: 29  & 136: 99  & 153: 8   & 173: 65 \\
+118: 33  & 137: 104 & 154: 94  & 180: 50 \\
+119: 36  & 138: 109 &          &         \\
+    \end{tabular}
+    \caption[Iridium NORAD ID to IRA ID mapping table]{Iridium NORAD ID to IRA ID mapping table (X:Y, meaning Iridium X is \texttt{sat-id} Y in IRA frames), valid for the measured data}
+    \label{t_exp_tle_iri_table}
+\end{table}
+
+
+% final parameters
+\begin{table}
+    \centering
+    \begin{tabular}{l|llll}
+Step size & Initial     & Final & Value limit        &                 \\ \hline
+Latitude  & \num{100e3} & 1     &                    & m               \\
+Longitude & \num{100e3} & 1     &                    & m               \\
+Altitude  & 10,         & 1     & \numrange{0}{3000} & m               \\
+Offset    & 3000        & 1     &                    & Hz              \\
+Drift     & 0.1         & 0.001 &                    & \unit{Hz\per\s} \\ 
+\hline \hline
+\param{min-curve-length} & 10 frames & & & \\
+\param{max-time-gap}     & 60 s      & & & \\
+\param{iteration-limit}  & 500       & & & \\
+\end{tabular}
+    \caption{Parameters of the navigation systems}
+    \label{t_exp_final_parameters}
+\end{table}
+
+% data overview
+\begin{table}
+    \centering
+    \begin{tabular}{lp{0.75in}lllll}
+ID    & Start time          & Duration & Length & Sat. & TLE age   & Signal param.\sc{*}       \\\hline
+val01 & 2024-05-05 15:11:42 & 01:06:35 & 1766   & 15     & 21:04:31  & -22.3|-83.5|28.9 \\
+val02 & 2024-05-05 17:55:00 & 01:48:49 & 3301   & 18     & 27:36:32  & -22.2|-83.2|28.8 \\
+val03 & 2024-05-05 19:45:47 & 01:21:15 & 1474   & 8      & 26:12:40  & -21.8|-82.4|28.5 \\
+val04 & 2024-05-06 15:20:49 & 00:40:58 & 1017   & 10     & 02:21:15  & -22.5|-82.8|28.3 \\
+val05 & 2024-05-06 18:30:19 & 00:55:05 & 1955   & 10     & 05:45:37  & -23.5|-84.6|28.9 \\
+val06 & 2024-05-13 12:22:27 & 01:06:39 & 4141   & 18     & 14:11:58  & -25.0|-86.3|29.1 \\
+val07 & 2024-05-13 14:45:22 & 01:06:37 & 2404   & 15     & 15:43:39  & -24.4|-85.7|29.0 \\
+val08 & 2024-05-13 16:58:01 & 00:39:51 & 2958   & 6      & 18:59:35  & -25.8|-86.7|28.7 \\
+val09 & 2024-05-13 18:49:33 & 00:58:20 & 2005   & 14     & 20:35:00  & -24.0|-85.2|29.0 \\
+val10 & 2024-05-14 12:43:10 & 01:23:19 & 4420   & 13     & 16:50:59  & -24.3|-85.7|29.2 \\
+\multicolumn{7}{l}{\sc{*}Expressed as Signal level (dB) | Noise level (dB) | SNR (dB)}
+    \end{tabular}
+    \caption{Captured data overview}
+    \label{t_exp_data_overview}
+\end{table}
+
+
+% mean data
+\begin{table}
+    \centering
+    \begin{tabular}{p{1in}l|llll}
+                                            &        & Min     & Mean    & Max     & Unit\\ \hline \hline
+Duration                                    &        & 00:39:51 & 01:06:45 & 01:48:49 & hh:mm:ss     \\ 
+Data length                                 &        & 1017 & 2544 & 4420 & frames     \\  \hline
+\multirow{3}{1in}{Frames per sat.}              &  min   & 7 & 27 & 120 &      \\ 
+                                            &  mean  & 102 & 215 & 493 &      \\ 
+                                            &  max   & 245 & 481 & 903 &      \\  \hline
+Detected sat.                         &        & 6 & 13 & 18 &      \\  \hline
+\multirow{3}{1in}{Satellite visibility  time}   &  min   & 00:00:51 & 00:01:49 & 00:03:39 &      \\ 
+                                            &  mean  & 00:05:13 & 00:07:43 & 00:17:42 &      \\ 
+                                            &  max   & 00:08:57 & 00:19:21 & 01:46:34 &      \\  \hline
+\multirow{3}{1in}{TLE age}                      &  min   & 01:00:14 & 10:07:32 & 14:46:07 &      \\ 
+                                            &  mean  & 02:21:15 & 16:56:11 & 27:36:32 &      \\ 
+                                            &  max   & 03:22:10 & 24:23:58 & 40:09:30 &      \\  \hline
+\multirow{3}{1in}{Satellite latitude}           &  min   & 28.84 & 29.20 & 30.31 &      \\ 
+                                            &  mean  & 46.72 & 49.21 & 52.53 &      \\ 
+                                            &  max   & 17.38 & 29.22 & 33.00 &      \\  \hline
+\multirow{3}{1in}{Satellite longitude}      &  min   & -20.33 & -12.76 & -4.16 &      \\ 
+                                            &  mean  & 6.64 & 10.19 & 13.32 &      \\ 
+                                            &  max   & 63.80 & 64.48 & 66.72 &      \\  \hline
+\multirow{4}{1in}{Extent of satellite coverage} &  N     & 1471 & 1547 & 1796 & km     \\ 
+                                            &  S     & 2252 & 2375 & 2414 & km     \\ 
+                                            &  E     & 250  & 1086 & 1352  & km     \\ 
+                                            &  W     & 1271 & 1873 & 2398 & km     \\  \hline
+\multirow{3}{1in}{Frame count}                  &  IRA   & 1018 & 2599 & 4443 &     frames \\ 
+                                            &  IBC   & 1018 & 2599 & 4443 &     frames \\ 
+                                            &  All   & 43013 & 84489 & 159055 & frames     \\  \hline
+Demodulator confidence                      &  mean  & 96.7 & 97.0 & 97.3 &  \%    \\ \hline
+\multirow{3}{1in}{Doppler shift}            &  min   & -35.15 & -32.44 & -29.52 & kHz \\
+                                            &  mean  & -3.54 & 3.83 & 9.08 &      kHz \\
+                                            &  max   & 34.10 & 36.55 & 39.73 &    kHz \\
+    \end{tabular}
+    \caption{Data parameters (minimum, mean, maximum values)}
+    \label{t_exp_data_param}
+\end{table}
+
+
+% results
+\begin{table}
+    \centering
+    \begin{tabular}{l|lllll|ll}
+ID & Lat. & Lon. & Alt & Offset  & Drift & 2D err. & 3D err.\\ 
+ & & & (m) & (Hz) & (\unit{Hz \per\s}) & (m) & (m) \\ \hline
+val01 & 50.571 & 13.839 & 222  & 2004 & 0.131 & 2124 & 2124\\
+val02 & 50.581 & 13.846 & 300  & 2140 & -0.173 & 1000 & 1004\\
+val03 & 50.580 & 13.843 & 0    & 990 & -0.131 & 1063 & 1083\\
+val04 & 50.580 & 13.839 & 0    & 774 & 0.256 & 1155 & 1173\\
+val05 & 50.568 & 13.859 & 1060 & 908 & -0.085 & 2674 & 2807\\
+val06 & 50.578 & 13.835 & 608  & 5004 & 0.127 & 1395 & 1452\\
+val07 & 50.580 & 13.839 & 928  & 5412 & 0.013 & 1137 & 1347\\
+val08 & 50.577 & 13.819 & 212  & 4941 & -0.217 & 2237 & 2237\\
+val09 & 50.562 & 13.837 & 724  & 4105 & -0.311 & 3102 & 3145\\
+val10 & 50.571 & 13.858 & 692  & 4421 & 0.022 & 2367 & 2417\\
+    \end{tabular}
+    \caption{Navigation system estimates}
+    \label{t_exp_data_results}
+\end{table}
+% H. err. je horizontální? Pak Abs. error je "3D" - to je asi zavadenejší značení.
+%% opravil jsem
+
+
+\begin{table}
+    \centering
+    \begin{tabular}{l|llll}
+
+Data & Mean lat & Mean lon & Bias (m) & Std. dev. (m)\\ \hline
+All  & & &                           & 1611 \\
+50\% & 50.575  & 13.842   & 1669     & 572  \\
+95\% & & &                           & 1467 \\
+    \end{tabular}
+    \caption{Accuracy and precision}
+    \label{t_exp_accuracy}
+\end{table}
+%  % Jen ne Spread! Je to std. deviation? A Error je "bias"?
+% Asi pozor na terminologii. Vtextu to ale určitě vysvětlíte :-).
+%% opravil jsem
+
+
+% absolute accuracy
+\begin{figure}
+    \centering
+    \includegraphics[width=5in]{img/exp_absolute_accuracy.png}
+    \caption{Estimated user positions from the validation data}
+    \label{f_exp_absolute_accuracy}
+\end{figure}
+
+
+% accuracy dist
+\begin{figure}
+    \centering
+    \includegraphics[width=5in]{img/exp_absolute_accuracy_dist.png}
+    \caption{Accuracy and precision cumulative distribution function}
+    \label{f_exp_absolute_accuracy_dist}
+\end{figure}
+% Asi nechápu co je modrá, proč a co se tím rozlišuje. Ale snad text napoví více.
+%% modrá je vůči skutečné poloze, oranžová je vůči mean poloze
+
+
+% accuracy vs time
+\begin{figure}
+    \centering
+    \includegraphics[width=5in]{img/exp_accuracy_vs_meas_time.png}
+    \caption{Accuracy as a function of measurement time}
+    \label{f_exp_accuracy_vs_meas_time}
+\end{figure}
+% Hezké. Tak k tomu se budu těšit na text, jak to zhodnotíte. 
+%% :)
+
+
+% accuracy vs sats
+\begin{figure}
+    \centering
+    \includegraphics[width=5in]{img/exp_accuracy_vs_num_of_sats.png}
+    \caption{Accuracy as a function of number of received satellites}
+    \label{f_exp_accuracy_vs_num_of_sats}
+\end{figure}
+% Super grafy a tabulky. Budu se těšit na text k tomu.
+%% :)
+
+

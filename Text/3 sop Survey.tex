@@ -11,6 +11,7 @@ This section briefly discusses two dedicated positioning systems, the Transit an
 
 \subsection{Transit}
 The Navy Navigation Satellite System, commonly referred to as Transit or NAVSAT, was the first operational satellite navigation system. The system was used to provide accurate position updates for the INS equipment aboard Polaris nuclear ballistic missile submarines. Later, civilian use cases such as fishing boat navigation emerged. The system was operational from 1964. The system used the Doppler method for positioning, the details of which are described in \autoref{s_pos_curve_fit_method}. The transmission frequencies were \qtylist{150;400}{MHz} (two to allow for compensation of ionospheric refraction) and the system also provided a data message used for clock synchronisation. The performance of the system exceeded that of all of the early large radio systems - the RMSE of a position fix of a static naval user was \qtyrange{40}{100}{m} and the time to fix was \qtyrange{10}{16}{min}, but could be as low as \qty{2}{min} with lower accuracy\cite{sat16}.
+% Neměl byste, prosím, ten zdroj 14] někde stažený/online? Celkem rád bych jej získal :-) 
 
 \subsection{Argos}
 Argos is a global satellite-based location and data collection system dedicated to studying and protecting Earth environment, operated through a multinational research agency collaboration. It allows any mobile object, usually a tracked animal, equipped with a compatible transmitter terminal to be located across the world\cite{sat17}. Unlike all other systems discussed, the actual position determination is done at the level of the satellite, which receives a signal (which may also contain sensor data) from a terminal and calculates its position.
@@ -44,7 +45,7 @@ In \cite{sop03}, two LEO constellations (Iridium Next and Orbcomm) are used to d
 The research outlined above is summarised in table \ref{t_sop_survey_summary}. Most research focused on using Iridium Next satellites as SoP source, followed by Orbcomm. The accuracy of position determination was mostly in the order of \qtyrange{e2}{e3}{\m} and improved significantly both with measurement time and with the number of measured satellites. In one case the performance was shown to exceed the one of existing GNSS systems. Furthermore, the surveyed research demonstrated the possibility of using SoP positioning both in static and dynamic applications. Notably, all of the surveyed experiments used Kalman filtering for fusion of multiple navigation system data or error estimation, albeit the actual implementation varied greatly.
 
 \begin{table}
-\caption{Summary of selected existing SoP positioning systems (* denotes a simulated result)}
+\caption[Summary of selected existing SoP positioning systems]{Summary of selected existing SoP positioning systems (* denotes a simulated result)}
 \label{t_sop_survey_summary}
 \hspace*{-2cm}
 \centering
@@ -64,6 +65,7 @@ Iridium Next, Orbcomm  & MSG, Ring Alert                    & static     & \qtyr
 
 
 \section{Comparison to dedicated positioning systems}
+\label{s_sop_comparison}
 To compare the SoP positioning systems, a representative system needs to be first created. The considered parameters are the system positioning accuracy and the measurement time required to achieve a position fix (time to fix).
 
 There are too few systems to use standard statistical methods, and the parameters of the systems are too spread apart to be represented by just one system. Furthermore, the systems with better accuracy generally take much longer to acquire a fix. Therefore, two systems were considered for comparison - "SoP A", which represents a more accurate albeit slower system, and "SoP B", which represents the opposite. The SoP A has an accuracy of \qty{200}{m} and time to fix of \qty{600}{s}, whereas the SoP B parameters are \qty{700}{m} and \qty{120}{s}, respectively.
@@ -72,7 +74,7 @@ The parameters of the different GNSS systems are quite similar at the level of S
 
 Additionally, the Transit system (\qty{70}{m}, \qty{13}{min}) will be considered (see \autoref{s_sop_dopp_systems}). The Argos system will not be considered, as the parameters vary greatly and its operation is different.
 
-The systems are summarised in \autoref{t_sop_comparison}. Clearly, GPS performs best in terms of accuracy. Interestingly though, the time of fix of the faster SoP systems is similar to that of cold start GPS. Compared to Transit, the SoP systems are faster, and the difference in accuracy is much less, albeit still not in favour of the SoP systems. 
+The systems are summarised in \autoref{t_sop_comparison}. Clearly, GPS performs best in terms of accuracy. Interestingly though, the time of fix of the faster SoP system (SoP B) is similar to that of cold start GPS. Compared to Transit, the SoP systems are faster, and the difference in accuracy is much less, albeit still not in favour of the SoP systems. 
 
 The findings of this comparison are hardly surprising, as even the Doppler method requires time synchronisation, which is not provided by SoP signals, and neither are precise ephemerides to increase the accuracy of satellite orbit determination or any other navigation aids. Furthermore, the SoP systems are based on systems which were never intended for precision navigation, such as the TLEs, or indeed the communication satellites themselves - the clock accuracy and therefore the transmission frequency is not assured on a navigation level.
 
@@ -93,3 +95,5 @@ The "SoP A" and "SoP B" systems provide a useful benchmark for this work.
     \label{t_sop_comparison}
 \end{table}
 
+% Tak s tou volbou metriky na srovnání jste se vyrovnal skvěle!
+% Jen ta informace o konvergenci RTK měření u GPS  - 30 minut. To už je trochu starší údaj. Dnes je to i do minuty. Ale klidně tam dejte "up to", nebo že historicky to je i až 30 minut.

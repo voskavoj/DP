@@ -5,7 +5,7 @@ This chapter describes current LEO satellite constellations which are readily us
 Parameters of the systems are summarised in table \ref{t_sat_general_summary}.
 
 \begin{table}
-\caption{Summary of \emph{approximate} parameters of LEO satellite systems: number of active satellites, number of orbital planes and inclinations, altitudes, visibility for one satellite, frequency ranges, signal strengths at ground level and modulation used}
+\caption[Summary of approximate parameters of LEO satellite systems]{Summary of \emph{approximate} parameters of LEO satellite systems: number of active satellites, number of orbital planes and inclinations, altitudes, visibility for one satellite, frequency ranges, signal strengths at ground level and modulation used}
 \label{t_sat_general_summary}
 \centering
 \begin{tabular}{l|llll}
@@ -33,6 +33,7 @@ The constellation consists of 66\footnote{Satellites 102-114, 116-123, 125-160, 
 Communication is carried over Ka-band for satellite-satellite links and satellite-gateway links, and over L-band (\qtyrange{1616}{1626.5}{\mega\hertz}) for satellite-user links. Each satellite provides 48 individual spot beams, sharing 240 traffic channels with a frequency re-use pattern\cite{sat07}. At ground level with an Iridium antenna, the signal strength can be expected to be \qtyrange{-90}{-110}{dBm}\cite{sop01}.
 
 The Iridium NEXT onboard clocks have a stability better than \num{10e-9} and a drift less than \qty{3}{\hertz\per\s}, which is sufficient for time transfers with accuracy in the order of \qty{e0}{\micro\s}\cite{sop11}.
+% Opravdu Iridium má drift až 3 Hz/s ? To je dost. Kolik že to vycházelo nám u přijímače?
 
 \subsection{Iridium signals}
 \label{s_sat_iridium_signals}
@@ -137,8 +138,10 @@ Iridium NEXT, Orbcommm, Globalstar and Starlink were discussed in this chapter, 
 Iridium NEXT constellation has the most satellites, while Globalstar has the most simultaneously visible satellites. At least one Iridium NEXT and Globalstar satellite is always visible, while for Orbcomm this is not the case. As many as 6, 6, and 13 Iridium, Orbcomm and Globalstar satellites respectively are visible simultaneously. On average, 2.2, 1.6, and 5.8 respectively are visible simultaneously. These values are summarised in \autoref{t_sat_simul_vis} and visualised in \autoref{f_sat_simul_vis}. Elevation angles for the visible satellites of one constellation (Iridium NEXT) are in \autoref{f_sat_elev_iri}.
 
 The visibility was simulated relative to the location of CUT FEE (\ang{50;6;11}N, \ang{14;23;32}E, \qty{225}{m}) over 36 hours starting on May 1\textsuperscript{nd} 2024 00:00 UTC. The plots are 2-hour excerpts from the middle of the time window.
+% CTU, ne CUT :-)
 
 The signal power at the receiver location for Iridium and Orbcomm is \qtylist{-100;-118}{dBm} respectively, compared to the power of GPS signal of \qty{-128}{dBm}\citep{pos04}{11} (difference of 63x, 10x respectively), which clearly illustrates the advantage of signal strength the SoP positioning systems enjoy over GNSS.
+% 28 dB je 630x, ne 63x
 
 \begin{table}
     \centering
@@ -165,3 +168,5 @@ Max & 6 & 6 & 13 \\
     \caption{Elevation angles of Iridium satellites during during 2 hours of a day}
     \label{f_sat_elev_iri}
 \end{figure}
+
+% OK. Super.
