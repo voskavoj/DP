@@ -41,8 +41,9 @@ The radio used in the navigation system is the ADALM-PLUTO (in short PlutoSDR) s
 
 \subsubsection{Frequency offset and drift}
 \label{s_des_offset_drift}
-The synthesizer blocks that generate all data clocks, sample clocks, and local oscillators inside the PlutoSDR transceiver are supplied by a reference clock, which is external to the transceiver, but it is integrated in PlutoSDR and connected to pin \texttt{XTALN} of the transceiver (see fig. \ref{f_des_transciever_diag})\cite{des07}. Due to frequency conversion, any error in the frequency of the reference clock will be multiplied in actual measurements. Given the reference clock nominal frequency of \qty{40}{Mhz} is approximately 40 times lower than the measured band (\qty{\approx1600}{Mhz}), \qty{1}{Hz} offset in reference clock frequency will appear as \qty{-40}{Hz} shift in measured frequency.
+The synthesizer blocks that generate all data clocks, sample clocks, and local oscillators inside the PlutoSDR transceiver are supplied by a reference clock, which is external to the transceiver, but it is integrated in PlutoSDR and connected to pin \texttt{XTALN} of the transceiver (see fig. \ref{f_des_transciever_diag})\cite{des07}. Due to frequency conversion, any error in the frequency of the reference clock will be multiplied in actual measurements. Given the reference clock nominal frequency of \qty{40}{MHz} is approximately 40 times lower than the measured band (\qty{\approx1600}{MHz}), \qty{1}{Hz} offset in reference clock frequency will appear as \qty{-40}{Hz} shift in measured frequency.
 % pozor na "Mhz"! Má být "MHz". Je to tak, že?! Neplatí v AJ jiná pravidla?! Kupodivu, setkávám se s tím totiž stále častěji a častěji.
+%% je to chyba, prošel jsem na to celou práci
 
 \begin{figure}
     \centering
@@ -57,15 +58,17 @@ An experiment was carried out, in which the PlutoSDR reference clock frequency w
 
 As a result of this experiment, the PlutoSDR was covered in polystyrene case when measurements were taken, to somewhat stabilise its temperature. Additionally, the SDR was calibrated to account for some of the discrepancy in reference clock frequency, by setting the device to assume the reference clock frequency is \qty{39999571}{Hz}.
 % Mimochodem - projevilo se to nějak pozitivně v měřeních? :-)
+%% ano, dřív byl offset kolem 20 kHz, teď 3-5 kHz
 
 This experiment, as well as the satellite signal measurements shows the navigation system needs to account for frequency offset (henceforth referred to as just \textit{offset}) and the change of this offset (henceforth referred to as \textit{drift}) in its calculations. Without precise external frequency source, such as atomic clock (which is unfeasible) or a GPS-synchronised oscillator (which introduces a reliance on GNSS), precise measurements of absolute frequency are not possible. Using a better SDR with more precise or better temperature-compensated oscillator might help, but any system needs to handle unreliable frequency measurements by itself.
 
 \subsection{Measurement setup}
 For successful signal capture, the antenna needs to have a wide and mostly unobstructed field of view. Furthermore, the radio should be appropriately protected from rapid changes in environment temperature (such as wind), and adequate power supply must be provided to the radio.
 
-An example of the measurement setup used in this work is photographed in figure \ref{f_des_meas_setup}. It consist of the GPS-704-X antenna with the amplifier (1), an antenna stand (an orange planting box with a bit of cardboard on top) (2), the PlutoSDR in polystyrene case (weighed down by nice rocks the author brought from Greece) (3), a \qty{12}{VDC} laboratory power supply (which is older than the author) (4) powering the amplifier, a Lenovo T440p laptop (5) running the measurement software and a power supply (a slightly rotten power outlet whose circuit breaker the author found after 30 minutes of searching in the \textit{basement}) (6). The measurement setup changed very little during the course of the work.
+An example of the measurement setup used in this work is photographed in figure \ref{f_des_meas_setup}. It consist of the GPS-704-X antenna with the amplifier (1), an antenna stand (2), the PlutoSDR in polystyrene case (3), a \qty{12}{VDC} laboratory power supply (4) powering the amplifier, a Lenovo T440p laptop (5) running the measurement software and a power supply (6). The measurement setup changed very little during the course of the work.
 % Ok, díky za očíslování částí na obr. 5.3
 % Komentáře v závorkách ... raději asi ne :-)
+%% bylo pozdě večer :D
 
 The view of the antenna is unobstructed above approximately \ang{15} of elevation, with the exception of north direction, which is slightly obstructed by a tree. However, as is apparent in the data, the field of view is overall satisfactory.
 
@@ -88,15 +91,12 @@ The \texttt{iridium-toolkit} is a Python application capable of decoding demodul
 
 Both of these packages have already been used in research, such as in \cite{sat08} to capture Iridium Ring Alert messages over a long time.
 
-% \paragraph{A note on nomenclature:} In this context, \textit{extracting} frames means acquiring information about a transmitted frame that do not go beyond its RF properties, such as centre frequency, signal strength or time of arrival. \textit{Demodulating} means converting captured samples into data bits, while \textit{decoding} means converting the bits into meaningful (and human-readable data).
-
 \subsubsection{Process used by \texttt{gr-iridium} to capture and decode Iridium frames}
 Below is a description of the process the \texttt{gr-iridium} uses to capture and demodulate Iridium frames. Since the documentation of the package is sparse, the information below comes was inferred from code. References to specific sections of code are in footnotes where appropriate\footnote{The source code is available at \url{https://github.com/muccc/gr-iridium/blob/v1.0.0/}}.
 
 The core of the package is a GNURadio flowgraph (see fig. \ref{f_des_gr_iridium_blocks}\footnote{The flowgraph was created by the author, it is not actually present in graphical form in the package}). Within this GNURadio environment, IQ samples are passed along the solid arrows into the blue nodes of the function blocks and Protocol Data Unit (PDU) messages are passed along the dotted arrows into the grey nodes. The process of extracting and demodulating frames is sequential - it starts in the \texttt{Soapy Custom Source} and ends in the \texttt{iridium\_frame\_printer}.
 
 % command to ease citing of code in gr-iridium
-%\newcommand{\grline}[2]{\footnote{gr-iridium v1.0.0: lib/#1\_impl.cc: line #2, available at \url{https://github.com/muccc/gr-iridium/blob/v1.0.0/lib/#1\_impl.cc\#L#2}}}
 \newcommand{\grline}[2]{\footnote{gr-iridium/lib/#1\_impl.cc, line #2}}
 \newcommand{\grlinetagger}[1]{\grline{iridium\_burst\_tagger}{#1}}
 \newcommand{\grlinedownmix}[1]{\grline{burst\_downmix}{#1}}
@@ -121,15 +121,17 @@ The \textbf{\texttt{iridium\_qpsk\_demod}} block demodulates the frame data. It 
 
 The \textbf{\texttt{frame\_sorter}} block sorts the PDU by time of arrival (the processing is multi-threaded, time ordering is thus not assured), and the \textbf{\texttt{iridium\_frame\_printer}} block prints the block into console or a file.
 % OK, i z pohledu radiáře to smysl dává. OK.
+%% super!
 
 
 \section{Data processing}
-After the capture, demodulation and decoding of Iridium frames, some processing is needed to create data suitable for navigation calculation.
+After the capture, demodulation and decoding of Iridium frames, further processing is needed to create data suitable for navigation calculation.
 
 
 \subsection{Parsing frames}
-Firstly, since the output of the \texttt{iridium-toolkit} is text, the output needs to be parsed. The output from \texttt{iridium-toolkit} if of the form (1) frame type (e.g. IRA = Iridium Ring Alert); (2) Unix timestamp of the start of the recording\footnote{In the setup in this work, this timestamp is incorrect}; (3) seconds from the start of the recording; (4) centre frequency of the frame; (5) demodulator confidence in percent;  (6) noise values for the frame; (7) frame data length; (8) direction of the frame (UP = uplink, DL = downlink); (9) frame-type-specific data. An example of a received frame is below.
+The output of the \texttt{iridium-toolkit} is a text file, one line per frame containing the extracted information, which needs to be parsed for further processing. The output from \texttt{iridium-toolkit} is of the form (1) frame type (e.g. IRA = Iridium Ring Alert); (2) Unix timestamp of the start of the recording\footnote{In the setup in this work, this timestamp is incorrect}; (3) seconds from the start of the recording; (4) centre frequency of the frame; (5) demodulator confidence in percent;  (6) noise values for the frame; (7) frame data length; (8) direction of the frame (UP = uplink, DL = downlink); (9) frame-type-specific data. An example of a received frame is below.
 % Předchozí kapitola končí popisem gr-iridium. A tady to začíná hned výstupem iridium-toolkit. Kde je mezitím toolkit popsán? Chápu. Ale asi jinak ten odstavec uvést - jinou větou.
+%% není popsán, je to hrozně specifické a popravdě je to šíleně nečitelná špageta kódu. Trochu jsem to zmínil v úvodu, jinak to popisovat asi nebudu. Větu jsem upravil
 
 \vspace{\parskip}
 \noindent\begin{minipage}{\textwidth}
@@ -148,11 +150,17 @@ The frame-type-specific data for some frame types, namely IRA (Iridium Ring Aler
     pos=(+38.82/+003.79) alt=797
 \end{verbatim}
 
-If the \texttt{alt} is high (generally above \qty{700}{km}), the position refers to the actual satellite, if it is low, the position refers to the location on Earth where the satellite beam is hitting the surface.
+If the \texttt{alt} is high (generally above \qty{700}{km}), the position refers to the actual satellite, if it is low, the position refers to the location on Earth where the satellite beam is hitting the surface\cite{des14}.
 % To se mi nezdá ... dávat místo kam by dopadla papsek.. 
+%% tak to tvrdí, přidal jsem zdroj na to Youtube video
 Some nonsensical values were also observed and filtered out by only accepting frames with $\qty{700}{km} < \texttt{alt} < \qty{900}{km}$ where satellite position information was extracted. The latitude and longitude is given with two significant digits of precision, which, for the latitude of Prague corresponds to accuracy of \qtylist{1.11; 0.71}{km} respectively - not suitable for precise navigation. The process by which Iridium satellites calculate this position is not public, but it can be assumed it has similar errors as the SGP4 algorithm.
 
 The final navigation system is capable of working with IRA and IBC frames. From these, the timestamps (2 and 3), frequency (4) and satellite ID (part of 9) are extracted for further usage where navigation is concerned, and also satellite position (part of 9) is extracted from IRA frames in other applications.
+
+
+\subsection{Synchronisation of transmitter and receiver time}
+In the measurement setup used in this work, the timestamps provided by the SDR were incorrect. The reason for this was not found. An alternative way to obtain the start time, and a way to provide a limited receiver-transmitter time synchronisation, was found in the IBC frames. Occasionally, the IBC frames contain a timestamp (e.g. \texttt{time:2024-05-05T15:45:04.61Z}), which refers to the beginning of the slot in which said frame was sent. As the slot number is also included in the frame, it is possible to convert the timestamp to the time of frame reception\cite{des14}. This was used in this work to calculate the time of recording start and to correct the receiver time.
+
 
 \subsection{Determining frame transmission frequency}
 To calculate the Doppler shift of the received frames, it is necessary to identify the channel - and thus the channel base frequency -  on which the frame was transmitted. For IRA frames, this is simple - the transmission frequency of Ring Alert frames is set at \qty{1626.2708}{MHz}. 
@@ -315,8 +323,9 @@ Lastly, the data were packed into a two dimensional array for further calculatio
 \section{Calculating user position}
 For calculating the user position from the processed data, the Doppler-curve-fitting method was implemented (see \autoref{s_pos_curve_fit_method} for its theoretical basis). This method was chosen because it is transparent and thus suited for demonstration-type work, shows very well the influences of error sources on the final position estimate, and can be developed iteratively and therefore allows for exploration of this specific navigation problem.
 
-In principle, the method attempts to find a state vector $\Vec{s}$, so that the variance function $F(c_M, c_E)$, where $c_M$ is the measured Doppler curve and $c_E$ is a trial Doppler curve based on $\Vec{s}$, is minimal. Simply, the method tries to estimate a state vector, whose corresponding Doppler curve provides the \textit{best} match for the measured Doppler curve. The form of the vector $\Vec{s}$, the specific variance function and the method of creating the trial Doppler curve $c_E$, as well as the implementation of the search are described in detail below.
+In principle, the method attempts to find a state vector $\Vec{s}$, so that the metric function $F(c_M, c_E)$, where $c_M$ is the measured Doppler curve and $c_E$ is a trial Doppler curve based on $\Vec{s}$, is minimal. Simply, the method tries to estimate a state vector, whose corresponding Doppler curve provides the \textit{best} match for the measured Doppler curve. The form of the vector $\Vec{s}$, the specific metric and the method of creating the trial Doppler curve $c_E$, as well as the implementation of the search are described in detail below.
 % F nazýváte "variance function" ... to jste někde našel? Nebylo by lepší "testovací", nebo "objective", "goal" function? Ve smyslu optimalizačních algoritmů. Pokud s ev optimalizaci nějaká funkce minimalizuje, tak se jí obyvkle říká, myslím, práve "objective fnc.". Viz ještě komentáře k 5.2 Tj. možná spíše "metrika".
+%% ok, upravím to na metriku
 
 \subsection{Estimating initial position}
 There are several ways to estimate an initial position for the method. In testing, the navigation system was shown to successfully locate the user while the initial position was well over \qty{1000}{km} away from the final position, the estimate may thus be only very rough. On the other hand, different implementations of the method may require more precise estimate.
@@ -370,7 +379,6 @@ the drift can be approximated linearly. As a result, the drift is modelled as $f
 
 Combining equations \ref{e_des_dopp_shift} and \ref{e_des_range_rate} with offset and drift yields
 
-
 \begin{equation}
     \label{e_des_dopp_curve}
     f_D = \frac{1}{c} f_B v_S \frac{r_S - r_U}{||r_S - r_U||_2} + f_O + \dot f_O t
@@ -383,12 +391,13 @@ Therefore, the navigation system needs to estimate the user position, the offset
     \Vec{s} = (\phi_U, \lambda_U, h_U, f_O, \dot f_O)
 \end{equation*}
 
-\subsection{Variance} % Asi bych pro tu funkci F zvolil opravdu jiný název. % A ten vzorec 5.4 ... není to "jen" rozdíl čtverců. Univerzální slovo je taky "metrika", spíše než "variance" :-). To mě prostě tahá za uši. 
-To evaluate how good is the trial position $r_U$, the trial curve and the measured curve are compared. To do this, a variance function $F(C_M, C_T)$ which for two curves yields a scalar value representing their similarity is needed.
+\subsection{Metric} % Asi bych pro tu funkci F zvolil opravdu jiný název. % A ten vzorec 5.4 ... není to "jen" rozdíl čtverců. Univerzální slovo je taky "metrika", spíše než "variance" :-). To mě prostě tahá za uši. 
+%% chápu, trochu to upravím na tu metriku
+To evaluate how good is the trial position $r_U$, the trial curve and the measured curve are compared. To do this, a metric function $F(C_M, C_T)$ which for two curves yields a scalar value representing their similarity is needed.
 
-The variance function can take advantage of the fact that both $C_M$ and $C_T$ share the same time axis, i.e. both represent Doppler frequencies at the same times.
+The metric can take advantage of the fact that both $C_M$ and $C_T$ share the same time axis, i.e. both represent Doppler frequencies at the same times.
 
-For this work, the variance function is given as the sum of squares of the differences in frequency of both curves, that is the coefficient of similarity of the two curves $e$ is given as
+For this work, the metric $e$ is given as the sum of squares of the differences in frequency of both curves:
 
 \begin{equation}
     e = \sum_{i=1}^n (C_{M_i} - C_{T_i})^2
@@ -397,8 +406,9 @@ For this work, the variance function is given as the sum of squares of the diffe
 \end{equation}
 where $n$ is the length of the two curves. The lesser the $e$, the more similar the curves are.
 
-The function which generates a trial curve for a given state vector $\Vec{s}$ and compares it to the measured curve in order to output the variance $e$ in in alg.
+The function which generates a trial curve for a given state vector $\Vec{s}$ and compares it to the measured curve in order to output the metric $e$ in alg.
 % in in ?
+%% opraveno
 \ref{a_des_check_trial_curve}.
 
 \begin{algorithm}
@@ -426,7 +436,7 @@ def check_trial_curve(lat_u, lon_u, alt_u, off_u, dft_u,
     # trial curve = doppler frequency + offset + drift
     trial_curve[:, 1] = f_d + off_u + f_drift
 
-    # Calculate variance
+    # Calculate metric
     var = sum((measured_curve[:, 1] - trial_curve[:, 1]) **2)
     
     return var
@@ -436,20 +446,22 @@ def check_trial_curve(lat_u, lon_u, alt_u, off_u, dft_u,
 \end{algorithm}
 
 
-\subsection{Searching for the variance function minimum}
-Two approaches to find the variance function minimum, i.e. the best estimate of user position, were implemented. The first is iterative - it moves the trial user position in the direction with the best improvement in variance. The second is grid-search based - the algorithm searches through a matrix of possible state vectors and picks the one with the lowest variance.
+\subsection{Searching for the metric function minimum}
+Two approaches to find the metric function minimum, i.e. the best estimate of user position, were implemented. The first is iterative - it moves the trial user position in the direction with the best improvement in metric. The second is grid-search based - the algorithm searches through a matrix of possible state vectors and picks the one with the lowest metric.
 
 The iterative algorithm is fairly fast and can converge even when the initial location is very far from the final estimate. On the other hand, it is theoretically prone to convergence into local minima. Conversely, the grid search algorithm is very slow and requires the initial estimate of the user position to be fairly close\footnote{While the algorithm can search an arbitrarily large area, it would take a \textit{very} long time}, however, it is resilient to local minima. In the final system, only the iterative algorithm was used.
 % OK. Jsou to prostě optimalizace. Na které katedře se to bude obhajovat. Aby prof. Šebek nerejpal :-D
+%% na měření, snad nebude. Dělal jsem se s tím děsně dlouho, bylo by hloupé to nerozepsat
 
 \subsubsection{The iterative search}
-The iterative-search algorithm takes a current best estimate of the trial state vector $\Vec{s_0}$ and calculates variance $e_0$. Then, for each member $\Vec{s_0}_k$ of the state vector $\Vec{s}$ (e.g. longitude or drift), it moves the trial state vector by a corresponding step $\Delta_k$ in both directions ($+\Delta_k$, $-\Delta_k$) and calculates variance ($e_{k+}$, $e_{k-}$), whilst keeping the other members of the state vector constant. Then it compares the new variances with the original one ($e_0$) to obtain the best direction $\delta_k$ in which to move the state vector:
+The iterative-search algorithm takes a current best estimate of the trial state vector $\Vec{s_0}$ and calculates the metric $e_0$. Then, for each member $\Vec{s_0}_k$ of the state vector $\Vec{s}$ (e.g. longitude or drift), it moves the trial state vector by a corresponding step $\Delta_k$ in both directions ($+\Delta_k$, $-\Delta_k$) and calculates the metric ($e_{k+}$, $e_{k-}$), whilst keeping the other members of the state vector constant. Then it compares the new metric with the original one ($e_0$) to obtain the best direction $\delta_k$ in which to move the state vector:
 \begin{equation*}
     \delta_k = \text{sign}(\max(0, e_0 - e_{k+}) - \max(0, e_0 - e_{k-}))
 \end{equation*}
 % nechybí číslování rovnice?
+%% to je schválně, když se na to neodkazuju, tak tam čísla nedávám
 
-If $\delta_k \not = 0$, the variance decreased in one or directions, and member $\Vec{s_1}_k$ of the state vector for the next iteration is thus modified by adding or subtracting the step $\Delta_k$. If $\delta_k = 0$, the member is kept constant, but the step size is decreased by $\dot\Delta$, down to step limit $\Delta_{k_{MIN}}$:
+If $\delta_k \not = 0$, the metric decreased in one or directions, and member $\Vec{s_1}_k$ of the state vector for the next iteration is thus modified by adding or subtracting the step $\Delta_k$. If $\delta_k = 0$, the member is kept constant, but the step size is decreased by $\dot\Delta$, down to step limit $\Delta_{k_{MIN}}$:
 
 \begin{align*}
     \text{If } \delta_k \not &= 0: \\
@@ -462,7 +474,7 @@ If $\delta_k \not = 0$, the variance decreased in one or directions, and member 
 
 Variable step size, where the $\delta_k$ is used as the coefficient for the step size instead of the $\dot\Delta$, was tried, but it was found that this creates an insignificant decrease in the number of iterations compared to problems related to overstepping. Thus, fixed step size was used.
 
-After checking all members of the state vector, the algorithm continues in another iteration with $\Vec{s_0} = \Vec{s_1}$ and  $\Delta_k = \Delta_{k_1}$ for all $k$. The algorithm ends either when the number of iteration exceeds \param{iteration-limit}, or when it converges. The convergence criterion is all step sizes are at their respective limit and moving in no direction improves the variance:
+After checking all members of the state vector, the algorithm continues in another iteration with $\Vec{s_0} = \Vec{s_1}$ and  $\Delta_k = \Delta_{k_1}$ for all $k$. The algorithm ends either when the number of iteration exceeds \param{iteration-limit}, or when it converges. The convergence criterion is all step sizes are at their respective limit and moving in no direction improves the metric:
 \begin{equation*}
     \text{convergence} = \text{all}_k(\Delta_k = \Delta_{k_{MIN}}) \And \text{all}_k(\delta_k = 0)
 \end{equation*}
@@ -471,18 +483,42 @@ Because the algorithm was shown to be prone to cycles, a cycle detector was impl
 
 The number of trial curve checks is a useful metric to evaluate the algorithm speed. The algorithm performs $n+1$ trial curve checks per iteration, where $n$ is the size of $\Vec{s}$. In testing, about \numrange{200}{400} iterations, therefore \numrange{1200}{1600} searches ($n = 6$), were most common.
 
-While the algorithm is not protected against convergence into a local minimum, this was not observed during testing very often, and the local minima that were observed were within hundreds of meters of the global minimum showed by
+While the algorithm is not protected against convergence into a local minimum, this was not observed during testing very often, and the local minima that were observed were within hundreds of meters of the global minimum showed by the grid search method (see below).
+
+An example of the algorithm search is in \autoref{f_des_alg_path}, with the final estimated and measured curves in \autoref{f_des_compared_curves}.
 % To jsou dobré postřehy. Super.
-the grid search method (see below).
+%% :)
 % Víte co, ono popisovat tohle je vždycky složité a nevděčné. Někdo prostě jen napíše že použil optimalizační algoritmus. Rozsepsal jste to, proč ne. Snad se v tom nikdo nebude složitě šťourat Ale myslím že ne. Opnent určitě ne.
 % Nekteré algoritmy je jednodušší vysvětlovat spíše diagramy, než textem :-). Ale ok. Každý má u programů rád diagramy :-).
 % U toho lokálního minima mám tip pro nějaké "příště" - někdy se správnost vyhledání testuje i tak, že se to nechá běžet podruhé z trochu jiného místa a jestli to zapadne na stejné.
+%% Chápu. Snad to bude ok
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{img/des_alg_path}
+    \caption{An example of the iterative curve fitting algorithm search}
+    \label{f_des_alg_path}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{img/des_compared_curves}
+    \caption{Doppler curves from final estimation and measurement}
+    \label{f_des_compared_curves}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{img/des_symmetry}
+    \caption{An example of the algorithm finding the symmetrical solution}
+    \label{f_des_symmetry}
+\end{figure}
 
 \subsubsection{The grid search}
-The grid search algorithm performs the trial curve checking for a set of combinations of $\Vec{s}$ and picks the one with the lowest variance.n% "variance". "n" navíc
+The grid search algorithm performs the trial curve checking for a set of combinations of $\Vec{s}$ and picks the one with the best metric. % "variance". "n" navíc %% přepsal jsem na metriku a n bylo zmizeno
 The process is then repeated $M$ times with decreasing grid spacing.
 
-First, an $n$-dimensional grid, where $n$ is the length of the state vector $\Vec{s}$, is constructed. Each axis belongs to one member $k$ of the state vector, and contains $g_k$ values spaced apart by step $\Delta_{k_m}$ ($m \in M$), centred on $\Vec{s_0}_k$. Then, for each point of the grid, trial checking is performed. Finally, the lowest variance is found, and the corresponding values of state vector members of the grid point are as $\Vec{s_1}$.
+First, an $n$-dimensional grid, where $n$ is the length of the state vector $\Vec{s}$, is constructed. Each axis belongs to one member $k$ of the state vector, and contains $g_k$ values spaced apart by step $\Delta_{k_m}$ ($m \in M$), centred on $\Vec{s_0}_k$. Then, for each point of the grid, trial checking is performed. Finally, the lowest metric is found, and the corresponding values of state vector members of the grid point are as $\Vec{s_1}$.
 
 Once the $\Vec{s_1}$ is found, $m$ is incremented and a new grid is constructed based on $\Vec{s_1}$ and $\Delta_{k_m}$, which is chosen so $\Delta{k_{m}} \approx \Delta_{k_{m-1}} / g_k$ - this way, the new grid fills one cell of the previous grid. Once the step sizes (and thus the resolutions) are sufficiently small, the search is completed.
 
@@ -490,7 +526,7 @@ The step sizes are fixed as parameters in the form of a list of size $M$. The gr
 
 The algorithm performs $M \cdot \Pi^n_1 g_k$ trial curve checks in total. If this algorithm was to be used on its own, a sufficiently large step in horizontal coordinate would have to be in the order of \qty{100}{km} for $g = 10$, and likewise for the other state vector members. Thus, a total of $5 \cdot (10 \cdot 10 \cdot 10 \cdot 5 \cdot 5) = \num{125000}$ was sometimes needed, making this approach very slow. On the other hand, convergence to the global minium is assured, as long as the the actual user position lays within the first (largest) grid, which places stricter requirements on the estimation of the initial position than the iterative method.
 
-To alleviate this shortcoming, a variation was considered where, if the lowest variance for a given grid was located at the edge of the grid, the grid would be extended in that direction. As this algorithm ended up not being used on its own, this was not implemented.
+To alleviate this shortcoming, a variation was considered where, if the best-fitting state vector for a given grid was located at the edge of the grid, the grid would be extended in that direction. As this algorithm ended up not being used on its own, this was not implemented.
 
 One possible application for this algorithm is as a final step to the iterative search, which solves the problem of convergence into a local minimum close to the actual user position. However, as any meaningful search would still require \num{e4} trial curve checks, significantly slowing down the overall calculation, for no observed benefit, this was not used.
 
@@ -533,13 +569,15 @@ Some additional tools were created to aid in analysis, development and testing o
 
 \file{read\_time} This scripts handles time synchronisation on the PlutoSDR, as the device was shown to not keep time properly. It connects over serial port, logs in and sets the device time to current system time using the \texttt{date} command. This is done when the system time seconds counter changes, to achieve maximum accuracy (since the \texttt{date} command accepts only whole seconds).
 % To je to, než jste našel význam toho času co ten toolkit už posílá? Že?
+%% ano
 
 \file{convert\_tles\_from\_special\_request} This is a simple script which converts TLE files from CelesTrak special request (one file per satellite with all TLEs for a given period) into the format used for current TLEs by CelesTrak (only one file containing one TLE set each per satellite). For each satellite, the closest TLE set for a given date and time was picked. This was useful for retroactive download of TLEs (when the author forgot to download them during data capture).
 
 \file{find\_norad\_ids\_in\_sat08\_data} This script was used to identify all the satellites in the large dataset from \cite{sat08}, as described in \autoref{s_des_sat08_id}.
 
-\file{noise\_analysis} This script was used to evaluate the noise resilience of the system. Gaussian noise of increasing intensity and mean value was added to simulated data and then the navigation algorithm was run, to get an idea about the influence of noise on the precision of the navigation system. The results are shown in \autoref{s_exp}.
+\file{noise\_analysis} This script was used to evaluate the noise resilience of the system. Gaussian noise of increasing noise standard deviation and mean value was added to simulated data and then the navigation algorithm was run, to get an idea about the influence of noise on the precision of the navigation system in the design process.
 % Intenzity? Výkon šumu je dán pouze rozptylem.
+%% chyba, mělo to být std
 
 \section{Summary}
 The navigation system is a Python application capable of calculating the user position from received satellite signal, without any prior knowledge of the user position. It is built to be independent of the actual satellite system used to navigate, and to be used with generic SDR and antenna setup. However, the support of only Iridium and PlutoSDR are actually implemented and verified.
@@ -550,7 +588,8 @@ Next, the navigation system processes the received frames. It identifies on whic
 
 Then, it uses the processed data to estimate the initial position for the navigation calculations. To do this, it interpolates the moment of zero-Doppler-shift for each Doppler curve, and places the initial estimate at the position where the moment occurs, averaged over all interpolated curves.
 
-Finally, the system calculates the user position using the Doppler-curve-fitting method in the iterative search algorithm. For each trial position, variance of the measured and trial curves is calculated, and the increase or decrease of the variance in all directions is evaluated. The trial position is then moved by a set step in the direction of most variance decrease, until it no longer decreases in any directions or the iteration limit is exceeded.
+Finally, the system calculates the user position using the Doppler-curve-fitting method in the iterative search algorithm. For each trial position, the metric for the measured and trial curves is calculated, and the increase or decrease of the metric in all directions is evaluated. The trial position is then moved by a set step in the direction of the largest  decrease of the metric, until it no longer decreases in any directions or the iteration limit is exceeded.
 
 The performance of the navigation system is examined in \autoref{s_exp}.
 % 5.6 ok - srozumitelné.
+%% díky

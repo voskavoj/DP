@@ -34,7 +34,7 @@ Communication is carried over Ka-band for satellite-satellite links and satellit
 
 The Iridium NEXT onboard clocks have a stability better than \num{10e-9} and a drift less than \qty{3}{\hertz\per\s}, which is sufficient for time transfers with accuracy in the order of \qty{e0}{\micro\s}\cite{sop11}.
 % Opravdu Iridium má drift až 3 Hz/s ? To je dost. Kolik že to vycházelo nám u přijímače?
-
+%% je to z literatury, víc nevím :) Nám to vycházelo dost podobně, ale tady je to asi myšleno na úrovní nosné, kdežto u nás je to na úrovni lok. oscilátoru
 \subsection{Iridium signals}
 \label{s_sat_iridium_signals}
 Due to the scope of this work, only the satellite-user (L-band) signals are examined, as the Ka-band signals are either not globally transmitted or not aimed towards the Earth.
@@ -137,11 +137,13 @@ Iridium NEXT, Orbcommm, Globalstar and Starlink were discussed in this chapter, 
 
 Iridium NEXT constellation has the most satellites, while Globalstar has the most simultaneously visible satellites. At least one Iridium NEXT and Globalstar satellite is always visible, while for Orbcomm this is not the case. As many as 6, 6, and 13 Iridium, Orbcomm and Globalstar satellites respectively are visible simultaneously. On average, 2.2, 1.6, and 5.8 respectively are visible simultaneously. These values are summarised in \autoref{t_sat_simul_vis} and visualised in \autoref{f_sat_simul_vis}. Elevation angles for the visible satellites of one constellation (Iridium NEXT) are in \autoref{f_sat_elev_iri}.
 
-The visibility was simulated relative to the location of CUT FEE (\ang{50;6;11}N, \ang{14;23;32}E, \qty{225}{m}) over 36 hours starting on May 1\textsuperscript{nd} 2024 00:00 UTC. The plots are 2-hour excerpts from the middle of the time window.
+The visibility was simulated relative to the location of CTU FEE (\ang{50;6;11}N, \ang{14;23;32}E, \qty{225}{m}) over 36 hours starting on May 1\textsuperscript{nd} 2024 00:00 UTC. The plots are 2-hour excerpts from the middle of the time window.
 % CTU, ne CUT :-)
+%% díky!
 
-The signal power at the receiver location for Iridium and Orbcomm is \qtylist{-100;-118}{dBm} respectively, compared to the power of GPS signal of \qty{-128}{dBm}\citep{pos04}{11} (difference of 63x, 10x respectively), which clearly illustrates the advantage of signal strength the SoP positioning systems enjoy over GNSS.
+The signal power at the receiver location for Iridium and Orbcomm is \qtylist{-100;-118}{dBm} respectively, compared to the power of GPS signal of \qty{-128}{dBm}\citep{pos04}{11} (difference of 630x, 10x respectively), which clearly illustrates the advantage of signal strength the SoP positioning systems enjoy over GNSS.
 % 28 dB je 630x, ne 63x
+%% díky
 
 \begin{table}
     \centering
@@ -170,3 +172,4 @@ Max & 6 & 6 & 13 \\
 \end{figure}
 
 % OK. Super.
+%% :)
