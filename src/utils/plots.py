@@ -9,28 +9,29 @@ from src.config.locations import LOCATIONS
 
 
 class ColorPicker:
-    color_list = ["b", "g", "r", "c", "m", "y", "k", "aqua", "aquamarine", "blue", "blueviolet",
-                  "brown", "burlywood", "cadetblue", "chartreuse", "chocolate",
-                  "coral", "cornflowerblue", "crimson", "cyan", "darkblue", "darkcyan", "darkgoldenrod", "darkgray",
-                  "darkgreen", "darkgrey", "darkkhaki", "darkmagenta", "darkolivegreen", "darkorange", "darkorchid",
-                  "darkred", "darksalmon", "darkseagreen", "darkslateblue", "darkslategray", "darkslategrey",
-                  "darkturquoise", "darkviolet", "deeppink", "deepskyblue", "dimgray", "dimgrey", "dodgerblue",
-                  "firebrick", "forestgreen", "fuchsia", "gold", "goldenrod", "gray", "green", "greenyellow",
-                  "grey", "hotpink", "indianred", "indigo", "khaki", "lavender", "lavenderblush", "lawngreen",
-                  "lightblue", "lightcoral", "lightcyan", "lightgreen", "lightpink", "lightsalmon", "lightseagreen",
-                  "lightskyblue", "lightslategray", "lightslategrey", "lightsteelblue", "lightyellow", "lime",
-                  "limegreen", "magenta", "maroon", "mediumaquamarine", "mediumblue", "mediumorchid", "mediumpurple",
-                  "mediumseagreen", "mediumslateblue", "mediumspringgreen", "mediumturquoise", "mediumvioletred",
-                  "midnightblue", "mintcream", "mistyrose", "moccasin", "navajowhite", "navy", "oldlace", "olive",
-                  "olivedrab", "orange", "orangered", "orchid", "palegoldenrod", "palegreen", "paleturquoise",
-                  "palevioletred", "peachpuff", "peru", "pink", "plum", "powderblue", "purple", "rebeccapurple", "red",
-                  "rosybrown", "royalblue", "saddlebrown", "salmon", "sandybrown", "seagreen", "sienna", "silver",
-                  "skyblue", "slateblue", "slategray", "slategrey", "springgreen", "steelblue", "tan", "teal",
-                  "thistle", "tomato", "turquoise", "violet", "yellow", "yellowgreen"]
+    def_list = ["b", "g", "r", "c", "m", "y", "k", "aqua", "aquamarine", "blue", "blueviolet",
+                "brown", "burlywood", "cadetblue", "chartreuse", "chocolate",
+                "coral", "cornflowerblue", "crimson", "cyan", "darkblue", "darkcyan", "darkgoldenrod", "darkgray",
+                "darkgreen", "darkgrey", "darkkhaki", "darkmagenta", "darkolivegreen", "darkorange", "darkorchid",
+                "darkred", "darksalmon", "darkseagreen", "darkslateblue", "darkslategray", "darkslategrey",
+                "darkturquoise", "darkviolet", "deeppink", "deepskyblue", "dimgray", "dimgrey", "dodgerblue",
+                "firebrick", "forestgreen", "fuchsia", "gold", "goldenrod", "gray", "green", "greenyellow",
+                "grey", "hotpink", "indianred", "indigo", "khaki", "lavender", "lavenderblush", "lawngreen",
+                "lightblue", "lightcoral", "lightcyan", "lightgreen", "lightpink", "lightsalmon", "lightseagreen",
+                "lightskyblue", "lightslategray", "lightslategrey", "lightsteelblue", "lightyellow", "lime",
+                "limegreen", "magenta", "maroon", "mediumaquamarine", "mediumblue", "mediumorchid", "mediumpurple",
+                "mediumseagreen", "mediumslateblue", "mediumspringgreen", "mediumturquoise", "mediumvioletred",
+                "midnightblue", "mintcream", "mistyrose", "moccasin", "navajowhite", "navy", "oldlace", "olive",
+                "olivedrab", "orange", "orangered", "orchid", "palegoldenrod", "palegreen", "paleturquoise",
+                "palevioletred", "peachpuff", "peru", "pink", "plum", "powderblue", "purple", "rebeccapurple", "red",
+                "rosybrown", "royalblue", "saddlebrown", "salmon", "sandybrown", "seagreen", "sienna", "silver",
+                "skyblue", "slateblue", "slategray", "slategrey", "springgreen", "steelblue", "tan", "teal",
+                "thistle", "tomato", "turquoise", "violet", "yellow", "yellowgreen"]
 
     def __init__(self):
         self.colors_by_line = dict()
         self.idx = 0
+        self.color_list = self.def_list
 
     def _choose_new_color(self):
         if self.idx >= len(self.color_list):
@@ -40,6 +41,10 @@ class ColorPicker:
         color = self.color_list[self.idx]
         self.idx += 1
         return color
+
+    def reserve_colors(self, *colors):
+        for color in colors:
+            self.color_list.remove(color)
 
     def pick_color(self, line_name):
         if line_name in self.colors_by_line:
@@ -58,6 +63,8 @@ def plot_results_of_iterative_position_finding(data: str | list, r=None, show=Fa
     else:
         results = data
 
+    plt.style.use("Plots/ctuthesis.mplstyle")
+
     final_lat, final_lon, final_alt = results[-1][2], results[-1][3], results[-1][4]
     try:
         final_off, final_dft = results[-1][5], results[-1][6]
@@ -67,10 +74,10 @@ def plot_results_of_iterative_position_finding(data: str | list, r=None, show=Fa
     pos_error = latlon_distance(home_lat, final_lat, home_lon, final_lon, home_alt, final_alt)
     res_arr = np.array(results)
 
-    min_lat = min(res_arr[:, 2].min(), home_lat)
-    min_lon = min(res_arr[:, 3].min(), home_lon)
-    max_lat = max(res_arr[:, 2].max(), home_lat)
-    max_lon = max(res_arr[:, 3].max(), home_lon)
+    min_lat = 51
+    min_lon = 12
+    max_lat = 54
+    max_lon = 18
 
     if map_covers_tracks and r is not None:
         sat_track = r.earth_location.geodetic
@@ -81,8 +88,8 @@ def plot_results_of_iterative_position_finding(data: str | list, r=None, show=Fa
 
     plt.figure()
     plt.title(f"Pos. error: {pos_error:.1f} m")
-    plt.figtext(.15, .05, f"Lat.: {final_lat:.2f}°, Lon.: {final_lon:.2f}°, Alt.: {final_alt:.0f} m" +
-                f", Offset: {final_off / 1e3:.2f} kHz, Drift: {final_dft * 1e3:.0f} mHz/s" if final_off is not None else "")
+    # plt.figtext(.15, .05, f"Lat.: {final_lat:.2f}°, Lon.: {final_lon:.2f}°, Alt.: {final_alt:.0f} m" +
+    #             f", Offset: {final_off / 1e3:.2f} kHz, Drift: {final_dft * 1e3:.0f} mHz/s" if final_off is not None else "")
 
     m = Basemap(llcrnrlon=min_lon - 2, llcrnrlat=min_lat - 2, urcrnrlon=max_lon + 2, urcrnrlat=max_lat + 2,
                 rsphere=(6378137.00, 6356752.3142), resolution='h', projection='merc', )
@@ -97,9 +104,10 @@ def plot_results_of_iterative_position_finding(data: str | list, r=None, show=Fa
     m.fillcontinents()
     m.drawcountries()
     m.drawrivers(color="blue")
-    m.drawparallels(np.arange(40, 65, 5), labels=[0, 1, 0, 0])
-    m.drawmeridians(np.arange(0, 30, 5), labels=[0, 0, 0, 1])
-    plt.legend()
+    m.drawparallels(np.arange(40, 65, 2), labels=[0, 1, 0, 0])
+    m.drawmeridians(np.arange(0, 30, 2), labels=[0, 0, 0, 1])
+    plt.legend(loc="upper right")
+    plt.tight_layout()
 
     plt.savefig(get_fig_filename("fig"))
 
@@ -128,16 +136,17 @@ def plot_analyzed_curve(curve, dopp_start, dopp_end, curve_duration, curve_densi
 
 
 def plot_measured_vs_trial_curve(measured_curve, trial_curve, lat, lon, alt, off):
+    plt.style.use("Plots/ctuthesis.mplstyle")
     plt.figure()
     plt.xlabel("Unix time [s]")
     plt.ylabel("Doppler shift [Hz]")
-    plt.figtext(.15, .12, f"Lat.: {lat:.2f}°, Lon.: {lon:.2f}°, Alt.: {alt:.0f} m, Offset: {off / 1e3:.0f} kHz")
+    # plt.figtext(.15, .12, f"Lat.: {lat:.2f}°, Lon.: {lon:.2f}°, Alt.: {alt:.0f} m, Offset: {off / 1e3:.0f} kHz")
     plt.scatter(measured_curve[:, 0], measured_curve[:, 1], marker=".", label="Measured curve")
     plt.scatter(trial_curve[:, 0], trial_curve[:, 1], marker=".", label="Trial curve")
     plt.legend()
 
 
 if __name__ == "__main__":
-    for i in [467]:
+    for i in [1104]:
         plot_results_of_iterative_position_finding(f"results_{i}")
     plt.show()
