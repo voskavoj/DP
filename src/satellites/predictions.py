@@ -200,6 +200,16 @@ def predict_satellite_visibility(satellite: "Satellite | list", observer_positio
 
 
 def find_closest_tle_id_to_ira_id_by_position(time, satrecs, sat_list, iri_lat, iri_lon, iri_alt):
+    """
+    Find the closest satellite to the Iridium satellite by position
+    :param time: reference time
+    :param satrecs: satrecarray
+    :param sat_list: list of TLEs
+    :param iri_lat: latitude from IRA frame
+    :param iri_lon: longitude from IRA frame
+    :param iri_alt: altitude from IRA frame
+    :return: closest satellite ID, distance, SGP4 latitude, longitude, altitude
+    """
 
     jds = np.array([time.jd1])
     jfs = np.array([time.jd2])
@@ -223,4 +233,7 @@ def find_closest_tle_id_to_ira_id_by_position(time, satrecs, sat_list, iri_lat, 
 
 
 def _texttime(time: Time):
+    """
+        Deprecated
+    """
     return time

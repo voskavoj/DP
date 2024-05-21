@@ -69,6 +69,12 @@ def load_data(name, index=None):
 
 
 def get_fig_filename(name, idx=True):
+    """
+    Get next available figure filename
+    :param name: name
+    :param idx: use index, if not, overriden
+    :return: filename
+    """
     global FIG_IDX
 
     create_tmp_dir()

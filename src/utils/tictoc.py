@@ -1,3 +1,7 @@
+"""
+    Timers for measuring time of execution of code
+"""
+
 import time
 
 

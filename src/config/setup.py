@@ -1,3 +1,18 @@
+"""
+    Setup of code
+
+    This does NOT contain algorithm parameters, which are in config/parameters
+
+    Important path is the WORKING_DIR, should point to the root of the project
+
+    EXP_NAME is the name of the experiment, which is used to load data from the Data folder
+    LOCATION is the location of the experiment, defined in locations, used to calculate distance to est. position
+    START_TIME is the start time of the experiment, if None, it is loaded from the data folder
+    VALIDATION_DATA_SETS is a list of all the validation data sets
+
+    DEBUG is a class containing all the debug flags, used to control the output of the program
+"""
+
 # Experiment settings
 EXP_NAME = "val01"
 LOCATION = "HOME"

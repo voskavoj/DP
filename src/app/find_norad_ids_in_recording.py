@@ -1,3 +1,7 @@
+"""
+    Identify NORAD IDs within Iridium frames
+"""
+
 import numpy as np
 from astropy.time import Time, TimeDelta
 import astropy.units as unit
@@ -17,6 +21,13 @@ LOAD_DATA_IDX = None
 
 
 def find_norad_ids_in_recording(satellites, frame_file=FRAME_FILE, print_log=False):
+    """
+        Find the NORAD IDs in the recording
+    :param satellites: TLEs
+    :param frame_file: decoded frames
+    :param print_log: whether to print details
+    :return: list of most likely NORAD ID per frame
+    """
     sat_list = unpack(satellites)
 
     with open(DATA_PATH + frame_file, "r") as file:
@@ -59,6 +70,10 @@ def find_norad_ids_in_recording(satellites, frame_file=FRAME_FILE, print_log=Fal
 
 
 def print_found_norad_ids_in_recording(ress):
+    """
+        Visualise the found ID map
+    :param ress: results of find_norad_ids_in_recording
+    """
     ress_arr = np.array(ress)
 
     # Dictionary to store results

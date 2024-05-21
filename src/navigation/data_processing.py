@@ -15,19 +15,6 @@ SATELLITE_FRAME_COUNT_FILTER = 10
 TIME_CORRECTION_FACTOR = 1  # ms/ms
 
 
-class NavDataIndices:
-    abs_time = 0
-    t = abs_time
-    freq = 1
-    f = freq
-    base_freq = 2
-    fb = base_freq
-    sat_pos = 3
-    pos = sat_pos
-    sat_id = 4
-    id = sat_id
-
-
 class NavDataArrayIndices:
     rel_time = 0
     t = rel_time
@@ -117,6 +104,15 @@ def nav_data_to_array(nav_data: list) -> np.array:
 
 
 def find_curves(nav_data_array, max_time_gap=0, min_curve_length=0):
+    """
+    Find curves in navigation data array based on max_time_gap and min_curve_length
+    One curve is one base freq. and one sat_id
+
+    :param nav_data_array: array of navigation data
+    :param max_time_gap: maximum time gap between consecutive data points in one curve
+    :param min_curve_length: minimum length of curve in datapoints
+    :return: list of arrays, each with a curve
+    """
     # sort nav_data_array by sat_id, base_freq, and abs_time
     sorted_indices = np.lexsort((nav_data_array[:, IDX.t], nav_data_array[:, IDX.fb], nav_data_array[:, IDX.id]))
 

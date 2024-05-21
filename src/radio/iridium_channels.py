@@ -1,3 +1,9 @@
+"""
+    This module contains the channel frequencies and IDs for Iridium satellites.
+
+    If there are duplicate values in the IRI_ID_TO_TLE_ID_MAP, the script will raise a ValueError upon import
+"""
+
 IRIDIUM_PARSER_PATH = "GNURadio/iridium-toolkit/iridium-parser.py"
 IRA_BASE_FREQUENCY = 1626270800
 _CHANNEL_SPACING = (1 / 3) * 10e5 / 8
@@ -12,6 +18,12 @@ CHANNEL_ID_THRESHOLD = _CHANNEL_SPACING
 
 
 def find_tx_base_frequency(freq, drop=False):
+    """
+    Find the base frequency (channel) of the transmission
+    :param freq: RX frequency
+    :param drop: drop if outside of channel spacing
+    :return: channel base frequency or False if dropped
+    """
     base_freq = min(CHANNEL_FREQS, key=lambda x: abs(x - freq))
     if drop and abs(base_freq - freq) > CHANNEL_ID_THRESHOLD:
         return False
@@ -21,6 +33,11 @@ def find_tx_base_frequency(freq, drop=False):
 
 
 def find_channel_id(freq):
+    """
+        Returns the channel ID for the given frequency
+    :param freq: RX frequency
+    :return: channel ID
+    """
     return CHANNEL_IDS[find_tx_base_frequency(freq, drop=False)]
 
 

@@ -1,3 +1,10 @@
+"""
+    Find position from processed data
+    This is the main development script
+
+    Currently set to run the curve fit method
+"""
+
 import pickle
 
 import numpy as np

@@ -1,3 +1,7 @@
+"""
+    Iriridium frame operations
+"""
+
 import subprocess
 
 from astropy.time import Time, TimeDelta
@@ -7,6 +11,14 @@ IRIDIUM_PARSER_PATH = "External/iridium-toolkit/iridium-parser.py"
 
 
 def parse_raw_iridium_frames(raw_frames: str | list, harder=True) -> list[str]:
+    """
+        Parse raw iridium frames using the iridium-parser script.
+        Make sure the path is correct
+
+    :param raw_frames: list of raw iridium frames or a single frame
+    :param harder: use --harder flag
+    :return: list of decoded iridium frames
+    """
     if isinstance(raw_frames, list):
         raw_frames = "\n".join(raw_frames)
 
@@ -21,6 +33,11 @@ def parse_raw_iridium_frames(raw_frames: str | list, harder=True) -> list[str]:
 
 
 def get_frame_confidence(frame: str) -> int:
+    """
+    Get the confidence of a decoded iridium frame.
+    :param frame: decoded iridium frame
+    :return: confidence as int in %
+    """
     return int(frame.split()[4].replace("%", ""))
 
 

@@ -12,7 +12,20 @@ from src.radio.iridium_frame_operations import decompose_ira_frame, decompose_ib
 
 
 class IridiumOfflineRadio:
+    """
+        Iririum offline radio class
+        Works over saved data
+        Written to simplify transition to Real Time calc.
+
+        Call get_frames() to get the processed frames
+    """
     def __init__(self, frames: list, file_is_parsed=False, non_ira_frames=True, drop_frequencies=True):
+        """
+        :param frames: frames
+        :param file_is_parsed: if frames are decoded (True) or just demodulated (False)
+        :param non_ira_frames: Use non-ira frames too
+        :param drop_frequencies: drop frames with frequencies that are outside of channel spacing
+        """
         self.frames_list = list()
 
         if not file_is_parsed:

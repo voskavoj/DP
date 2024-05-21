@@ -1,3 +1,8 @@
+"""
+    Generate test data for the navigation algorithm based on the satellites within the measured data
+    Parametrised below
+"""
+
 import numpy as np
 import pickle
 from astropy.time import Time, TimeDelta

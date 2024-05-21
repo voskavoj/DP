@@ -33,7 +33,9 @@ def estimate_zero_doppler_shift_position(detected_curves, satellites):
     """
         Estimate the position of the satellite at the moment of zero doppler shift, as a weighted average of all curves
 
-        :return: lat, lon; or 0, 0 if no valid curves were found
+    :param detected_curves: list of curves
+    :param satellites: satellites
+    :return: lat, lon; or 0, 0 if no valid curves were found
     """
 
     estimated_init_locations = list()
@@ -110,6 +112,9 @@ def _adjust_step(step, diff, step_limit, force=False):
 
 
 class RatioCycleDetector:
+    """
+    Detects if the algorithm is stuck in a cycle
+    """
     def __init__(self):
         self.last_ratios = None
         self.second_to_last_ratios = None
@@ -134,6 +139,23 @@ class RatioCycleDetector:
 
 
 def fit_curve(results, lat_0, lon_0, alt_0, off_0, dft_0, measured_curve, r_sat_arr, v_sat_arr, params):
+    """
+    Iterative curve fitting method
+
+    "sos" is the metric
+
+    :param results: list of results
+    :param lat_0: initial latitude
+    :param lon_0: initial longitude
+    :param alt_0: initial altitude
+    :param off_0: initial offset
+    :param dft_0: initial drift
+    :param measured_curve: array of measured nav data
+    :param r_sat_arr: array of satellite positions
+    :param v_sat_arr: array of satellite velocities
+    :param params: parameters
+    :return: final metric, lat, lon, alt, off, dft, results
+    """
     iteration_result = IterationResults.limit
     cycle_detector = RatioCycleDetector()
 
@@ -272,7 +294,13 @@ def fit_curve(results, lat_0, lon_0, alt_0, off_0, dft_0, measured_curve, r_sat_
 
 
 def _generate_grid_search_steps(val, step, params):
-
+    """
+    Generate grid search steps for value (state vector member)
+    :param val: state vector member
+    :param step: step
+    :param params: parameters
+    :return: steps
+    """
     if step == 0:
         return [val]
 
@@ -292,6 +320,23 @@ def _generate_grid_search_steps(val, step, params):
 
 
 def fit_curve_grid(results, lat_0, lon_0, alt_0, off_0, dft_0, measured_curve, r_sat_arr, v_sat_arr, params):
+    """
+    Grid-based curve fitting method
+
+    "sos" is the metric
+
+    :param results: list of results
+    :param lat_0: initial latitude
+    :param lon_0: initial longitude
+    :param alt_0: initial altitude
+    :param off_0: initial offset
+    :param dft_0: initial drift
+    :param measured_curve: array of measured nav data
+    :param r_sat_arr: array of satellite positions
+    :param v_sat_arr: array of satellite velocities
+    :param params: parameters
+    :return: result, final lat, lon, alt, off, dft, results
+    """
 
     lat = lat_0
     lon = lon_0
@@ -331,12 +376,12 @@ def fit_curve_grid(results, lat_0, lon_0, alt_0, off_0, dft_0, measured_curve, r
 
 def solve(nav_data, satellites, params: CurveFitMethodParameters, init_state: tuple[float, float, float, float, float] | None = None):
     """
+    Perform the curve fitting method
 
     :param nav_data: list: absolute time (Time) | frequency (float) | base frequency (float) | satellite position at time (ITRS) | ID
     :param satellites:
     :param params: parameters of solving
     :param init_state: initial state, if None, the function will estimate it
-    :param repeats: number of repeats
     :return: final lat, lon, alt, off, dft
     """
 

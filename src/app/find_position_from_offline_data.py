@@ -16,6 +16,12 @@ IRIDIUM_PARSER_PATH = "External/iridium-toolkit/iridium-parser.py"
 
 
 def main(data_path, tle_path=None):
+    """
+    Main function to find the position from offline data
+
+    :param data_path: path to the demodulated frames
+    :param tle_path: path to the TLE file
+    """
     # decode frames
     print("Decoding frames, this may take a while")
     print(f"Command: python {IRIDIUM_PARSER_PATH} -p {data_path} --harder")

@@ -1,4 +1,6 @@
-
+"""
+    Text visualization utilities
+"""
 
 def tableify(data, col_dec=None, col_unit=None, col_head=None, row_head=None):
     try:

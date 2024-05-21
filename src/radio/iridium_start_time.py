@@ -59,15 +59,6 @@ def compute_start_time(frames, confidence_threshold=80, time_spread_threshold=10
         start_time_end = None
         corr_factor = 1
 
-    # plot
-    # plt.figure()
-    # p = np.poly1d(fit)
-    # ptime = np.linspace(np.min(rel_time_arr), np.max(rel_time_arr), 2)
-    # plt.plot(rel_time_arr, start_time_arr)
-    # plt.plot(ptime, p(ptime), color="black", label="Fit")
-    # plt.figtext(.15, .12, f"Fit parameters ($s/s^n$): {fit}")
-    # plt.show()
-
     print(f"Start time goes from {Time(start_time, format="unix", scale="utc").iso} "
           f"to {Time(start_time_end, format="unix", scale="utc").iso} in {duration:.0f} s ({duration/60:.0f} min) - "
           f"correction factor is 1 + {(corr_factor - 1)*1e6:.3f} us/s")

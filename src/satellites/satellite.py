@@ -8,6 +8,9 @@ from sgp4.conveniences import sat_epoch_datetime
 
 
 class Satellite:
+    """
+    Satellite class
+    """
     def __init__(self, constellation, number, tle_line_1, tle_line_2):
         self.name = constellation + " " + number
         try:
@@ -20,6 +23,11 @@ class Satellite:
         self.tle_time = Time(sat_epoch_datetime(self.satrec))
 
     def tle_age(self, time: Time):
+        """
+        Calculate the age of the TLE in seconds
+        :param time: reference time, if None, now is used
+        :return: seconds
+        """
         if time is None:
             time = Time.now()
         return (time - self.tle_time).to("s").value

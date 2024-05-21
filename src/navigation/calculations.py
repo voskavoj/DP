@@ -4,19 +4,16 @@ import numpy as np
 from geopy import distance
 
 
-class StateVector:
-    def __init__(self, lat: float, lon: float, alt: float, off: float, dft: float):
-        self.lat = lat
-        self.lon = lon
-        self.alt = alt
-        self.off = off
-        self.dft = dft
-
-
 def latlon_distance(lat1, lat2, lon1, lon2, alt1=None, alt2=None):
     """
-    Returns results in m
-
+    Calculate distance between two points in 3D space.
+    :param lat1: latitude of the first point
+    :param lat2: latitude of the second point
+    :param lon1: longitude of the first point
+    :param lon2: longitude of the second point
+    :param alt1: altitude of the first point (optional)
+    :param alt2: altitude of the second point (optional)
+    :return: distance in meters
     """
     horizontal_distance = distance.geodesic((lat1, lon1), (lat2, lon2)).m
     if alt1 is None and alt2 is None:
@@ -60,6 +57,13 @@ def m_to_deg_lon(m, lat, deg=True):
 
 
 def deg_lon_to_m(lon, current_lat):
+    """
+    Approximate conversion from distance in longitude to distance in meters
+
+    :param lon: longitude in degrees
+    :param current_lat: current latitude in degrees
+    :return: distance in meters
+    """
     lat_rad = np.deg2rad(current_lat)
 
     m_per_deg_lon = 111132.954 * np.cos(lat_rad)
@@ -67,6 +71,13 @@ def deg_lon_to_m(lon, current_lat):
 
 
 def deg_lat_to_m(lat, current_lat):
+    """
+    Approximate conversion from distance in latitude to distance in meters
+
+    :param lat: latitude in degrees
+    :param current_lat: current latitude in degrees
+    :return: distance in meters
+    """
     lat_rad = np.deg2rad(current_lat)
 
     m_per_deg_lat = 111132.954 - 559.822 * np.cos(2 * lat_rad) + 1.175 * np.cos(4 * lat_rad)

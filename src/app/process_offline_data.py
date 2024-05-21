@@ -12,6 +12,20 @@ from src.utils.data import save_data
 
 
 def process_offline_data(start_time=None, save_file=SAVED_DATA_FILE, save=True):
+    """
+    Process the demodulated and decoded frames into navigation data
+
+    #) Load TLEs from Data directory (arg. offline_dir)
+    #) Load demodulated frames from Data directory
+    #) Find start time by the use IBC frame - radio/iridium_start_time
+    #) Process frames into array of time, f, fb, sat_id - radio/iridium_offline_radio
+    #) Process frames into navigation data - navigation/data_processing
+
+    :param start_time: time of start of the recording
+    :param save_file: name of the file to save the data to
+    :param save: whether to save the data
+    :return: processed navigation data
+    """
     satellites = download_tles(constellations=CONSTELLATIONS, offline_dir=DATA_PATH)
     with open(DATA_PATH + FRAME_FILE, "r") as file:
         frames = file.readlines()

@@ -1,4 +1,6 @@
-
+"""
+    Parameters of the algorithms
+"""
 
 class CurveFitMethodParameters:
     def __init__(self):

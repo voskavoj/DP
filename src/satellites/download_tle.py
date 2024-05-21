@@ -25,6 +25,13 @@ CONSTELLATION_URL = {"Iridium": "iridium-next",
 
 
 def download_tles(constellations=SATELLITE_CONSTELLATIONS, offline_dir=None) -> Dict[str, Dict[str, Satellite]]:
+    """
+    Main function to download TLEs for given constellations or load from data folder
+
+    :param constellations: list of constellations to download
+    :param offline_dir: load TLEs from folder
+    :return: TLEs
+    """
     tles = dict()
 
     for constellation in constellations:
@@ -34,6 +41,11 @@ def download_tles(constellations=SATELLITE_CONSTELLATIONS, offline_dir=None) -> 
 
 
 def unpack(tles: dict) -> List[Satellite]:
+    """
+    Unpacks TLEs from dictionary to list
+    :param tles: dictionary TLEs
+    :return: list TLEs
+    """
     satellite_list = list()
     for const in tles.values():
         satellite_list.extend(const.values())
