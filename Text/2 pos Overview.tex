@@ -1,6 +1,6 @@
 \chapter{Doppler frequency-based satellite-aided positioning}
 \label{s_pos}
-This chapter lays the groundwork for the system designed in the rest of this work. The Doppler effect and the Doppler frequency-based method, henceforth referred to as the \textit{Doppler method}, are described, with some implementations based on the reviewed literature. Furthermore, this chapter discusses the process of satellite signal capture, which is an essential part of satellite-aided navigation. A way to determine satellite position is presented, and frames of reference used for navigation in this work are described. 
+This chapter lays the groundwork for the system designed in the latter part of this work. The Doppler effect and the Doppler frequency-based method, henceforth referred to as the \textit{Doppler method}, are described, with some implementations based on the reviewed literature. Furthermore, this chapter discusses the process of satellite signal capture, which is an essential part of satellite-aided navigation. A way to determine satellite position is presented, and frames of reference used for navigation in this work are described. 
 
 
 
@@ -10,7 +10,7 @@ The Doppler effect is the change in the frequency of a wave as perceived by an o
     \label{e_pos_doppler_basic}
     f_R = \frac{c \pm v_R}{c \pm v_T} f_0
 \end{equation}
- where $c$ is the speed of wave in the medium, $v_R$ and $v_T$ are the respective scalar velocities of the receiver and transmitter relative to the medium (the direction depends on the sign convention), and $f_0$ is the transmitted frequency. 
+ where $c$ is the speed of the wave in the medium, $v_R$ and $v_T$ are the respective scalar velocities of the receiver and transmitter relative to the medium (the direction depends on the sign convention), and $f_0$ is the transmitted frequency. 
 
 To simplify calculations, the \autoref{e_pos_doppler_basic} can be simplified:
 
@@ -58,7 +58,7 @@ The assumption of stationary receiver requires the positions to be in ECEF frame
 \label{s_pos_doppler_method}
 The Doppler method is a method of radio-frequency navigation which calculates the user position from measurements of the Doppler shift of the received signal and from the knowledge of the transmitter position.
 
-A satellite passes over the surface of the Earth with a tangential velocity $v$, transmitting a signal on a frequency $f_0$ (see \autoref{f_pos_doppler_method_simple}). On the surface, a user measures a Doppler-shifted frequency $f_R$ (see \autoref{e_pos_dopp_fr}).
+When a satellite passes over the surface of the Earth with a tangential velocity $v$, transmitting a signal on a frequency $f_0$ (see \autoref{f_pos_doppler_method_simple}), a user on the surface measures a Doppler-shifted frequency $f_R$ (see \autoref{e_pos_dopp_fr}).
 
 \begin{figure}
     \centering
@@ -67,7 +67,7 @@ A satellite passes over the surface of the Earth with a tangential velocity $v$,
     \label{f_pos_doppler_method_simple}
 \end{figure}
 
-The relative velocity $v_T$ of the satellite and the user is the component of the satellite velocity which points in the direction of a line joining the user and satellite position - is offset from the satellite velocity by the angle $\alpha$. It can be expressed as
+The relative velocity of the satellite and the user, $v_T$, is the component of the satellite velocity vector, which points in the direction of user. It is offset from the satellite velocity by the angle $\alpha$. It can be expressed as
 
 \begin{equation*}
     v_T = v \ \cos{\alpha}
@@ -80,11 +80,11 @@ Thus, the Doppler shift can be expressed as
     \text{thus } \cos{\alpha} &= \frac{f_D}{f_R \ v}c
 \end{align}
 
-The user is located somewhere on an infinite cone (the \textit{isodoppler cone}) with the centre at the position of the satellite at the time of measurement, the axis in the direction of $v$ and an opening angle $2\alpha$.
+The user is located somewhere on an infinite cone (the \textit{isodoppler cone}) with the centre at the position of the satellite at the time of transmission, the axis in the direction of $v$ and an opening angle $2\alpha$.
 % "cone" - ne rotační hyperboloid? Možná v angličtině je to jinak než v ČJ. "Cone" jste našel v literatuře? Pokud ano, asi OK. Měl jsem vždy dojem, že jsme tomu v češtině říkali rotační hyperboloid, ne kužel. Ale možná je to opravdu kužel, ne hyperboloid, a říkal jsem nesmysly.
 %% on to není hyperboloid, je to skutečně kužel. V literatuře to je, akorát ne u rodilých mluvčích
 
-If the measurement is carried multiple times, a \textit{Doppler curve} is be obtained - a curve of Doppler shifts in time ($t$, $f_D$). The user is located at the intersections of the respective isodoppler cones. If the user is assumed to be on the surface, an intersection with a sphere representing the surface can be considered.
+If the measurement is carried multiple times, a \textit{Doppler curve} can be obtained - a curve of Doppler shifts in time ($t$, $f_D$). The user is located at the intersections of the respective isodoppler cones. If the user is assumed to be on the surface, an intersection with a sphere representing the surface can be considered.
 
 Furthermore, it is apparent from \autoref{e_pos_cos_alpha}, that if $f_D = 0$, $cos \alpha = 0$ and therefore $\alpha = \ang{90}$ - the isodoppler curve at that point becomes a plane perpendicular to the satellite orbital velocity. When projected on the surface of the Earth, the plane appears as a line perpendicular to the satellite track.
 
@@ -104,7 +104,7 @@ A review of existing work reveals two general ways of implementing the Doppler m
 
 \subsection{The Doppler curve fitting method}
 \label{s_pos_curve_fit_method}
-The Doppler curve fitting method is based on measuring the frequency emitted by a satellite, thus obtaining a Doppler shift curve. This measured curve is then compared using the least-squares fit by trial Doppler curves generated based on trial user position and the trial position corrected, until a best fit is found. The trial Doppler curve is calculated based on \autoref{e_pos_dopp_shift}. This method was used by the Transit navigation system\cite{sat16}.
+The Doppler curve fitting method is based on measuring the frequency emitted by a satellite, thus obtaining a Doppler shift curve. This measured curve is then compared using the least-squares fit to the trial Doppler curves generated based on trial user position. The trial position is corrected until the best fit is found. The trial Doppler curve is calculated based on \autoref{e_pos_dopp_shift}. This method had been used by the Transit navigation system\cite{sat16}.
 
 
 \subsection{The Observation Model method}
@@ -112,7 +112,7 @@ The second method is the most common in the reviewed research. It is based on cr
 % Super - díky za uvedení i této metody
 %% :)
 
-The range rate measurement of $i$\textsuperscript{th} satellite was usually modelled as
+The range rate measurement of $i$\textsuperscript{th} satellite was usually modelled in the research as
 \begin{equation}
    \dot\rho_i = \frac{c f_{D_i}}{f_R} = (V_i - V) \frac{r_i - r_0}{||r_i - r_0||_2} + c \dot\delta t - c \dot \delta t^i + \sigma
 \end{equation}
@@ -120,9 +120,9 @@ where $c \dot\delta t$, $c \dot \delta t^i$ is the clock drift in \unit{\m\per\s
 
 
 \section{Maximum Doppler shift}
-An estimate of the maximum of Doppler shift which can be occur in a captured signal frequency is a useful parameter for signal acquisition and for transmission channel identification, where it can serve as a bound.
+An estimate of the maximum of Doppler shift which can occur in a captured signal frequency is a useful parameter for signal acquisition and for transmission channel identification, where it can serve as a limit.
 
-The largest shift occurs when $\cos{\alpha} = 1$ in eq. \ref{e_pos_fd_alpha}, that is, when the satellite radius vector is perpendicular to that of the receiver. However, in this situation, the satellite in LEO is invisible to the receiver. More practically, the largest Doppler shift occurs when the satellite is first (and last) visible to the receiver. For a ground-based receiver with no obstacle in sight, this happens when the satellite intersects a plane tangential to the Earth surface at the receiver position.
+The largest shift occurs when $\cos{\alpha} = 1$ in \autoref{e_pos_fd_alpha}, that is, when the satellite radius vector is perpendicular to that of the receiver. However, in this situation, the satellite in LEO is invisible to the receiver. More practically, the largest Doppler shift occurs when the satellite is first (and last) visible to the receiver. For a ground-based receiver with no obstacle in sight, this happens when the satellite intersects a plane tangential to the Earth surface at the receiver position.
 
 In this special case, the angle $\alpha$ is equal to the angle between the satellite and user radius vectors. Thus,
 \begin{equation*}
@@ -134,13 +134,13 @@ Orbital velocity for a circular orbit is approximately
 \begin{equation*}
     v \approx \sqrt{\frac{\mu}{R_E + h}}
 \end{equation*}
-where $\mu$ is the standard gravitational parameter. Thus, substituting the above into eq. \ref{e_pos_fd_alpha}, the maximum Doppler shift depends only on the orbital altitude and transmission frequency:
+where $\mu$ is the standard gravitational parameter. Thus, substituting the equation above into \autoref{e_pos_fd_alpha}, the maximum Doppler shift depends only on the orbital altitude and transmission frequency:
 \begin{equation}
     \label{e_pos_fd_max}
     f_{D max} \approx f_R \frac{1}{c} \sqrt{\frac{\mu}{R_E + h}} \frac{R_E}{R_E + h}
 \end{equation}
 
-The calculated maximum Doppler shift for the satellites considered in the LEO system survey in section \ref{s_sat} is in table \ref{t_pos_max_fd}.
+The calculated maximum Doppler shift for the satellites considered in the LEO system survey in \autoref{s_sat} is in \autoref{t_pos_max_fd}.
 % OK. Ty vzorce vypadají opět hezky. Odvozeno, nebo někde z literatury? Ptám se jen kvůli možnosti kontroly. Stejně jako tabulka 2.1.
 %% odvozeno a spočítáno mnou, přidal jsem popisky
 
@@ -162,9 +162,9 @@ The calculated maximum Doppler shift for the satellites considered in the LEO sy
 \label{s_pos_tracking_satellite}
 One of the basic principles of capturing a satellite signal burst, extensively used in the reviewed literature, is based on thresholding the signal power level.
 
-First, the raw captured signal is amplified by a low noise amplifier (LNA) and is squared once or twice (2\textsuperscript{nd} or 4\textsuperscript{th} power) to increase the prominence of dominant peaks. Then, the Fourier transform (FFT) or a Power Spectral Density (PSD) function is applied with a windowing function (e.g. Hamming or Blackman-Harris). The resultant spectrum is then compared to a threshold representing the noise level. Peaks whose power level is stronger than the threshold and whose frequency falls within the plausible range for the given signal type are considered to be indicative of a present signal. The peak rise and fall times are noted (usually in terms of sample number rather than seconds). 
+First, the raw captured signal is amplified by a low noise amplifier (LNA) and is squared once or twice (2\textsuperscript{nd} or 4\textsuperscript{th} power) to increase the prominence of dominant peaks. Then, the Fast Fourier transform (FFT) or a Power Spectral Density (PSD) function is applied with a windowing function (e.g. Hamming or Blackman-Harris). The resultant spectrum is then compared to a threshold representing the noise level. Peaks whose power level is stronger than the threshold and whose frequency falls within the plausible range for the given signal type are considered to be indicative of a present signal. The peak rise and fall times are noted (usually in terms of sample number rather than seconds). 
 
-The samples within those times enter a Phase Lock Loop (PLL) to refine the frequency estimate. The PLL is is composed of a Numerically Controlled Oscillator
+The samples within those times enter a Phase Lock Loop (PLL) to refine the frequency estimate. The PLL is composed of a Numerically Controlled Oscillator
 (NCO), integrator functions, phase detector and a loop filter. A typical setup is shown in the block diagram in \autoref{f_pos_tracking_block}\cite{sop03, sop04, sop05}.
 
 \tikzstyle{block} = [rectangle, rounded corners, minimum height=1cm, text centered, text width=1cm, draw=black]
@@ -221,7 +221,7 @@ The Doppler method requires the knowledge of the position of the transmitting sa
 %% je to ukázáno v Design
 position needs to be calculated on the user side. To do this, the satellite orbit needs to be known and a propagation model used to calculate the satellite position at a given time.
 
-A widely used approach utilises Two Line Element (TLE) sets, which contain orbital parameters for satellites, and the Simplified General Perturbations-4 (SGP4) model for propagation. TLEs are regularly updated by the North American Aerospace Defense Command (NORAD) and are publicly available via e.g. the CelesTrak project website\cite{des11}. An analysed example of TLE is shown in \autoref{f_pos_tle}. A TLE is valid for a given time, called an \textit{epoch}.
+A widely used approach utilises Two Line Element (TLE) sets, which contain orbital parameters for satellites, and the Simplified General Perturbations-4 (SGP4) model for propagation. TLEs are regularly updated by the North American Aerospace Defense Command (NORAD) and are publicly available via e.g. the CelesTrak project website\cite{des11}. An analysed example of TLE is shown in \autoref{f_pos_tle}. A TLE is valid for a given time, which is called an \textit{epoch}.
 
 \begin{figure}
     \centering
@@ -232,7 +232,7 @@ A widely used approach utilises Two Line Element (TLE) sets, which contain orbit
 
 The SGP4 model is an orbit propagation model developed by the U.S. Air Force in the 1960s and further refined e.g. by Vallado et al.\cite{des06}. It is compatible with TLEs and commonly used together. The perturbation calculations are simplified - the Earth’s gravitational model is truncated, the atmospheric model is a static density field with exponential decay, and third-body influences are modelled only partially\citep{pos01}{698}. The SGP4 model works in the TEME coordinate frame (see \autoref{s_pos_frames_of_ref}).
 
-The accuracy of the model was evaluated in \cite{pos07}, which concluded that for the satellite constellations under evaluation in this work the position prediction errors one day from TLE epoch are on the order of \qty{e2}{m}, with maximum errors between \qtyrange{3}{6}{km}, depending on the intensity of the Solar flux.
+The accuracy of the model was evaluated in \cite{pos07}. It was concluded that for a LEO satellite, the position prediction errors of the SGP4 algorithm when the TLEs are one day old are on the order of \qty{e2}{m}, with maximum errors between \qtyrange{3}{6}{km}, depending on the intensity of the Solar flux.
 
 
 
@@ -245,13 +245,13 @@ For this work, three frames of reference are important: TEME (ECI), ITRS (ECEF) 
 The process of transforming between those systems is described e.g. in \cite{pos01}, and the transformations used in this work are all based on the equations and algorithms provided there: from TEME to ITRS \citep{pos01}{231-233}, from ITRS to geodetic \citep{pos01}{174-179} and back \citep{pos01}{146}.
 
 \subsection{True Equator Mean Equinox}
-The True Equator Mean Equinox (TEME) reference frame is a Cartesian ECI frame. The z-axis points along the Celestial Ephemeris Pole\footnote{The Earth rotation axis} (CEP), while x-axis is located on the True Equator plane (a plane perpendicular to the CEP) and points in the direction of the Vernal Equinox without accounting for celestial nutation (the \textit{mean} or \textit{uniform} equinox)\citep{pos01}{231-233}. TEME frame is used by the SGP4 algorithm (see \autoref{s_pos_tle_sgp4}).
+The True Equator Mean Equinox (TEME) reference frame is a Cartesian ECI frame. The z-axis points along the Celestial Ephemeris Pole\footnote{The Earth rotation axis} (CEP), while x-axis is located on the True Equator plane (a plane perpendicular to the CEP) and points in the direction of the Vernal Equinox without accounting for celestial nutation (the \textit{mean} or \textit{uniform} equinox)\citep{pos01}{231-233}. The TEME frame is used by the SGP4 algorithm (see \autoref{s_pos_tle_sgp4}).
 
 \subsection{International Terrestrial Reference System}
 The International Terrestrial Reference System (ITRS) is a standard Cartesian ECEF frame. The origin is at the centre of mass of the Earth and the axes are fixed to defining coordinates on Earth. As a result of tectonic movement, the system is periodically recalculated\citep{pos01}{152}. All calculations within this work are done in ITRS.
 
 \subsection{World Geodetic System Geodetic Datum}
-The World Geodetic System-84 (WGS84), where 84 refers to the most recent version from 1984, is an ECEF frame maintained by the U.S. National Geospatial-Intelligence Agency. The WGS84 and ITRS agree on a level of \unit{cm}\citep{pos01}{203}. The geodetic datum  (hereafter referred to as only \textit{geodetic frame}) is a latitude-longitude-altitude ($\phi, \lambda, h$ respectively) frame defined within WGS84. In this work, the estimated position is in the geodetic frame for clarity, however, for navigation calculations themselves the position is always converted to ITRS.
+The World Geodetic System-84 (WGS84), where 84 refers to the most recent version from 1984, is an ECEF frame maintained by the U.S. National Geospatial-Intelligence Agency. The WGS84 and ITRS agree on a level of centimetres\citep{pos01}{203}. The geodetic datum  (hereafter referred to as only the \textit{geodetic frame}) is a latitude-longitude-altitude ($\phi, \lambda, h$ respectively) frame defined within WGS84. In this work, the estimated position is in the geodetic frame for clarity, however, for navigation calculations themselves the position is always converted to ITRS.
 
 % Opět, výborně.
 %% Díky :)
