@@ -1,5 +1,6 @@
 This repostitory contains the source code created as a part of the diploma thesis **Signals of opportunity positioning using LEO satellites** by Vojtěch Voska at the CTU FEE.
 
+**This and only this is the version valid for thesis submission.**
 
 ## How to install
 1. Install Python 3.10 (https://www.python.org/)
