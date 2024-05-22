@@ -13,14 +13,16 @@
     DEBUG is a class containing all the debug flags, used to control the output of the program
 """
 
+raise NotImplementedError("EXP_NAME, LOCATION and WORKING_DIR need to be set in src/config/setup.py. Remove this line afterward.")
+
 # Experiment settings
-EXP_NAME = "val01"
-LOCATION = "HOME"
+EXP_NAME = ""
+LOCATION = ""
 START_TIME = None
 VALIDATION_DATA_SETS = ["val01", "val02", "val03", "val04", "val05", "val06", "val07", "val08", "val09", "val10"]
 
 # Paths
-WORKING_DIR = "C:\\Git\\Personal\\DP\\"
+WORKING_DIR = ""
 TMP_PATH = WORKING_DIR + "tmp\\"
 DATA_PATH = WORKING_DIR + f"Data\\{EXP_NAME}\\"
 
