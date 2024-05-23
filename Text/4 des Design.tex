@@ -83,7 +83,7 @@ The view of the antenna is unobstructed above approximately \ang{15} of elevatio
 \section{Frame extraction and decoding}
 One of the methods of acquiring and tracking a satellite signal has been described in \autoref{s_pos_tracking_satellite}. However, that refers only to acquiring the signal itself and measuring its frequency. It is highly advantageous to also demodulate and decode the data within the signal. Firstly, some frame types are associated with a specific frequency or a range of frequencies, which greatly simplifies determining the frequency on which the frames were transmitted, and thus their Doppler shift. Secondly, some frame types contain satellite identifiers, which are useful for determining which satellite is transmitting. Thirdly, some frame types contain the position of the transmitting satellite, which may be used as an initial location for the navigation algorithm.
 
-Extracting, demodulating and decoding frames from satellite signal is a specialised task, which is beyond the scope of this work. Therefore, two already existing programs were used - \texttt{gr-iridium}\cite{des09} and \texttt{iridium-toolkit}\cite{des10}.
+Extracting, demodulating and decoding frames from satellite signal is a specialised task, which is beyond the scope of this work. Therefore, two already existing programs were used - \texttt{gr-iridium}\cite{des09} and \texttt{iridium-toolkit}\cite{des10}. Due to the lack of public documentation, the programs were developed by reverse-engineering Iridium phone and pager firmware and by trial and error over two years\cite{des14}.
 
 The \texttt{gr-iridium} package is a module for GNURadio, which handles capturing and demodulating frames sent by Iridium satellites. It works with generic SDRs and outputs decoded Iridium frames as text output in console. Provided it is supplied with proper configuration, the package works from command line and is Windows-compatible, with compiled binaries available in Conda package manager. It requires GNURadio 3.10. The principle of operation is described below.
  
@@ -119,7 +119,7 @@ The \textbf{\texttt{burst\_downmix}} operates on PDUs. For each PDU, it shifts t
 
 The \textbf{\texttt{iridium\_qpsk\_demod}} block demodulates the frame data. It decimates the signal to one sample per symbol, applies a PLL to remove remaining frequency or phase offset\grlinedemod{358}. Then it performs a QPSK demodulation, checks the unique word and passes the modified PDU to the block output.
 
-The \textbf{\texttt{frame\_sorter}} block sorts the PDU by time of arrival (the processing is multi-threaded -  ordering in time is not assured), and the \textbf{\texttt{iridium\_frame\_printer}} block prints the block into console or a file.
+The \textbf{\texttt{frame\_sorter}} block sorts the PDU by time of arrival (the processing is multi-threaded -  ordering in time is not assured), and the \textbf{\texttt{iridium\_frame\_} \texttt{printer}} block prints the block into console or a file.
 % OK, i z pohledu radiáře to smysl dává. OK.
 %% super!
 
@@ -291,7 +291,8 @@ for sat_ID in satellites:
     save sat_doppler_freq and sat_ID
 
 closest_ID = find sat_ID for
-        min(abs(sat_doppler_freq - doppler_frequency) in saved data
+        min(abs(sat_doppler_freq - doppler_frequency) in 
+        saved data
     \end{verbatim}
     \caption{Generic satellite identification}
     \label{a_des_satellite_id_gen}

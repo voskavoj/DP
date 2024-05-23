@@ -224,14 +224,20 @@ The overall accuracy of the system is lowered by several factors. Firstly, the t
 
 Secondly, ionospheric and tropospheric delays were neglected, as was the time of flight of the signal. Furthermore, the satellite clock was assumed to be perfectly accurate, which is likely not the case.
 
+Thirdly, the time of reception of the satellite signal may not be accurate, as it was not provided by the SDR but rather by synchronisation with Iridium IBC frames. There were occasional step changes in the estimated recording start time of hundreds of milliseconds throughout the recordings, which may suggest a timing inaccuracy on the part of either the SDR or the Iridium signals themselves. Note that this method of time synchronisation was not found in literature by the author nor it could verified in this work.
+
 Most important source of inaccuracy is thought to be the SDR frequency offset and drift. This can be somewhat compensated e.g. by introducing a temperature-coupled compensator, or by better estimation of drift by the navigation system, as the linear compensation proved somewhat insufficient.
 
 
 
 \section{Comparison to existing SoP positioning systems}
-To compare the navigation system (NS) against the existing SoP positioning systems (reviewed in \autoref{s_sop}), the two model SoP systems from \autoref{s_sop_comparison} are used: SoP A and SoP B. The SoP A has an accuracy of \qty{200}{m} and time to fix of \qty{10}{min}, whereas the SoP B has an accuracy of \qty{700}{m} and TTF of \qty{2}{min} (see \autoref{t_sop_comparison}). The NS has an accuracy of \qty{1669}{m} and TTF of \qty{30}{min}. Precision or accuracy as a function of number of satellites is not known for the SoP positioning systems from the literature and therefore cannot be compared.
+To compare the navigation system (NS) against the existing SoP positioning systems (reviewed in \autoref{s_sop}), the two model SoP systems from \autoref{s_sop_comparison} are used: SoP A and SoP B. The SoP A has an accuracy of \qty{200}{m} and time to fix of \qty{10}{min}, whereas the SoP B has an accuracy of \qty{700}{m} and TTF of \qty{2}{min} (see \autoref{t_sop_comparison}). Note that some of the systems used to construct these example systems utilise sensor fusion with e.g. INS or altimeter. The NS has an accuracy of \qty{1669}{m} and TTF of \qty{30}{min}. Precision or accuracy as a function of number of satellites is not known for the SoP positioning systems from the literature, and therefore cannot be compared.
 
-The navigation system developed in this work performs worse than the SoP systems from the literature, both in terms of accuracy and time to fix. This is partially due to the existing system generally using much more complex error estimation and more accurate frequency measurements. Furthermore, unlike the existing systems, the NS is a full-stack system capable of performing all the required tasks, which introduces many more avenues for errors, such as satellite or channel misidentification, and makes the identification and correction of these errors more difficult.
+The navigation system developed in this work is less accurate than the SoP systems from the literature. This is partially due to the existing systems generally using more complex error estimation, especially the estimation of the receiver (and in some cases transmitter) frequency drift. Another factor might be the issues with timing, which were not present in the reviewed systems.
+
+The NS generally requires more time to acquire a fix than the reviewed systems, which is an attribute of the curve-fitting calculation method. The TTF could be significantly lowered if more constellations were used, as this would enable simultaneous complete Doppler curves.
+
+Finally, unlike the existing systems, the NS is a full-stack system capable of performing all the required tasks, which introduces many more avenues for errors, such as satellite or channel misidentification, and makes the identification and correction of these errors more difficult due to the complexity of the system.
 
 
 % mean data
