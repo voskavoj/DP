@@ -10,7 +10,8 @@ from src.navigation.calculations import latlon_distance, m_to_deg_lon, m_to_deg_
 from src.navigation.curve_fit_method import solve
 
 
-RUN_NEW_DATA = False
+RUN_NEW_DATA = True
+IDX = -1
 
 home_lon, home_lat, home_alt = LOCATIONS["HOME"][0], LOCATIONS["HOME"][1], LOCATIONS["HOME"][2]
 LON_HOME, LAT_HOME, ALT_HOME = LOCATIONS["HOME"][0], LOCATIONS["HOME"][1], LOCATIONS["HOME"][2]
@@ -24,7 +25,7 @@ def cb_solve(nav_data, satellites, default_parameters, *_):
 
 
 # section: ------------------------------------------------------------------------- ANALYSIS
-results = load_results("absolute_accuracy")
+results = load_results("absolute_accuracy", index=IDX)
 if RUN_NEW_DATA or results is None:
     run_for_all_data(cb_solve, "absolute_accuracy")
     results = load_results("absolute_accuracy")
@@ -125,10 +126,10 @@ m = Basemap(llcrnrlon=ll_lon, llcrnrlat=ll_lat, urcrnrlon=ur_lon, urcrnrlat=ur_l
 m.plot(home_lon, home_lat,           "x", color="blue",   latlon=True, label="Actual position")
 m.plot(res_arr[:, 1], res_arr[:, 0], "o", color="orange", latlon=True, label="Estimated positions")
 # spread
-m.plot(mean_lon, mean_lat, ".", marker="x", color="red",   latlon=True, label="All")
-m.plot(*make_latlon_circle(mean_lat, mean_lon, spread_all), "-", ms=1, color="red",   label="All data", alpha=0.5, latlon=True)
-m.plot(*make_latlon_circle(mean_lat, mean_lon, spread_cep), "-", ms=1, color="green", label="Best 50%", alpha=0.5, latlon=True)
-m.plot(*make_latlon_circle(mean_lat, mean_lon, spread_95),  "-", ms=1, color="blue",  label="Best 95%", alpha=0.5, latlon=True)
+m.plot(mean_lon, mean_lat, ".", marker="x", color="red",   latlon=True, label="Mean estimate")
+m.plot(*make_latlon_circle(mean_lat, mean_lon, spread_all), "-", ms=1, color="red",   label="Std. dev.", alpha=0.5, latlon=True)
+# m.plot(*make_latlon_circle(mean_lat, mean_lon, spread_cep), "-", ms=1, color="green", label="Best 50%", alpha=0.5, latlon=True)
+# m.plot(*make_latlon_circle(mean_lat, mean_lon, spread_95),  "-", ms=1, color="blue",  label="Best 95%", alpha=0.5, latlon=True)
 # distance around home
 m.plot(*make_latlon_circle(home_lat, home_lon, 1000), ".", ms=1, color="black", label="_nolegend_", alpha=0.25, latlon=True)
 m.plot(*make_latlon_circle(home_lat, home_lon, 2000), ".", ms=1, color="black", label="_nolegend_", alpha=0.25, latlon=True)
@@ -145,10 +146,10 @@ plt.savefig(get_fig_filename("validation\\" + f"exp_absolute_accuracy", idx=Fals
 
 plt.figure()
 plt.plot(cumm_func_all[:, 0], cumm_func_all[:, 1], ".-", label="To actual postion")
-plt.plot(cumm_func_all_spread[:, 0], cumm_func_all_spread[:, 1], ".-", color="red", label="To mean postion")
+# plt.plot(cumm_func_all_spread[:, 0], cumm_func_all_spread[:, 1], ".-", color="red", label="To mean postion")
 plt.xlabel("Error (m)")
 plt.ylabel("Probability (-)")
-plt.legend()
+# plt.legend()
 plt.savefig(get_fig_filename("validation\\" + f"exp_absolute_accuracy_dist", idx=False), dpi=600)
 
 plt.show()
